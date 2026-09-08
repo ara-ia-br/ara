@@ -1,20 +1,22 @@
 from ollama import Client
 
 from app.ai.base import AIProvider
+from app.security.settings import setting
 
 
 class OllamaProvider(AIProvider):
 
     def __init__(
         self,
-        modelo: str = "qwen3.5:4b"
+        modelo: str | None = None,
+        base_url: str | None = None
     ):
-        self.modelo = modelo
+        self.modelo = modelo or setting.OLLAMA_MODEL
+        self.base_url = base_url or setting.OLLAMA_BASE_URL
 
         self.client = Client(
-            host="http://localhost:11434"
+            host=self.base_url
         )
-
 
     def gerar_resposta(
         self,
@@ -24,24 +26,11 @@ class OllamaProvider(AIProvider):
         resposta = self.client.chat(
             model=self.modelo,
             messages=mensagens,
-
-            # Mantém o modelo carregado na memória
-            # para as próximas requisições.
             keep_alive="30m",
-
-            # Evita raciocínio extra quando não for necessário.
-            # Para Qwen isso ajuda bastante na latência.
             think=False,
-
             options={
-                # Limita o contexto inicialmente.
-                # Depois podemos aumentar se precisar.
                 "num_ctx": 8192,
-
-                # Limita tamanho máximo da resposta.
                 "num_predict": 800,
-
-                # Respostas naturais, sem muita aleatoriedade.
                 "temperature": 0.5
             }
         )

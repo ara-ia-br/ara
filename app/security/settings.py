@@ -22,6 +22,9 @@ class Setting(BaseSettings):
 
     OPENAI_SERVICE_TIER: str = "fast"
 
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "qwen3.5:4b"
+
     model_config = SettingsConfigDict(
         env_file="config.env",
         env_file_encoding="utf-8",
