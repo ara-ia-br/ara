@@ -452,14 +452,14 @@ function Chat({
                 >
 
                     <div
-                        className="jarvis-symbol ara-symbol"
+                        className="jarvis-symbol"
                     >
                         J
                     </div>
 
 
                     <h2>
-                        Bem-vindo à A.R.A.
+                        Bem-vindo ao JARVIS
                     </h2>
 
 
@@ -505,7 +505,7 @@ function Chat({
                             className="online-dot"
                         />
 
-                        A.R.A. Online
+                        JARVIS Online
 
                     </span>
 
@@ -527,9 +527,9 @@ function Chat({
                         <div className="welcome">
 
                             <div
-                                className="jarvis-symbol ara-symbol"
+                                className="jarvis-symbol"
                             >
-                                A
+                                J
                             </div>
 
 
@@ -594,7 +594,7 @@ function Chat({
                                     message-author
                                 "
                             >
-                                A.R.A.
+                                JARVIS
                             </div>
 
 
@@ -667,7 +667,7 @@ function Chat({
                         placeholder={
                             carregando
                                 ? (
-                                    "A.R.A. está "
+                                    "JARVIS está "
                                     + "pensando..."
                                 )
                                 : (
@@ -728,7 +728,7 @@ function Chat({
 
                 <span className="disclaimer">
 
-                    A.R.A. pode cometer erros.
+                    JARVIS pode cometer erros.
                     Verifique informações
                     importantes.
 

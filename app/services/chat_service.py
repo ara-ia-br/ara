@@ -4,7 +4,8 @@ import re
 
 from sqlalchemy.orm import Session
 
-from time import perf_counter
+from app.security.settings import setting
+
 
 from app.services.time_service import (
     TimeService
@@ -412,7 +413,7 @@ class ChatService:
 
 
         # =====================================================
-        # FALLBACK
+        #FALLBACK
         # =====================================================
 
         return (
@@ -1406,7 +1407,7 @@ class ChatService:
             remetente=RemetenteMensagem.JARVIS,
             conteudo=resposta,
             tipo="TEXTO",
-            modelo_ia="gemma3",
+            modelo_ia=setting.OLLAMA_MODEL,
             tempo_processamento=tempo
         )
 
@@ -1431,9 +1432,9 @@ class ChatService:
         # 19. EXTRAÇÃO DE MEMÓRIA
         # =========================================================
 
-        # ChatService._extrair_memoria(
-          #  db=db,
-           # id_usuario=id_usuario,
+        #ChatService._extrair_memoria(
+            #db=db,
+            #id_usuario=id_usuario,
             #conteudo=conteudo
         #)
 
@@ -1446,7 +1447,7 @@ class ChatService:
             "id_conversa": id_conversa,
             "mensagem_usuario": conteudo,
             "resposta_jarvis": resposta,
-            "modelo": "gemma3",
+            "modelo": setting.OLLAMA_MODEL,
             "ferramenta": None,
             "tempo_processamento": tempo
         }

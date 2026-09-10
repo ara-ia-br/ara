@@ -9,7 +9,7 @@ from datetime import timedelta
 
 from sqlalchemy.orm import Session
 
-from app.ai.engine import ai_engine
+
 
 from app.agent.intent import (
     AgentDecision,
@@ -231,115 +231,23 @@ class JarvisAgent:
         ):
             return decisao_direta
 
-        # =====================================================
-        # 5. FALLBACK VIA IA
-        # =====================================================
+    # =====================================================
+    # 5. FALLBACK DETERMINÍSTICO
+    # =====================================================
+    #
+    # Nenhuma intenção operacional conhecida foi detectada.
+    # A mensagem segue diretamente para o fluxo normal de
+    # conversação.
+    #
+    # Isso evita uma chamada adicional ao modelo apenas para
+    # classificar mensagens comuns como CONVERSAR.
+    # =====================================================
 
-        prompt = f"""
-Você é o módulo de decisão do JARVIS.
-
-Sua função é determinar se a mensagem do usuário
-requer apenas uma resposta normal ou se deve
-executar uma ferramenta.
-
-CONTEXTO TEMPORAL OFICIAL:
-
-{contexto_temporal}
-
-A data e hora acima são a referência temporal oficial.
-
-Ao interpretar expressões como:
-
-- hoje
-- amanhã
-- depois de amanhã
-- ontem
-- segunda
-- terça
-- quarta
-- quinta
-- sexta
-- sábado
-- domingo
-- horários relativos
-
-use obrigatoriamente o contexto temporal informado.
-
-Ferramentas disponíveis:
-
-{ferramentas}
-
-Mensagem do usuário:
-
-{mensagem}
-
-Responda SOMENTE com JSON válido.
-
-Para conversa normal:
-
-{{
-    "acao": "CONVERSAR",
-    "ferramenta": null,
-    "argumentos": {{}}
-}}
-
-Para executar ferramenta:
-
-{{
-    "acao": "EXECUTAR",
-    "ferramenta": "nome_da_ferramenta",
-    "argumentos": {{}}
-}}
-
-Nunca escolha uma ferramenta que não esteja disponível.
-
-Não escreva explicações.
-Não use markdown.
-Não use blocos de código.
-Retorne exclusivamente JSON válido.
-"""
-
-        resposta = ai_engine.gerar_resposta(
-            [
-                {
-                    "role": "system",
-                    "content": (
-                        "Você é um classificador de "
-                        "intenções e ferramentas. "
-                        "Retorne exclusivamente JSON válido."
-                    )
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
+        return AgentDecision(
+            acao=TipoAcao.CONVERSAR
         )
 
-        print(
-            "\n===== AGENT DEBUG ====="
-        )
 
-        print(
-            "Ferramentas:",
-            ferramentas
-        )
-
-        print(
-            "Resposta do modelo:"
-        )
-
-        print(
-            resposta
-        )
-
-        print(
-            "=======================\n"
-        )
-
-        return JarvisAgent._interpretar(
-            resposta
-        )
 
     # =========================================================
     # INTERPRETAR RESPOSTA DO MODELO

@@ -10,14 +10,10 @@ from app.ai.engine import (
     ai_engine
 )
 
-from app.models.memoria import (
-    Memoria
-)
 
-from app.repositories.memoria_repository import (
-    MemoriaRepository
+from app.memory.memory_consolidator import (
+    MemoryConsolidator
 )
-
 
 class MemoryExtractor:
 
@@ -787,9 +783,12 @@ Caso não exista memória relevante:
 
         return resultado_unico
 
-
     # =========================================================
     # PROCESSAR E SALVAR
+    # =========================================================
+
+    # =========================================================
+    # PROCESSAR MEMÓRIAS
     # =========================================================
 
     @staticmethod
@@ -797,121 +796,19 @@ Caso não exista memória relevante:
         db: Session,
         id_usuario: int,
         mensagem: str
-    ) -> list[Memoria]:
+    ) -> list:
 
         if id_usuario is None:
-
             return []
-
 
         if not MemoryExtractor.deve_analisar(
             mensagem
         ):
-
             return []
 
-
-        memorias_extraidas = (
-            MemoryExtractor.extrair(
-                mensagem
-            )
-        )
-
-
-        if not memorias_extraidas:
-            return []
-
-
-        memorias_salvas = []
-
-
-        for dados in memorias_extraidas:
-
-            # =================================================
-            # VERIFICA DUPLICATA EXATA
-            # =================================================
-
-            existente = (
-                MemoriaRepository
-                .buscar_conteudo(
-                    db,
-                    id_usuario,
-                    dados["conteudo"]
-                )
-            )
-
-
-            if existente is not None:
-
-                # Se já existe e estava inativa,
-                # deixamos a consolidação para a próxima etapa.
-                continue
-
-
-            # =================================================
-            # CRIA MEMÓRIA
-            # =================================================
-
-            memoria = Memoria(
-                id_usuario=id_usuario,
-                tipo_memoria=dados["tipo"],
-                conteudo=dados["conteudo"],
-                importancia=dados["importancia"],
-                ativa=True
-            )
-
-
-            memoria = (
-                MemoriaRepository.criar(
-                    db,
-                    memoria
-                )
-            )
-
-
-            memorias_salvas.append(
-                memoria
-            )
-
-
-        return memorias_salvas
-
-    @staticmethod
-    def processar(
-            db: Session,
-            id_usuario: int,
-            mensagem: str
-    ) -> list[Memoria]:
-
-        print(
-            "\n===== MEMORY DEBUG ====="
-        )
-
-        print(
-            "Mensagem:",
-            mensagem
-        )
-
-        deve_analisar = (
-            MemoryExtractor.deve_analisar(
-                mensagem
-            )
-        )
-
-        print(
-            "Deve analisar:",
-            deve_analisar
-        )
-
-        print(
-            "========================\n"
-        )
-
-        if id_usuario is None:
-            return []
-
-        if not deve_analisar:
-            return []
+        # =====================================================
+        # EXTRAÇÃO
+        # =====================================================
 
         memorias_extraidas = (
             MemoryExtractor.extrair(
@@ -922,38 +819,27 @@ Caso não exista memória relevante:
         if not memorias_extraidas:
             return []
 
-        memorias_salvas = []
+        memorias_processadas = []
+
+        # =====================================================
+        # CONSOLIDAÇÃO
+        # =====================================================
 
         for dados in memorias_extraidas:
 
-            existente = (
-                MemoriaRepository.buscar_conteudo(
-                    db,
-                    id_usuario,
-                    dados["conteudo"]
+            resultado = (
+                MemoryConsolidator.consolidar(
+                    db=db,
+                    id_usuario=id_usuario,
+                    tipo=dados["tipo"],
+                    conteudo=dados["conteudo"],
+                    importancia=dados["importancia"]
                 )
             )
 
-            if existente is not None:
-                continue
-
-            memoria = Memoria(
-                id_usuario=id_usuario,
-                tipo_memoria=dados["tipo"],
-                conteudo=dados["conteudo"],
-                importancia=dados["importancia"],
-                ativa=True
-            )
-
-            memoria = (
-                MemoriaRepository.criar(
-                    db,
-                    memoria
+            if resultado.memoria is not None:
+                memorias_processadas.append(
+                    resultado.memoria
                 )
-            )
 
-            memorias_salvas.append(
-                memoria
-            )
-
-        return memorias_salvas
+        return memorias_processadas

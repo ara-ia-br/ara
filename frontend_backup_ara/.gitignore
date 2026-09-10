@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Segredos
+.env
+.env.*
+!.env.example
+config.env
+*.pem
+*.key
+
+# PyCharm / IDE
+.idea/
+.vscode/
+
+# Frontend
+node_modules/
+dist/
+
+# Logs
+*.log
+
+# Sistema
+.DS_Store
+Thumbs.db

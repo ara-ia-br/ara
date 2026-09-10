@@ -1,986 +1,265 @@
-import { useEffect, useRef, useState } from "react";
-import {useLocation, useNavigate} from "react-router-dom";
-
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
     Archive,
+    Bot,
+    CalendarDays,
+    ChevronLeft,
+    ChevronRight,
+    FileText,
+    FolderKanban,
+    History,
+    Home,
     ListTodo,
+    MemoryStick,
     MessageSquare,
     MessageSquarePlus,
     MoreHorizontal,
     Pencil,
+    Plug,
     RotateCcw,
+    Search,
     Settings,
     Trash2,
-    User,
-    X
+    Workflow
 } from "lucide-react";
-
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import BrandMark from "./BrandMark";
 
+const navItems = [
+    { label: "Hoje", path: "/hoje", icon: Home },
+    { label: "A.R.A.", path: "/chat", icon: Bot },
+    { label: "Tarefas", path: "/tarefas", icon: ListTodo },
+    { label: "Agenda", path: "/agenda", icon: CalendarDays },
+    { label: "Memória", path: "/memoria", icon: MemoryStick },
+    { label: "Arquivos", path: "/arquivos", icon: FileText },
+    { label: "Projetos", path: "/projetos", icon: FolderKanban },
+    { label: "Automações", path: "/automacoes", icon: Workflow },
+    { label: "Integrações", path: "/integracoes", icon: Plug }
+];
 
 function Sidebar({
     conversaSelecionada,
     setConversaSelecionada,
     atualizarConversas,
-    conversaCriada
+    conversaCriada,
+    recolhida,
+    setRecolhida,
+    onOpenCommand
 }) {
-
     const { usuario, logout } = useAuth();
-
     const navigate = useNavigate();
-
     const location = useLocation();
-
     const [conversas, setConversas] = useState([]);
-    const [conversasArquivadas, setConversasArquivadas] = useState([]);
-
+    const [arquivadas, setArquivadas] = useState([]);
+    const [mostrarArquivadas, setMostrarArquivadas] = useState(false);
     const [criando, setCriando] = useState(false);
-
     const [menuAberto, setMenuAberto] = useState(null);
-
     const [renomeando, setRenomeando] = useState(null);
     const [novoTitulo, setNovoTitulo] = useState("");
 
-    const [mostrarArquivadas, setMostrarArquivadas] = useState(false);
-
-    const menuRef = useRef(null);
-
-
-    <div className="sidebar-navigation">
-
-    <button
-        className={
-            location.pathname === "/chat"
-                ? "sidebar-nav-item active"
-                : "sidebar-nav-item"
-        }
-        onClick={() => navigate("/chat")}
-    >
-        <MessageSquare size={18} />
-
-        <span>
-            Chat
-        </span>
-    </button>
-
-    <button
-        className={
-            location.pathname === "/tarefas"
-                ? "sidebar-nav-item active"
-                : "sidebar-nav-item"
-        }
-        onClick={() => navigate("/tarefas")}
-    >
-        <ListTodo size={18} />
-
-        <span>
-            Tarefas
-        </span>
-    </button>
-
-</div>
-
-
-    // =========================================================
-    // CARREGAR CONVERSAS ATIVAS
-    // =========================================================
-
     async function carregarConversas() {
-
-        if (!usuario?.id_usuario) {
-            return;
-        }
-
+        if (!usuario?.id_usuario) return;
         try {
-
-            const resposta = await api.get(
-                `/conversas/usuario/${usuario.id_usuario}`
-            );
-
-            setConversas(
-                resposta.data
-            );
-
-
-            // Se não existe conversa selecionada,
-            // seleciona automaticamente a primeira.
-            if (
-                !conversaSelecionada
-                && resposta.data.length > 0
-            ) {
-
-                setConversaSelecionada(
-                    resposta.data[0]
-                );
-            }
-
-
-            // Atualiza os dados da conversa selecionada
-            // caso título/data/status tenham mudado.
+            const resposta = await api.get(`/conversas/usuario/${usuario.id_usuario}`);
+            const lista = Array.isArray(resposta.data) ? resposta.data : [];
+            setConversas(lista);
+            if (!conversaSelecionada && lista.length > 0) setConversaSelecionada(lista[0]);
             if (conversaSelecionada) {
-
-                const atualizada = resposta.data.find(
-                    (conversa) =>
-                        conversa.id_conversa
-                        === conversaSelecionada.id_conversa
-                );
-
-                if (atualizada) {
-
-                    setConversaSelecionada(
-                        atualizada
-                    );
-
-                } else {
-
-                    setConversaSelecionada(null);
-                }
+                const atualizada = lista.find((item) => item.id_conversa === conversaSelecionada.id_conversa);
+                if (atualizada) setConversaSelecionada(atualizada);
             }
-
         } catch (erro) {
-
-            console.error(
-                "Erro ao carregar conversas:",
-                erro
-            );
+            console.error("Erro ao carregar conversas:", erro);
         }
     }
-
-
-    // =========================================================
-    // CARREGAR CONVERSAS ARQUIVADAS
-    // =========================================================
 
     async function carregarArquivadas() {
-
-        if (!usuario?.id_usuario) {
-            return;
-        }
-
+        if (!usuario?.id_usuario) return;
         try {
-
-            const resposta = await api.get(
-                `/conversas/usuario/${usuario.id_usuario}/arquivadas`
-            );
-
-            setConversasArquivadas(
-                resposta.data
-            );
-
+            const resposta = await api.get(`/conversas/usuario/${usuario.id_usuario}/arquivadas`);
+            setArquivadas(Array.isArray(resposta.data) ? resposta.data : []);
         } catch (erro) {
-
-            console.error(
-                "Erro ao carregar conversas arquivadas:",
-                erro
-            );
+            console.error("Erro ao carregar conversas arquivadas:", erro);
         }
     }
 
-
-    // =========================================================
-    // CRIAR NOVA CONVERSA
-    // =========================================================
+    useEffect(() => { carregarConversas(); }, [usuario?.id_usuario, atualizarConversas]);
+    useEffect(() => { if (mostrarArquivadas) carregarArquivadas(); }, [mostrarArquivadas]);
 
     async function criarNovaConversa() {
-
-        if (
-            criando
-            || !usuario?.id_usuario
-        ) {
-            return;
-        }
-
+        if (criando || !usuario?.id_usuario) return;
         setCriando(true);
-
         try {
-
-            const resposta = await api.post(
-                "/conversas",
-                {
-                    id_usuario: usuario.id_usuario,
-                    titulo: "Nova conversa"
-                }
-            );
-
-            setConversaSelecionada(
-                resposta.data
-            );
-
+            const resposta = await api.post("/conversas", {
+                id_usuario: usuario.id_usuario,
+                titulo: "Nova conversa"
+            });
+            setConversaSelecionada(resposta.data);
             conversaCriada();
-
+            navigate("/chat");
         } catch (erro) {
-
-            console.error(
-                "Erro ao criar conversa:",
-                erro
-            );
-
+            console.error("Erro ao criar conversa:", erro);
         } finally {
-
             setCriando(false);
         }
     }
 
-
-    // =========================================================
-    // ABRIR / FECHAR MENU DE CONVERSA
-    // =========================================================
-
-    function alternarMenu(
-        event,
-        idConversa
-    ) {
-
-        event.stopPropagation();
-
-        setMenuAberto(
-            menuAberto === idConversa
-                ? null
-                : idConversa
-        );
-    }
-
-
-    // =========================================================
-    // RENOMEAR
-    // =========================================================
-
-    function iniciarRenomeacao(
-        event,
-        conversa
-    ) {
-
-        event.stopPropagation();
-
-        setRenomeando(
-            conversa.id_conversa
-        );
-
-        setNovoTitulo(
-            conversa.titulo
-        );
-
+    function iniciarRenomeacao(conversa) {
+        setRenomeando(conversa.id_conversa);
+        setNovoTitulo(conversa.titulo || "");
         setMenuAberto(null);
     }
 
-
-    function cancelarRenomeacao() {
-
-        setRenomeando(null);
-        setNovoTitulo("");
-    }
-
-
-    async function salvarNovoTitulo(
-        event,
-        conversa
-    ) {
-
+    async function salvarNovoTitulo(event, conversa) {
         event.preventDefault();
-        event.stopPropagation();
-
         const titulo = novoTitulo.trim();
-
-        if (!titulo) {
-            return;
-        }
-
+        if (!titulo) return;
         try {
-
-            const resposta = await api.patch(
-                `/conversas/${conversa.id_conversa}/titulo`,
-                {
-                    titulo
-                }
-            );
-
-
-            setConversas(
-                (anteriores) =>
-                    anteriores.map(
-                        (item) =>
-                            item.id_conversa
-                            === conversa.id_conversa
-                                ? resposta.data
-                                : item
-                    )
-            );
-
-
-            if (
-                conversaSelecionada?.id_conversa
-                === conversa.id_conversa
-            ) {
-
-                setConversaSelecionada(
-                    resposta.data
-                );
-            }
-
-
-            cancelarRenomeacao();
-
+            const resposta = await api.patch(`/conversas/${conversa.id_conversa}/titulo`, { titulo });
+            setConversas((anteriores) => anteriores.map((item) => item.id_conversa === conversa.id_conversa ? resposta.data : item));
+            if (conversaSelecionada?.id_conversa === conversa.id_conversa) setConversaSelecionada(resposta.data);
+            setRenomeando(null);
         } catch (erro) {
-
-            console.error(
-                "Erro ao renomear conversa:",
-                erro
-            );
+            console.error("Erro ao renomear conversa:", erro);
         }
     }
 
-
-    // =========================================================
-    // ARQUIVAR
-    // =========================================================
-
-    async function arquivarConversa(
-        event,
-        conversa
-    ) {
-
-        event.stopPropagation();
-
-        const confirmar = window.confirm(
-            `Arquivar "${conversa.titulo}"?`
-        );
-
-        if (!confirmar) {
-            return;
-        }
-
+    async function arquivarConversa(conversa) {
+        if (!window.confirm(`Arquivar “${conversa.titulo}”?`)) return;
         try {
-
-            await api.patch(
-                `/conversas/${conversa.id_conversa}/arquivar`
-            );
-
-
-            setConversas(
-                (anteriores) =>
-                    anteriores.filter(
-                        (item) =>
-                            item.id_conversa
-                            !== conversa.id_conversa
-                    )
-            );
-
-
-            if (
-                conversaSelecionada?.id_conversa
-                === conversa.id_conversa
-            ) {
-
-                setConversaSelecionada(null);
-            }
-
-
+            await api.patch(`/conversas/${conversa.id_conversa}/arquivar`);
+            setConversas((anteriores) => anteriores.filter((item) => item.id_conversa !== conversa.id_conversa));
+            if (conversaSelecionada?.id_conversa === conversa.id_conversa) setConversaSelecionada(null);
+            conversaCriada();
             setMenuAberto(null);
-
-            conversaCriada();
-
-            if (mostrarArquivadas) {
-                carregarArquivadas();
-            }
-
         } catch (erro) {
-
-            console.error(
-                "Erro ao arquivar conversa:",
-                erro
-            );
+            console.error("Erro ao arquivar conversa:", erro);
         }
     }
 
-
-    // =========================================================
-    // RESTAURAR
-    // =========================================================
-
-    async function restaurarConversa(
-        conversa
-    ) {
-
+    async function restaurarConversa(conversa) {
         try {
-
-            const resposta = await api.patch(
-                `/conversas/${conversa.id_conversa}/restaurar`
-            );
-
-
-            setConversasArquivadas(
-                (anteriores) =>
-                    anteriores.filter(
-                        (item) =>
-                            item.id_conversa
-                            !== conversa.id_conversa
-                    )
-            );
-
-
-            await carregarConversas();
-
-            setConversaSelecionada(
-                resposta.data
-            );
-
+            const resposta = await api.patch(`/conversas/${conversa.id_conversa}/restaurar`);
+            setArquivadas((anteriores) => anteriores.filter((item) => item.id_conversa !== conversa.id_conversa));
             conversaCriada();
-
+            setConversaSelecionada(resposta.data);
+            navigate("/chat");
         } catch (erro) {
-
-            console.error(
-                "Erro ao restaurar conversa:",
-                erro
-            );
+            console.error("Erro ao restaurar conversa:", erro);
         }
     }
 
-
-    // =========================================================
-    // EXCLUIR
-    // =========================================================
-
-    async function excluirConversa(
-        event,
-        conversa
-    ) {
-
-        event.stopPropagation();
-
-        const confirmar = window.confirm(
-            `Excluir definitivamente "${conversa.titulo}"?\n\n`
-            + "Essa ação não poderá ser desfeita."
-        );
-
-        if (!confirmar) {
-            return;
-        }
-
+    async function excluirConversa(conversa) {
+        if (!window.confirm(`Excluir definitivamente “${conversa.titulo}”?`)) return;
         try {
-
-            await api.delete(
-                `/conversas/${conversa.id_conversa}`
-            );
-
-
-            setConversas(
-                (anteriores) =>
-                    anteriores.filter(
-                        (item) =>
-                            item.id_conversa
-                            !== conversa.id_conversa
-                    )
-            );
-
-
-            if (
-                conversaSelecionada?.id_conversa
-                === conversa.id_conversa
-            ) {
-
-                setConversaSelecionada(null);
-            }
-
-
+            await api.delete(`/conversas/${conversa.id_conversa}`);
+            setConversas((anteriores) => anteriores.filter((item) => item.id_conversa !== conversa.id_conversa));
+            if (conversaSelecionada?.id_conversa === conversa.id_conversa) setConversaSelecionada(null);
+            conversaCriada();
             setMenuAberto(null);
-
-            conversaCriada();
-
         } catch (erro) {
-
-            console.error(
-                "Erro ao excluir conversa:",
-                erro
-            );
-
-            alert(
-                erro.response?.data?.detail
-                || "Não foi possível excluir a conversa."
-            );
+            console.error("Erro ao excluir conversa:", erro);
         }
     }
 
-
-    // =========================================================
-    // MOSTRAR / ESCONDER ARQUIVADAS
-    // =========================================================
-
-    function alternarArquivadas() {
-
-        const novoEstado = !mostrarArquivadas;
-
-        setMostrarArquivadas(
-            novoEstado
-        );
-
-        if (novoEstado) {
-            carregarArquivadas();
-        }
-    }
-
-
-    // =========================================================
-    // CARREGAMENTO AUTOMÁTICO
-    // =========================================================
-
-    useEffect(
-        () => {
-
-            carregarConversas();
-
-        },
-        [
-            atualizarConversas,
-            usuario?.id_usuario
-        ]
-    );
-
-
-    // =========================================================
-    // FECHAR MENU AO CLICAR FORA
-    // =========================================================
-
-    useEffect(
-        () => {
-
-            function fecharMenu(event) {
-
-                if (
-                    menuRef.current
-                    && !menuRef.current.contains(
-                        event.target
-                    )
-                ) {
-
-                    setMenuAberto(null);
-                }
-            }
-
-
-            document.addEventListener(
-                "mousedown",
-                fecharMenu
-            );
-
-
-            return () => {
-
-                document.removeEventListener(
-                    "mousedown",
-                    fecharMenu
-                );
-            };
-
-        },
-        []
-    );
-
+    const iniciais = useMemo(() => {
+        const nome = usuario?.nome || usuario?.email || "U";
+        return nome.split(/\s+/).slice(0, 2).map((parte) => parte[0]?.toUpperCase()).join("");
+    }, [usuario]);
 
     return (
-        <aside className="sidebar">
-
-            {/* ==================================================
-                CABEÇALHO
-            ================================================== */}
-
-            <div className="sidebar-header">
-
-                <div className="logo">
-                    J
-                </div>
-
-                <div>
-
-                    <h1>
-                        JARVIS
-                    </h1>
-
-                    <span>
-                        Assistente pessoal
-                    </span>
-
-                </div>
-
+        <aside className={recolhida ? "sidebar ara-sidebar collapsed" : "sidebar ara-sidebar"}>
+            <div className="sidebar-topline">
+                <BrandMark compact={recolhida} />
+                <button className="sidebar-collapse" onClick={() => setRecolhida(!recolhida)} aria-label="Recolher menu">
+                    {recolhida ? <ChevronRight size={17} /> : <ChevronLeft size={17} />}
+                </button>
             </div>
 
-
-            {/* ==================================================
-                NOVA CONVERSA
-            ================================================== */}
-
-            <button
-                className="new-chat"
-                onClick={criarNovaConversa}
-                disabled={criando}
-            >
-
-                <MessageSquarePlus size={19} />
-
-                {
-                    criando
-                        ? "Criando..."
-                        : "Nova conversa"
-                }
-
+            <button className="new-chat ara-new-chat" onClick={criarNovaConversa} disabled={criando} title="Nova conversa">
+                <MessageSquarePlus size={18} /><span>{criando ? "Criando..." : "Nova conversa"}</span>
             </button>
 
+            <button className="command-trigger" onClick={onOpenCommand} title="Command Center">
+                <Search size={17} /><span>Command Center</span><kbd>Ctrl K</kbd>
+            </button>
 
-            {/* ==================================================
-                LISTA DE CONVERSAS
-            ================================================== */}
+            <nav className="ara-nav" aria-label="Principal">
+                {navItems.map(({ label, path, icon: Icon }) => (
+                    <button
+                        key={path}
+                        className={location.pathname === path ? "ara-nav-item active" : "ara-nav-item"}
+                        onClick={() => navigate(path)}
+                        title={label}
+                    >
+                        <Icon size={18} /><span>{label}</span>
+                    </button>
+                ))}
+            </nav>
 
-            <div className="sidebar-section">
+            {!recolhida && (
+                <section className="conversation-section">
+                    <div className="sidebar-section-heading">
+                        <span>CONVERSAS RECENTES</span>
+                        <button onClick={() => setMostrarArquivadas(!mostrarArquivadas)} title="Arquivadas"><History size={15} /></button>
+                    </div>
 
-                <span className="section-title">
-                    CONVERSAS
-                </span>
-
-
-                {
-                    conversas.length === 0
-                    && (
-                        <div className="no-conversations">
-
-                            Nenhuma conversa ainda.
-
-                        </div>
-                    )
-                }
-
-
-                {
-                    conversas.map(
-                        (conversa) => (
-
-                            <div
-                                key={conversa.id_conversa}
-                                className="conversation-wrapper"
-                            >
-
-                                {
-                                    renomeando
-                                    === conversa.id_conversa
-                                        ? (
-
-                                            <form
-                                                className="rename-conversation"
-                                                onSubmit={
-                                                    (event) =>
-                                                        salvarNovoTitulo(
-                                                            event,
-                                                            conversa
-                                                        )
-                                                }
-                                                onClick={
-                                                    (event) =>
-                                                        event.stopPropagation()
-                                                }
-                                            >
-
-                                                <input
-                                                    type="text"
-                                                    value={novoTitulo}
-                                                    onChange={
-                                                        (event) =>
-                                                            setNovoTitulo(
-                                                                event.target.value
-                                                            )
-                                                    }
-                                                    maxLength={200}
-                                                    autoFocus
-                                                />
-
-                                                <button
-                                                    type="button"
-                                                    onClick={
-                                                        cancelarRenomeacao
-                                                    }
-                                                    title="Cancelar"
-                                                >
-                                                    <X size={16} />
-                                                </button>
-
-                                            </form>
-
-                                        )
-                                        : (
-
-                                            <button
-                                                className={
-                                                    conversaSelecionada
-                                                        ?.id_conversa
-                                                    === conversa.id_conversa
-
-                                                        ? "conversation active"
-
-                                                        : "conversation"
-                                                }
-                                                onClick={
-                                                    () =>
-                                                        setConversaSelecionada(
-                                                            conversa
-                                                        )
-                                                }
-                                            >
-
-                                                <MessageSquare
-                                                    size={17}
-                                                />
-
-                                                <span
-                                                    className="conversation-title"
-                                                >
-
-                                                    {conversa.titulo}
-
-                                                </span>
-
-
-                                                <span
-                                                    className="conversation-menu-container"
-                                                    ref={
-                                                        menuAberto
-                                                        === conversa.id_conversa
-
-                                                            ? menuRef
-
-                                                            : null
-                                                    }
-                                                >
-
-                                                    <span
-                                                        className="conversation-more"
-                                                        onClick={
-                                                            (event) =>
-                                                                alternarMenu(
-                                                                    event,
-                                                                    conversa.id_conversa
-                                                                )
-                                                        }
-                                                    >
-
-                                                        <MoreHorizontal
-                                                            size={18}
-                                                        />
-
-                                                    </span>
-
-
-                                                    {
-                                                        menuAberto
-                                                        === conversa.id_conversa
-                                                        && (
-
-                                                            <span
-                                                                className="conversation-menu"
-                                                            >
-
-                                                                <span
-                                                                    onClick={
-                                                                        (event) =>
-                                                                            iniciarRenomeacao(
-                                                                                event,
-                                                                                conversa
-                                                                            )
-                                                                    }
-                                                                >
-
-                                                                    <Pencil
-                                                                        size={15}
-                                                                    />
-
-                                                                    Renomear
-
-                                                                </span>
-
-
-                                                                <span
-                                                                    onClick={
-                                                                        (event) =>
-                                                                            arquivarConversa(
-                                                                                event,
-                                                                                conversa
-                                                                            )
-                                                                    }
-                                                                >
-
-                                                                    <Archive
-                                                                        size={15}
-                                                                    />
-
-                                                                    Arquivar
-
-                                                                </span>
-
-
-                                                                <span
-                                                                    className="danger"
-                                                                    onClick={
-                                                                        (event) =>
-                                                                            excluirConversa(
-                                                                                event,
-                                                                                conversa
-                                                                            )
-                                                                    }
-                                                                >
-
-                                                                    <Trash2
-                                                                        size={15}
-                                                                    />
-
-                                                                    Excluir
-
-                                                                </span>
-
-                                                            </span>
-
-                                                        )
-                                                    }
-
-                                                </span>
-
-                                            </button>
-
-                                        )
-                                }
-
+                    <div className="conversation-list">
+                        {conversas.slice(0, 12).map((conversa) => (
+                            <div className="conversation-row" key={conversa.id_conversa}>
+                                {renomeando === conversa.id_conversa ? (
+                                    <form className="conversation-rename" onSubmit={(event) => salvarNovoTitulo(event, conversa)}>
+                                        <input value={novoTitulo} onChange={(event) => setNovoTitulo(event.target.value)} autoFocus maxLength={200} />
+                                    </form>
+                                ) : (
+                                    <button
+                                        className={conversaSelecionada?.id_conversa === conversa.id_conversa ? "conversation-link active" : "conversation-link"}
+                                        onClick={() => { setConversaSelecionada(conversa); navigate("/chat"); }}
+                                    >
+                                        <MessageSquare size={15} /><span>{conversa.titulo}</span>
+                                    </button>
+                                )}
+                                <button className="conversation-more" onClick={() => setMenuAberto(menuAberto === conversa.id_conversa ? null : conversa.id_conversa)}>
+                                    <MoreHorizontal size={16} />
+                                </button>
+                                {menuAberto === conversa.id_conversa && (
+                                    <div className="conversation-popover">
+                                        <button onClick={() => iniciarRenomeacao(conversa)}><Pencil size={14} /> Renomear</button>
+                                        <button onClick={() => arquivarConversa(conversa)}><Archive size={14} /> Arquivar</button>
+                                        <button className="danger" onClick={() => excluirConversa(conversa)}><Trash2 size={14} /> Excluir</button>
+                                    </div>
+                                )}
                             </div>
+                        ))}
+                        {conversas.length === 0 && <p className="sidebar-empty">Nenhuma conversa ainda.</p>}
+                    </div>
 
-                        )
-                    )
-                }
-
-            </div>
-
-
-            {/* ==================================================
-                CONVERSAS ARQUIVADAS
-            ================================================== */}
-
-            <div className="archived-section">
-
-                <button
-                    className="archived-button"
-                    onClick={alternarArquivadas}
-                >
-
-                    <Archive size={17} />
-
-                    <span>
-                        Conversas arquivadas
-                    </span>
-
-                </button>
-
-
-                {
-                    mostrarArquivadas
-                    && (
-                        <div className="archived-list">
-
-                            {
-                                conversasArquivadas.length === 0
-                                    ? (
-
-                                        <div className="no-conversations">
-
-                                            Nenhuma conversa arquivada.
-
-                                        </div>
-
-                                    )
-                                    : (
-
-                                        conversasArquivadas.map(
-                                            (conversa) => (
-
-                                                <div
-                                                    key={conversa.id_conversa}
-                                                    className="archived-item"
-                                                >
-
-                                                    <span
-                                                        title={conversa.titulo}
-                                                    >
-
-                                                        {conversa.titulo}
-
-                                                    </span>
-
-
-                                                    <button
-                                                        onClick={
-                                                            () =>
-                                                                restaurarConversa(
-                                                                    conversa
-                                                                )
-                                                        }
-                                                        title="Restaurar conversa"
-                                                    >
-
-                                                        <RotateCcw
-                                                            size={14}
-                                                        />
-
-                                                        Restaurar
-
-                                                    </button>
-
-                                                </div>
-
-                                            )
-                                        )
-
-                                    )
-                            }
-
+                    {mostrarArquivadas && (
+                        <div className="archived-block">
+                            <span>ARQUIVADAS</span>
+                            {arquivadas.map((conversa) => (
+                                <button key={conversa.id_conversa} onClick={() => restaurarConversa(conversa)}>
+                                    <RotateCcw size={14} /><span>{conversa.titulo}</span>
+                                </button>
+                            ))}
+                            {arquivadas.length === 0 && <small>Nenhuma conversa arquivada.</small>}
                         </div>
-                    )
-                }
-
-            </div>
-
-
-            {/* ==================================================
-                RODAPÉ
-            ================================================== */}
+                    )}
+                </section>
+            )}
 
             <div className="sidebar-footer">
-
-                <button>
-
-                    <Settings size={18} />
-
-                    <span>
-                        Configurações
-                    </span>
-
+                <button className={location.pathname === "/configuracoes" ? "profile-card active" : "profile-card"} onClick={() => navigate("/configuracoes")}>
+                    <span className="profile-avatar">{iniciais}</span>
+                    <span className="profile-copy"><strong>{usuario?.nome || "Minha conta"}</strong><small>{usuario?.email || "Configurações"}</small></span>
+                    <Settings size={16} />
                 </button>
-
-
-                <button
-                    onClick={logout}
-                >
-
-                    <User size={18} />
-
-                    <span>
-                        Sair
-                        {
-                            usuario?.nome
-                                ? ` (${usuario.nome})`
-                                : ""
-                        }
-                    </span>
-
-                </button>
-
+                {!recolhida && <button className="logout-link" onClick={logout}>Sair da sessão</button>}
             </div>
-
         </aside>
     );
 }
-
 
 export default Sidebar;
