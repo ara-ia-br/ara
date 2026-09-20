@@ -1,27 +1,12 @@
-function Message({
-    autor,
-    children
-}) {
-
-    const jarvis = autor === "jarvis";
+function Message({ autor, children }) {
+    const assistente = autor === "jarvis" || autor === "ara";
 
     return (
-        <div
-            className={
-                jarvis
-                    ? "message jarvis-message"
-                    : "message user-message"
-            }
-        >
-
+        <div className={assistente ? "message jarvis-message ara-message" : "message user-message"}>
             <div className="message-author">
-                {jarvis ? "JARVIS" : "Você"}
+                {assistente ? <><span className="message-signal" />A.R.A.</> : "Você"}
             </div>
-
-            <div className="message-content">
-                {children}
-            </div>
-
+            <div className="message-content">{children}</div>
         </div>
     );
 }

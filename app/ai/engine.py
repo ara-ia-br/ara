@@ -1,31 +1,19 @@
-from app.ai.base import AIProvider
-
-from app.ai.ollama_provider import (
-    OllamaProvider
-)
+from app.ai.groq_provider import GroqProvider
 
 
 class AIEngine:
 
-    def __init__(
-        self,
-        provider: AIProvider | None = None
-    ):
-
-        self.provider = (
-            provider
-            if provider is not None
-            else OllamaProvider()
-        )
-
+    def __init__(self):
+        self.provider = GroqProvider()
 
     def gerar_resposta(
         self,
-        mensagens: list[dict]
-    ) -> str:
-
+        mensagens,
+        temperatura=0.7
+    ):
         return self.provider.gerar_resposta(
-            mensagens
+            mensagens=mensagens,
+            temperatura=temperatura
         )
 
 

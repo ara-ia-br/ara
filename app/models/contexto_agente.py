@@ -1,10 +1,11 @@
 from datetime import datetime
 
 from sqlalchemy import (
+    Integer,
     BigInteger,
     DateTime,
     ForeignKey,
-    String
+    String,
 )
 
 from sqlalchemy.orm import (
@@ -26,7 +27,7 @@ class ContextoAgente(Base):
     )
 
     id_usuario: Mapped[int] = mapped_column(
-        BigInteger,
+        Integer,
         ForeignKey(
             "usuario.id_usuario",
             ondelete="CASCADE"
@@ -35,7 +36,7 @@ class ContextoAgente(Base):
     )
 
     id_conversa: Mapped[int] = mapped_column(
-        BigInteger,
+        Integer,
         ForeignKey(
             "conversa.id_conversa",
             ondelete="CASCADE"
@@ -45,7 +46,7 @@ class ContextoAgente(Base):
     )
 
     ultima_tarefa_id: Mapped[int | None] = mapped_column(
-        BigInteger,
+        Integer,
         ForeignKey(
             "tarefa.id_tarefa",
             ondelete="SET NULL"
@@ -54,7 +55,7 @@ class ContextoAgente(Base):
     )
 
     ultimo_lembrete_id: Mapped[int | None] = mapped_column(
-        BigInteger,
+        Integer,
         nullable=True
     )
 

@@ -60,3 +60,5 @@ logs/
 
 # Backup local do histórico Git
 .git-backup/
+*.bak*
+*.pre_*

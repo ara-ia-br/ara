@@ -1,3 +1,5 @@
+from app.services.natural_time_service import NaturalTimeService
+import re
 from datetime import datetime
 
 from sqlalchemy.orm import Session
@@ -17,7 +19,8 @@ def criar_lembrete(
     titulo: str,
     data_hora: str,
     descricao: str | None = None,
-    recorrencia: str | None = None
+    recorrencia: str | None = None,
+    id_tarefa: int | None = None
 ) -> dict:
 
     titulo = titulo.strip()
@@ -49,7 +52,8 @@ def criar_lembrete(
         titulo=titulo,
         data_hora=data_convertida,
         descricao=descricao,
-        recorrencia=recorrencia
+        recorrencia=recorrencia,
+        id_tarefa=id_tarefa
     )
 
 
@@ -58,6 +62,9 @@ def criar_lembrete(
 
         "id_lembrete":
             lembrete.id_lembrete,
+
+        "id_tarefa":
+            lembrete.id_tarefa,
 
         "titulo":
             lembrete.titulo,
@@ -133,93 +140,368 @@ def listar_lembretes(
 # CANCELAR LEMBRETE
 # =========================================================
 
+
 def cancelar_lembrete(
-    db: Session,
+    db,
     id_usuario: int,
-    titulo: str
-) -> dict:
+    titulo: str | None = None,
+    id_lembrete: int | None = None
+):
+    """
+    Cancela um lembrete.
 
-    titulo = titulo.strip()
+    Ações contextuais devem usar id_lembrete.
+    O título permanece apenas para compatibilidade.
+    """
 
-    if not titulo:
+    if id_lembrete is not None:
 
-        raise ValueError(
-            "Informe qual lembrete deseja cancelar."
+        lembrete = LembreteService.buscar_por_id(
+            db,
+            id_lembrete
         )
 
+        if lembrete.id_usuario != id_usuario:
+            raise ValueError(
+                "Lembrete não pertence ao usuário."
+            )
 
-    lembrete = (
-        LembreteService.cancelar(
+        status = (
+            lembrete.status.value
+            if hasattr(lembrete.status, "value")
+            else str(lembrete.status)
+        )
+
+        if status == "CANCELADA":
+            raise ValueError(
+                "Esse lembrete já está cancelado."
+            )
+
+        if status == "CONCLUIDA":
+            raise ValueError(
+                "Não é possível cancelar um lembrete concluído."
+            )
+
+        resultado = LembreteService.cancelar(
+            db=db,
+            id_usuario=id_usuario,
+            id_lembrete=lembrete.id_lembrete
+        )
+
+    else:
+
+        if not titulo:
+            raise ValueError(
+                "Informe qual lembrete deseja cancelar."
+            )
+
+        resultado = LembreteService.cancelar(
             db=db,
             id_usuario=id_usuario,
             titulo=titulo
         )
-    )
-
 
     return {
-        "sucesso": True,
-
-        "id_lembrete":
-            lembrete.id_lembrete,
-
-        "titulo":
-            lembrete.titulo,
-
-        "data_hora": (
-            lembrete.data_hora.isoformat()
-            if lembrete.data_hora
-            else None
-        ),
-
-        "status":
-            lembrete.status.value
+        "id_lembrete": resultado.id_lembrete,
+        "id_tarefa": resultado.id_tarefa,
+        "titulo": resultado.titulo,
+        "data_hora": resultado.data_hora.isoformat(),
+        "status": (
+            resultado.status.value
+            if hasattr(resultado.status, "value")
+            else str(resultado.status)
+        )
     }
 
-
-# =========================================================
-# CONCLUIR LEMBRETE
-# =========================================================
-
 def concluir_lembrete(
-    db: Session,
+    db,
     id_usuario: int,
-    titulo: str
-) -> dict:
+    titulo: str | None = None,
+    id_lembrete: int | None = None
+):
+    """
+    Conclui um lembrete.
 
-    titulo = titulo.strip()
+    Ações contextuais devem usar id_lembrete.
+    O título permanece apenas para compatibilidade.
+    """
 
-    if not titulo:
+    if id_lembrete is not None:
 
-        raise ValueError(
-            "Informe qual lembrete deseja concluir."
+        lembrete = LembreteService.buscar_por_id(
+            db,
+            id_lembrete
         )
 
+        if lembrete.id_usuario != id_usuario:
+            raise ValueError(
+                "Lembrete não pertence ao usuário."
+            )
 
-    lembrete = (
-        LembreteService.concluir(
+        status = (
+            lembrete.status.value
+            if hasattr(lembrete.status, "value")
+            else str(lembrete.status)
+        )
+
+        if status == "CONCLUIDA":
+            raise ValueError(
+                "Esse lembrete já está concluído."
+            )
+
+        if status == "CANCELADA":
+            raise ValueError(
+                "Não é possível concluir um lembrete cancelado."
+            )
+
+        # O service atual trabalha por título.
+        # Como já resolvemos o ID exato, usamos o título
+        # desse registro específico.
+        resultado = LembreteService.concluir(
+            db=db,
+            id_usuario=id_usuario,
+            id_lembrete=lembrete.id_lembrete
+        )
+
+    else:
+
+        if not titulo:
+            raise ValueError(
+                "Informe qual lembrete deseja concluir."
+            )
+
+        resultado = LembreteService.concluir(
             db=db,
             id_usuario=id_usuario,
             titulo=titulo
         )
+
+    return {
+        "id_lembrete": resultado.id_lembrete,
+        "id_tarefa": resultado.id_tarefa,
+        "titulo": resultado.titulo,
+        "data_hora": resultado.data_hora.isoformat(),
+        "status": (
+            resultado.status.value
+            if hasattr(resultado.status, "value")
+            else str(resultado.status)
+        )
+    }
+
+def editar_lembrete(
+    db,
+    id_usuario: int,
+    titulo: str | None = None,
+    nova_data_hora: str | None = None,
+    novo_titulo: str | None = None,
+    id_lembrete: int | None = None
+):
+    """
+    Edita um lembrete existente.
+
+    Prioridade de identificação:
+    1. id_lembrete, quando fornecido pelo contexto;
+    2. titulo, para compatibilidade com comandos explícitos.
+
+    Aceita:
+    - amanhã às 22h
+    - sexta às 20h
+    - 22h
+    - 22:30
+    """
+
+    # ========================================================
+    # RESOLVE O LEMBRETE
+    # ========================================================
+
+    lembrete = None
+
+    # Caminho seguro para ações contextuais.
+    if id_lembrete is not None:
+
+        lembrete = LembreteService.buscar_por_id(
+            db,
+            id_lembrete
+        )
+
+        if lembrete.id_usuario != id_usuario:
+            raise ValueError(
+                "Lembrete não pertence ao usuário."
+            )
+
+    # Compatibilidade com chamadas antigas por título.
+    else:
+
+        if not titulo:
+            raise ValueError(
+                "Informe qual lembrete deseja editar."
+            )
+
+        lembretes = LembreteService.listar(
+            db,
+            id_usuario
+        )
+
+        titulo_normalizado = (
+            titulo.lower().strip()
+        )
+
+        # Primeiro: correspondência exata.
+        for item in lembretes:
+            if (
+                item.titulo.lower().strip()
+                == titulo_normalizado
+            ):
+                lembrete = item
+                break
+
+        # Depois: correspondência parcial.
+        if lembrete is None:
+            for item in lembretes:
+
+                titulo_item = (
+                    item.titulo.lower().strip()
+                )
+
+                if (
+                    titulo_normalizado in titulo_item
+                    or titulo_item in titulo_normalizado
+                ):
+                    lembrete = item
+                    break
+
+        if lembrete is None:
+            raise ValueError(
+                f"Lembrete '{titulo}' não encontrado."
+            )
+
+    # ========================================================
+    # PROTEÇÃO DE STATUS
+    # ========================================================
+
+    status_atual = (
+        lembrete.status.value
+        if hasattr(lembrete.status, "value")
+        else str(lembrete.status)
     )
 
+    if status_atual in {
+        "CONCLUIDA",
+        "CANCELADA"
+    }:
+        raise ValueError(
+            "Não é possível editar um lembrete "
+            f"com status {status_atual}."
+        )
+
+    # ========================================================
+    # INTERPRETA NOVA DATA / HORÁRIO
+    # ========================================================
+
+    data_hora_final = None
+
+    if nova_data_hora:
+
+        # Primeiro tenta uma expressão temporal completa.
+        data_hora_final = (
+            NaturalTimeService.interpretar(
+                nova_data_hora
+            )
+        )
+
+        # Se recebeu somente horário, mantém a data atual.
+        if data_hora_final is None:
+
+            horario = re.search(
+                r"(?<!\d)"
+                r"([01]?\d|2[0-3])"
+                r"(?:[:h](\d{2}))?"
+                r"\s*(?:h|horas?)?"
+                r"(?!\d)",
+                nova_data_hora.lower()
+            )
+
+            if horario:
+
+                hora = int(
+                    horario.group(1)
+                )
+
+                minuto = int(
+                    horario.group(2)
+                    or 0
+                )
+
+                data_hora_final = (
+                    lembrete.data_hora.replace(
+                        hour=hora,
+                        minute=minuto,
+                        second=0,
+                        microsecond=0
+                    )
+                )
+
+        if data_hora_final is None:
+            raise ValueError(
+                "Não consegui identificar a nova "
+                "data ou horário do lembrete."
+            )
+
+    if (
+        data_hora_final is None
+        and novo_titulo is None
+    ):
+        raise ValueError(
+            "Informe o que deseja alterar "
+            "no lembrete."
+        )
+
+    # ========================================================
+    # PERSISTE
+    # ========================================================
+
+    lembrete = LembreteService.editar(
+        db=db,
+        id_lembrete=lembrete.id_lembrete,
+        id_usuario=id_usuario,
+        data_hora=data_hora_final,
+        titulo=novo_titulo
+    )
+
+    return {
+        "id_lembrete": lembrete.id_lembrete,
+        "id_tarefa": lembrete.id_tarefa,
+        "titulo": lembrete.titulo,
+        "data_hora": lembrete.data_hora.isoformat(),
+        "status": (
+            lembrete.status.value
+            if hasattr(lembrete.status, "value")
+            else str(lembrete.status)
+        )
+    }
+
+# =========================================================
+# EXCLUIR TODOS OS LEMBRETES
+# =========================================================
+
+def excluir_todos_lembretes(
+    db: Session,
+    id_usuario: int
+) -> dict:
+    """
+    Exclui fisicamente todos os lembretes do usuário.
+
+    As tarefas vinculadas são preservadas.
+    """
+
+    quantidade = (
+        LembreteService.excluir_todos(
+            db=db,
+            id_usuario=id_usuario
+        )
+    )
 
     return {
         "sucesso": True,
-
-        "id_lembrete":
-            lembrete.id_lembrete,
-
-        "titulo":
-            lembrete.titulo,
-
-        "data_hora": (
-            lembrete.data_hora.isoformat()
-            if lembrete.data_hora
-            else None
-        ),
-
-        "status":
-            lembrete.status.value
+        "quantidade_excluida": quantidade
     }

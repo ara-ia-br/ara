@@ -1,3 +1,4 @@
+from app.services.consulta_instrucional_service import ConsultaInstrucionalService
 import json
 import re
 
@@ -9,7 +10,7 @@ from datetime import timedelta
 
 from sqlalchemy.orm import Session
 
-from app.ai.engine import ai_engine
+
 
 from app.agent.intent import (
     AgentDecision,
@@ -36,6 +37,8 @@ from app.services.time_service import (
     TimeService
 )
 
+
+from app.services.contexto_agente_service import ContextoAgenteService
 
 class JarvisAgent:
 
@@ -103,6 +106,26 @@ class JarvisAgent:
 
 
 
+
+        # =====================================================
+        # INSTRUCTIONAL GUARD GLOBAL
+        # =====================================================
+        #
+        # Perguntar COMO executar uma ação não autoriza sua
+        # execução. Esta barreira ocorre antes de todos os
+        # detectores operacionais.
+        # =====================================================
+
+        consulta_instrucional = (
+            ConsultaInstrucionalService.analisar(
+                mensagem
+            )
+        )
+
+        if consulta_instrucional is not None:
+            return AgentDecision(
+                acao=TipoAcao.CONVERSAR
+            )
 
         ferramentas = ToolRegistry.listar()
 
@@ -194,7 +217,29 @@ class JarvisAgent:
             return decisao_contextual_lembrete
 
         # =====================================================
-        # 3. AÇÕES DE LEMBRETE
+        # 3. EXCLUSÃO EM MASSA DE LEMBRETES
+        # =====================================================
+
+        decisao_exclusao_lembretes = (
+            JarvisAgent
+            ._detectar_exclusao_todos_lembretes(
+                mensagem
+            )
+        )
+
+        if (
+            decisao_exclusao_lembretes is not None
+            and decisao_exclusao_lembretes.acao
+                == TipoAcao.EXECUTAR
+            and decisao_exclusao_lembretes.ferramenta
+            and ToolRegistry.existe(
+                decisao_exclusao_lembretes.ferramenta
+            )
+        ):
+            return decisao_exclusao_lembretes
+
+        # =====================================================
+        # 4. AÇÕES DE LEMBRETE
         # =====================================================
 
         decisao_lembrete = (
@@ -219,7 +264,10 @@ class JarvisAgent:
 
         decisao_direta = (
             JarvisAgent._detectar_lembrete(
-                mensagem
+                mensagem=mensagem,
+                db=db,
+                id_usuario=id_usuario,
+                id_conversa=id_conversa
             )
         )
 
@@ -231,115 +279,23 @@ class JarvisAgent:
         ):
             return decisao_direta
 
-        # =====================================================
-        # 5. FALLBACK VIA IA
-        # =====================================================
+    # =====================================================
+    # 5. FALLBACK DETERMINÍSTICO
+    # =====================================================
+    #
+    # Nenhuma intenção operacional conhecida foi detectada.
+    # A mensagem segue diretamente para o fluxo normal de
+    # conversação.
+    #
+    # Isso evita uma chamada adicional ao modelo apenas para
+    # classificar mensagens comuns como CONVERSAR.
+    # =====================================================
 
-        prompt = f"""
-Você é o módulo de decisão do JARVIS.
-
-Sua função é determinar se a mensagem do usuário
-requer apenas uma resposta normal ou se deve
-executar uma ferramenta.
-
-CONTEXTO TEMPORAL OFICIAL:
-
-{contexto_temporal}
-
-A data e hora acima são a referência temporal oficial.
-
-Ao interpretar expressões como:
-
-- hoje
-- amanhã
-- depois de amanhã
-- ontem
-- segunda
-- terça
-- quarta
-- quinta
-- sexta
-- sábado
-- domingo
-- horários relativos
-
-use obrigatoriamente o contexto temporal informado.
-
-Ferramentas disponíveis:
-
-{ferramentas}
-
-Mensagem do usuário:
-
-{mensagem}
-
-Responda SOMENTE com JSON válido.
-
-Para conversa normal:
-
-{{
-    "acao": "CONVERSAR",
-    "ferramenta": null,
-    "argumentos": {{}}
-}}
-
-Para executar ferramenta:
-
-{{
-    "acao": "EXECUTAR",
-    "ferramenta": "nome_da_ferramenta",
-    "argumentos": {{}}
-}}
-
-Nunca escolha uma ferramenta que não esteja disponível.
-
-Não escreva explicações.
-Não use markdown.
-Não use blocos de código.
-Retorne exclusivamente JSON válido.
-"""
-
-        resposta = ai_engine.gerar_resposta(
-            [
-                {
-                    "role": "system",
-                    "content": (
-                        "Você é um classificador de "
-                        "intenções e ferramentas. "
-                        "Retorne exclusivamente JSON válido."
-                    )
-                },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
+        return AgentDecision(
+            acao=TipoAcao.CONVERSAR
         )
 
-        print(
-            "\n===== AGENT DEBUG ====="
-        )
 
-        print(
-            "Ferramentas:",
-            ferramentas
-        )
-
-        print(
-            "Resposta do modelo:"
-        )
-
-        print(
-            resposta
-        )
-
-        print(
-            "=======================\n"
-        )
-
-        return JarvisAgent._interpretar(
-            resposta
-        )
 
     # =========================================================
     # INTERPRETAR RESPOSTA DO MODELO
@@ -688,12 +644,121 @@ Retorne exclusivamente JSON válido.
         return 3
 
     # =========================================================
+    # EXCLUIR TODOS OS LEMBRETES
+    # =========================================================
+
+    @staticmethod
+    def _detectar_exclusao_todos_lembretes(
+        mensagem: str
+    ) -> AgentDecision | None:
+
+        texto = (
+            mensagem
+            .lower()
+            .strip()
+        )
+
+        # -----------------------------------------------------
+        # QUERY / INSTRUCTION GUARD
+        #
+        # Perguntar COMO fazer uma operação não significa
+        # solicitar que ela seja executada.
+        #
+        # Exemplos:
+        # "como excluir todos os lembretes?"
+        # "como posso apagar todos os lembretes?"
+        # "me ensine a excluir todos os lembretes"
+        # -----------------------------------------------------
+
+        padroes_instrucionais = (
+            r"^como\b",
+            r"^me\s+ensine\b",
+            r"^me\s+explique\b",
+            r"^explique\b",
+            r"^me\s+mostre\s+como\b",
+            r"^me\s+diga\s+como\b",
+            r"^quero\s+saber\s+como\b",
+            r"^gostaria\s+de\s+saber\s+como\b",
+            r"^posso\b",
+            r"^eu\s+consigo\b",
+            r"^qual\s+(?:e|é|seria)\s+"
+            r"(?:a\s+)?(?:forma|maneira)\b",
+            r"^qual\s+(?:e|é|seria)\s+"
+            r"(?:o\s+)?jeito\b",
+        )
+
+        if any(
+            re.search(
+                padrao,
+                texto
+            )
+            for padrao in padroes_instrucionais
+        ):
+            return None
+
+        # -----------------------------------------------------
+        # A intenção precisa conter:
+        #
+        # 1. verbo explícito de exclusão;
+        # 2. quantificador de totalidade;
+        # 3. domínio lembrete.
+        #
+        # Isso evita interpretar exclusões individuais como
+        # exclusões em massa.
+        # -----------------------------------------------------
+
+        verbo_exclusao = bool(
+            re.search(
+                r"\b(?:"
+                r"exclua|excluir|exclui|"
+                r"apague|apagar|"
+                r"delete|deletar|"
+                r"remova|remover"
+                r")\b",
+                texto
+            )
+        )
+
+        totalidade = bool(
+            re.search(
+                r"\b(?:"
+                r"todos|todas"
+                r")\b",
+                texto
+            )
+        )
+
+        dominio_lembrete = bool(
+            re.search(
+                r"\blembretes?\b",
+                texto
+            )
+        )
+
+        if not (
+            verbo_exclusao
+            and totalidade
+            and dominio_lembrete
+        ):
+            return None
+
+        return AgentDecision(
+            acao=TipoAcao.EXECUTAR,
+            ferramenta="excluir_todos_lembretes",
+            argumentos={}
+        )
+
+
+    # =========================================================
     # DETECTAR LEMBRETE
     # =========================================================
 
     @staticmethod
     def _detectar_lembrete(
-        mensagem: str
+        mensagem: str,
+        db: Session | None = None,
+        id_usuario: int | None = None,
+        id_conversa: int | None = None
     ) -> AgentDecision | None:
 
         texto = mensagem.lower().strip()
@@ -712,6 +777,165 @@ Retorne exclusivamente JSON válido.
             for gatilho in gatilhos
         ):
             return None
+
+        # =====================================================
+        # REMINDER BRIDGE — REFERÊNCIA À ÚLTIMA TAREFA
+        #
+        # Exemplos:
+        # "crie um lembrete para ela 30 minutos antes"
+        # "me lembre dela 1 hora antes"
+        #
+        # A referência contextual aponta para a última tarefa
+        # válida da conversa. O horário do lembrete é calculado
+        # a partir de data_limite da tarefa.
+        # =====================================================
+
+        referencia_tarefa = bool(
+            re.search(
+                r"\b(?:"
+                r"ela|ele|"
+                r"essa\s+tarefa|"
+                r"esta\s+tarefa|"
+                r"esse\s+tarefa|"
+                r"este\s+tarefa"
+                r")\b",
+                texto
+            )
+        )
+
+        deslocamento_antes = re.search(
+            r"\b(\d+)\s*"
+            r"(minuto|minutos|hora|horas)\s+antes\b",
+            texto
+        )
+
+        if (
+            referencia_tarefa
+            and deslocamento_antes is not None
+        ):
+
+            if (
+                db is None
+                or id_usuario is None
+                or id_conversa is None
+            ):
+                return AgentDecision(
+                    acao=TipoAcao.CONVERSAR
+                )
+
+            id_tarefa = (
+                ContextoAgenteService
+                .obter_ultima_tarefa_id(
+                    db=db,
+                    id_usuario=id_usuario,
+                    id_conversa=id_conversa
+                )
+            )
+
+            if id_tarefa is None:
+                return AgentDecision(
+                    acao=TipoAcao.CONVERSAR
+                )
+
+            try:
+
+                tarefa = TarefaService.buscar_por_id(
+                    db,
+                    id_tarefa
+                )
+
+            except ValueError:
+
+                return AgentDecision(
+                    acao=TipoAcao.CONVERSAR
+                )
+
+            if tarefa.id_usuario != id_usuario:
+                return AgentDecision(
+                    acao=TipoAcao.CONVERSAR
+                )
+
+            data_limite = getattr(
+                tarefa,
+                "data_limite",
+                None
+            )
+
+            if data_limite is None:
+                return AgentDecision(
+                    acao=TipoAcao.CONVERSAR
+                )
+
+            quantidade = int(
+                deslocamento_antes.group(1)
+            )
+
+            unidade = (
+                deslocamento_antes
+                .group(2)
+            )
+
+            if unidade.startswith("hora"):
+                deslocamento = timedelta(
+                    hours=quantidade
+                )
+            else:
+                deslocamento = timedelta(
+                    minutes=quantidade
+                )
+
+            data_lembrete = (
+                data_limite
+                - deslocamento
+            )
+
+            # =====================================================
+            # NORMALIZAÇÃO DE TIMEZONE
+            #
+            # MariaDB/MySQL DATETIME não preserva timezone.
+            # TimeService.agora(), por outro lado, pode retornar
+            # um datetime timezone-aware.
+            #
+            # Antes de comparar, os dois valores precisam usar
+            # a mesma referência temporal.
+            # =====================================================
+
+            agora_referencia = TimeService.agora()
+
+            if (
+                data_lembrete.tzinfo is None
+                and agora_referencia.tzinfo is not None
+            ):
+                data_lembrete = data_lembrete.replace(
+                    tzinfo=agora_referencia.tzinfo
+                )
+
+            elif (
+                data_lembrete.tzinfo is not None
+                and agora_referencia.tzinfo is None
+            ):
+                agora_referencia = agora_referencia.replace(
+                    tzinfo=data_lembrete.tzinfo
+                )
+
+            # Não cria lembrete contextual já vencido.
+            if data_lembrete <= agora_referencia:
+                return AgentDecision(
+                    acao=TipoAcao.CONVERSAR
+                )
+
+            return AgentDecision(
+                acao=TipoAcao.EXECUTAR,
+                ferramenta="criar_lembrete",
+                argumentos={
+                    "titulo": tarefa.titulo,
+                    "data_hora":
+                        data_lembrete.isoformat(),
+                    "descricao": None,
+                    "recorrencia": None,
+                    "id_tarefa": tarefa.id_tarefa
+                }
+            )
 
         agora = TimeService.agora()
 
@@ -987,7 +1211,85 @@ Retorne exclusivamente JSON válido.
         )
 
         if entidade is None:
-            return None
+
+            # =================================================
+            # CONTINUAÇÃO IMPLÍCITA DE PRIORIDADE
+            # =================================================
+            #
+            # Exemplos:
+            #
+            # "prioridade alta também"
+            # "coloque prioridade alta também"
+            #
+            # Não usamos a última tarefa como fallback global.
+            # Isso só ocorre quando há evidência clara de uma
+            # continuação de prioridade.
+
+            texto_contextual = (
+                EntidadeContextualService
+                ._normalizar_texto(
+                    mensagem
+                )
+            )
+
+            possui_continuacao = bool(
+                re.search(
+                    r"\btambem\b",
+                    texto_contextual
+                )
+            )
+
+            possui_prioridade = bool(
+                re.search(
+                    r"\b(?:"
+                    r"prioridade"
+                    r"|urgente"
+                    r"|importante"
+                    r"|muito\s+baixa"
+                    r"|baixa"
+                    r"|normal"
+                    r"|alta"
+                    r")\b",
+                    texto_contextual
+                )
+            )
+
+            eh_continuacao_prioridade = (
+                possui_continuacao
+                and possui_prioridade
+            )
+
+            if not eh_continuacao_prioridade:
+                return None
+
+            id_tarefa_contextual = (
+                ContextoAgenteService
+                .obter_ultima_tarefa_id(
+                    db=db,
+                    id_usuario=id_usuario,
+                    id_conversa=id_conversa
+                )
+            )
+
+            if id_tarefa_contextual is None:
+                return None
+
+            try:
+
+                tarefa = (
+                    TarefaService.buscar_por_id(
+                        db,
+                        id_tarefa_contextual
+                    )
+                )
+
+            except ValueError:
+                return None
+
+            if tarefa.id_usuario != id_usuario:
+                return None
+
+            return tarefa
 
         try:
 
@@ -1031,6 +1333,12 @@ Retorne exclusivamente JSON válido.
             return None
 
         texto = mensagem.lower().strip()
+
+
+        # Se a mensagem fala explicitamente de lembrete,
+        # ela não pode ser capturada pelo contexto de tarefa.
+        if "lembrete" in texto:
+            return None
 
         # =====================================================
         # RESOLVE REFERÊNCIA
@@ -1121,7 +1429,38 @@ Retorne exclusivamente JSON válido.
             "coloca para",
             "coloque para",
             "passa para",
-            "passe para"
+            "passe para",
+
+            # continuações naturais
+            "muda ela para",
+            "mude ela para",
+            "muda ela pra",
+            "mude ela pra",
+
+            "muda essa para",
+            "mude essa para",
+            "muda essa pra",
+            "mude essa pra",
+
+            "muda esta para",
+            "mude esta para",
+            "muda esta pra",
+            "mude esta pra",
+
+            "coloca ela para",
+            "coloque ela para",
+            "coloca ela pra",
+            "coloque ela pra",
+
+            "coloca essa para",
+            "coloque essa para",
+            "coloca essa pra",
+            "coloque essa pra",
+
+            "coloca esta para",
+            "coloque esta para",
+            "coloca esta pra",
+            "coloque esta pra"
         ]
 
         if any(
@@ -1153,6 +1492,65 @@ Retorne exclusivamente JSON válido.
                 "=================================="
             )
 
+            # =================================================
+            # HORÁRIO ISOLADO
+            # =================================================
+            #
+            # NaturalTimeService pode não interpretar:
+            #
+            # "mude ela para 21h"
+            # "coloque ela para 22h30"
+            #
+            # Se a tarefa já possui data_limite, preservamos
+            # sua data e alteramos apenas hora/minuto.
+
+            if (
+                data_limite is None
+                and tarefa.data_limite is not None
+            ):
+
+                horario_match = re.search(
+                    r"(?<!\d)"
+                    r"([01]?\d|2[0-3])"
+                    r"(?:"
+                    r"\s*[hH]\s*([0-5]?\d)?"
+                    r"|"
+                    r":([0-5]\d)"
+                    r")"
+                    r"(?!\d)",
+                    mensagem
+                )
+
+                if horario_match:
+
+                    hora = int(
+                        horario_match.group(1)
+                    )
+
+                    minuto_texto = (
+                        horario_match.group(2)
+                        or horario_match.group(3)
+                    )
+
+                    minuto = (
+                        int(minuto_texto)
+                        if minuto_texto
+                        else 0
+                    )
+
+                    data_atual = (
+                        tarefa.data_limite
+                    )
+
+                    data_limite = (
+                        data_atual.replace(
+                            hour=hora,
+                            minute=minuto,
+                            second=0,
+                            microsecond=0
+                        )
+                    )
+
             if data_limite is not None:
 
                 return AgentDecision(
@@ -1164,6 +1562,96 @@ Retorne exclusivamente JSON válido.
                             data_limite.isoformat()
                     }
                 )
+
+        # =====================================================
+        # CONSULTA CONTEXTUAL DA TAREFA — READ-ONLY
+        # =====================================================
+
+        texto_consulta = (
+            EntidadeContextualService
+            ._normalizar_texto(
+                mensagem
+            )
+        )
+
+        # -----------------------------------------------------
+        # PRIORIDADE
+        # -----------------------------------------------------
+
+        eh_consulta_prioridade = bool(
+            re.search(
+                r"^(?:"
+                r"qual\s+(?:e\s+|seria\s+)?a\s+prioridade"
+                r"|qual\s+prioridade"
+                r"|que\s+prioridade"
+                r")\b",
+                texto_consulta
+            )
+        )
+
+        if eh_consulta_prioridade:
+
+            return AgentDecision(
+                acao=TipoAcao.EXECUTAR,
+                ferramenta="consultar_tarefa",
+                argumentos={
+                    "titulo": titulo,
+                    "campo": "prioridade"
+                }
+            )
+
+        # -----------------------------------------------------
+        # STATUS
+        # -----------------------------------------------------
+
+        eh_consulta_status = bool(
+            re.search(
+                r"^(?:"
+                r"qual\s+(?:e\s+|seria\s+)?o\s+status"
+                r"|qual\s+status"
+                r"|que\s+status"
+                r")\b",
+                texto_consulta
+            )
+        )
+
+        if eh_consulta_status:
+
+            return AgentDecision(
+                acao=TipoAcao.EXECUTAR,
+                ferramenta="consultar_tarefa",
+                argumentos={
+                    "titulo": titulo,
+                    "campo": "status"
+                }
+            )
+
+        # -----------------------------------------------------
+        # PRAZO
+        # -----------------------------------------------------
+
+        eh_consulta_prazo = bool(
+            re.search(
+                r"^(?:"
+                r"qual\s+(?:e\s+|seria\s+)?o\s+prazo"
+                r"|qual\s+prazo"
+                r"|quando\s+.*(?:vence|termina)"
+                r"|que\s+horas?\s+.*(?:vence|termina)"
+                r")\b",
+                texto_consulta
+            )
+        )
+
+        if eh_consulta_prazo:
+
+            return AgentDecision(
+                acao=TipoAcao.EXECUTAR,
+                ferramenta="consultar_tarefa",
+                argumentos={
+                    "titulo": titulo,
+                    "campo": "data_limite"
+                }
+            )
 
         # =====================================================
         # ALTERAR PRIORIDADE
@@ -1639,10 +2127,16 @@ Retorne exclusivamente JSON válido.
         # =====================================================
 
         gatilhos_criar = [
+            "quero criar uma tarefa",
+            "quero adicionar uma tarefa",
+            "gostaria de criar uma tarefa",
+            "gostaria de adicionar uma tarefa",
             "cria uma tarefa",
             "crie uma tarefa",
+            "criar uma tarefa",
             "adiciona uma tarefa",
-            "adicione uma tarefa"
+            "adicione uma tarefa",
+            "adicionar uma tarefa"
         ]
 
         for gatilho in gatilhos_criar:
@@ -1692,6 +2186,95 @@ Retorne exclusivamente JSON válido.
                         titulo
                     )
                 )
+
+                # =================================================
+                # NORMALIZAÇÃO DO TÍTULO
+                #
+                # Exemplos:
+                #
+                # "quero criar uma tarefa chamada estudar Java"
+                #     -> "estudar Java"
+                #
+                # "estudar Java para amanhã às 19h"
+                #     -> "estudar Java"
+                # =================================================
+
+                titulo = re.sub(
+                    r"(?i)^\s*(?:"
+                    r"chamada|chamado|"
+                    r"com\s+o\s+nome\s+de|"
+                    r"com\s+nome\s+de"
+                    r")\s+",
+                    "",
+                    titulo
+                ).strip()
+
+                # remover_tempo_do_texto pode deixar o conector
+                # imediatamente anterior à expressão temporal.
+                if data_limite is not None:
+
+                    titulo = re.sub(
+                        r"(?i)\s+(?:"
+                        r"para|pra|"
+                        r"em|no|na|"
+                        r"às|as"
+                        r")\s*$",
+                        "",
+                        titulo
+                    ).strip()
+
+                titulo = (
+                    JarvisAgent._limpar_titulo(
+                        titulo
+                    )
+                )
+
+                # =================================================
+                # PROTEÇÃO CONTRA TÍTULO RESIDUAL
+                #
+                # Exemplo:
+                # "crie uma tarefa para amanhã às 15h"
+                #
+                # Depois da remoção da data pode sobrar somente
+                # "para". Isso não representa um título válido.
+                # =================================================
+
+                titulo_normalizado = (
+                    re.sub(
+                        r"\s+",
+                        " ",
+                        titulo.lower()
+                    )
+                    .strip(" ,.;:-")
+                )
+
+                apenas_conectores = bool(
+                    re.fullmatch(
+                        r"(?:"
+                        r"para|pra|"
+                        r"em|no|na|"
+                        r"a|o|as|às|"
+                        r"ao|aos|"
+                        r"de|do|da|dos|das"
+                        r")"
+                        r"(?:\s+(?:"
+                        r"para|pra|"
+                        r"em|no|na|"
+                        r"a|o|as|às|"
+                        r"ao|aos|"
+                        r"de|do|da|dos|das"
+                        r"))*",
+                        titulo_normalizado
+                    )
+                )
+
+                if (
+                    not titulo_normalizado
+                    or apenas_conectores
+                ):
+                    return AgentDecision(
+                        acao=TipoAcao.CONVERSAR
+                    )
 
                 # =================================================
                 # PRIORIDADE
@@ -1930,18 +2513,56 @@ Retorne exclusivamente JSON válido.
 
     @staticmethod
     def _resolver_lembrete_contextual(
-            mensagem: str,
-            db: Session | None,
-            id_usuario: int | None,
-            id_conversa: int | None
+        mensagem: str,
+        db: Session | None,
+        id_usuario: int | None,
+        id_conversa: int | None
     ):
+        """
+        Resolve referências contextuais de lembrete.
+
+        Prioridade:
+        1. entidade contextual da conversa, se ainda estiver ativa;
+        2. ultimo_lembrete_id do contexto operacional, se ativo;
+        3. lembrete pendente mais recente do usuário.
+
+        Lembretes CONCLUIDOS ou CANCELADOS não podem assumir
+        uma referência genérica como "esse lembrete".
+        """
 
         if (
-                db is None
-                or id_usuario is None
-                or id_conversa is None
+            db is None
+            or id_usuario is None
+            or id_conversa is None
         ):
             return None
+
+        # ====================================================
+        # VALIDAÇÃO CENTRAL
+        # ====================================================
+
+        def lembrete_ativo(lembrete):
+
+            if lembrete is None:
+                return False
+
+            if lembrete.id_usuario != id_usuario:
+                return False
+
+            status = (
+                lembrete.status.value
+                if hasattr(lembrete.status, "value")
+                else str(lembrete.status)
+            )
+
+            return status not in {
+                "CONCLUIDA",
+                "CANCELADA"
+            }
+
+        # ====================================================
+        # 1. ENTIDADE CONTEXTUAL
+        # ====================================================
 
         entidade = (
             EntidadeContextualService
@@ -1954,25 +2575,78 @@ Retorne exclusivamente JSON válido.
             )
         )
 
-        if entidade is None:
-            return None
+        if entidade is not None:
+
+            try:
+                lembrete = (
+                    LembreteService.buscar_por_id(
+                        db,
+                        entidade.id_entidade
+                    )
+                )
+
+                if lembrete_ativo(lembrete):
+                    return lembrete
+
+            except ValueError:
+                pass
+
+        # ====================================================
+        # 2. CONTEXTO OPERACIONAL
+        # ====================================================
 
         try:
 
-            lembrete = (
-                LembreteService.buscar_por_id(
-                    db,
-                    entidade.id_entidade
+            id_ultimo = (
+                ContextoAgenteService
+                .obter_ultimo_lembrete_id(
+                    db=db,
+                    id_usuario=id_usuario,
+                    id_conversa=id_conversa
                 )
             )
 
-        except ValueError:
+            if id_ultimo is not None:
+
+                lembrete = (
+                    LembreteService.buscar_por_id(
+                        db,
+                        id_ultimo
+                    )
+                )
+
+                if lembrete_ativo(lembrete):
+                    return lembrete
+
+        except (ValueError, AttributeError):
+            pass
+
+        # ====================================================
+        # 3. FALLBACK:
+        # LEMBRETE ATIVO MAIS RECENTE
+        # ====================================================
+
+        lembretes = (
+            LembreteService.listar(
+                db,
+                id_usuario
+            )
+        )
+
+        ativos = [
+            item
+            for item in lembretes
+            if lembrete_ativo(item)
+        ]
+
+        if not ativos:
             return None
 
-        if lembrete.id_usuario != id_usuario:
-            return None
+        return max(
+            ativos,
+            key=lambda item: item.id_lembrete
+        )
 
-        return lembrete
 
     @staticmethod
     def _detectar_acao_contextual_lembrete(
@@ -1991,7 +2665,9 @@ Retorne exclusivamente JSON válido.
             "lembretes",
             "ele",
             "esse lembrete",
-            "este lembrete"
+            "essa lembrete",
+            "este lembrete",
+            "esta lembrete"
         ]
 
         if not any(
@@ -2015,6 +2691,40 @@ Retorne exclusivamente JSON válido.
         titulo = lembrete.titulo
 
         # =====================================================
+        # EDITAR DATA / HORÁRIO
+        # =====================================================
+
+        if any(
+            termo in texto
+            for termo in [
+                "adie",
+                "adiar",
+                "mude",
+                "mudar",
+                "altere",
+                "alterar",
+                "remarque",
+                "remarcar",
+                "reagende",
+                "reagendar"
+            ]
+        ):
+
+            # Captura a parte temporal da mensagem.
+            # A própria tool resolve data completa ou apenas horário.
+            temporal = texto
+
+            return AgentDecision(
+                acao=TipoAcao.EXECUTAR,
+                ferramenta="editar_lembrete",
+                argumentos={
+                    "id_lembrete": lembrete.id_lembrete,
+                    "titulo": titulo,
+                    "nova_data_hora": temporal
+                }
+            )
+
+        # =====================================================
         # CONCLUIR
         # =====================================================
 
@@ -2033,6 +2743,7 @@ Retorne exclusivamente JSON válido.
                 acao=TipoAcao.EXECUTAR,
                 ferramenta="concluir_lembrete",
                 argumentos={
+                    "id_lembrete": lembrete.id_lembrete,
                     "titulo": titulo
                 }
             )
@@ -2055,6 +2766,7 @@ Retorne exclusivamente JSON válido.
                 acao=TipoAcao.EXECUTAR,
                 ferramenta="cancelar_lembrete",
                 argumentos={
+                    "id_lembrete": lembrete.id_lembrete,
                     "titulo": titulo
                 }
             )

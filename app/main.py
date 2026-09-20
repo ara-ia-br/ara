@@ -46,7 +46,7 @@ app.include_router(tarefa_router)
 def health_check():
     return {
         "status": "online",
-        "system": "JARVIS"
+        "system": "A.R.A."
     }
 
 
@@ -85,3 +85,48 @@ def usuario_check():
         ]
 
     return usuarios
+
+
+# === FRONTEND A.R.A. ===
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from pathlib import Path
+
+FRONTEND_DIST = Path(
+    "/kaggle/working/ara/frontend/dist"
+)
+
+if FRONTEND_DIST.exists():
+
+    assets_dir = FRONTEND_DIST / "assets"
+
+    if assets_dir.exists():
+        app.mount(
+            "/assets",
+            StaticFiles(
+                directory=assets_dir
+            ),
+            name="frontend-assets"
+        )
+
+    @app.get("/")
+    async def frontend_root():
+        return FileResponse(
+            FRONTEND_DIST / "index.html"
+        )
+
+    @app.get("/{full_path:path}")
+    async def frontend_spa(full_path: str):
+
+        arquivo = FRONTEND_DIST / full_path
+
+        if (
+            full_path
+            and arquivo.exists()
+            and arquivo.is_file()
+        ):
+            return FileResponse(arquivo)
+
+        return FileResponse(
+            FRONTEND_DIST / "index.html"
+        )

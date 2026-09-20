@@ -13,7 +13,7 @@ export function AuthProvider({ children }) {
     const [usuario, setUsuario] = useState(() => {
 
         const salvo = localStorage.getItem(
-            "jarvis_usuario"
+            "ara_usuario"
         );
 
         return salvo
@@ -32,7 +32,7 @@ export function AuthProvider({ children }) {
         };
 
         localStorage.setItem(
-            "jarvis_usuario",
+            "ara_usuario",
             JSON.stringify(usuarioLogado)
         );
 
@@ -43,7 +43,7 @@ export function AuthProvider({ children }) {
     function logout() {
 
         localStorage.removeItem(
-            "jarvis_usuario"
+            "ara_usuario"
         );
 
         setUsuario(null);

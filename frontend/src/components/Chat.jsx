@@ -156,15 +156,15 @@ function Chat({
             // VALIDA RESPOSTA DO BACKEND
             // =================================================
 
-            const respostaJarvis = (
+            const respostaAra = (
                 resposta.data
-                    ?.resposta_jarvis
+                    ?.resposta_ara
             );
 
 
             if (
-                !respostaJarvis
-                || typeof respostaJarvis
+                !respostaAra
+                || typeof respostaAra
                 !== "string"
             ) {
 
@@ -175,7 +175,7 @@ function Chat({
 
 
                 throw new Error(
-                    "O backend não retornou resposta_jarvis."
+                    "O backend não retornou resposta_ara."
                 );
             }
 
@@ -193,7 +193,7 @@ function Chat({
                     "jarvis",
 
                 conteudo:
-                    respostaJarvis
+                    respostaAra
             };
 
 
@@ -452,14 +452,14 @@ function Chat({
                 >
 
                     <div
-                        className="jarvis-symbol"
+                        className="jarvis-symbol ara-symbol"
                     >
                         J
                     </div>
 
 
                     <h2>
-                        Bem-vindo ao JARVIS
+                        Bem-vindo à A.R.A.
                     </h2>
 
 
@@ -505,7 +505,7 @@ function Chat({
                             className="online-dot"
                         />
 
-                        JARVIS Online
+                        A.R.A. Online
 
                     </span>
 
@@ -527,9 +527,9 @@ function Chat({
                         <div className="welcome">
 
                             <div
-                                className="jarvis-symbol"
+                                className="jarvis-symbol ara-symbol"
                             >
-                                J
+                                A
                             </div>
 
 
@@ -594,7 +594,7 @@ function Chat({
                                     message-author
                                 "
                             >
-                                JARVIS
+                                A.R.A.
                             </div>
 
 
@@ -667,7 +667,7 @@ function Chat({
                         placeholder={
                             carregando
                                 ? (
-                                    "JARVIS está "
+                                    "A.R.A. está "
                                     + "pensando..."
                                 )
                                 : (
@@ -728,7 +728,7 @@ function Chat({
 
                 <span className="disclaimer">
 
-                    JARVIS pode cometer erros.
+                    A.R.A. pode cometer erros.
                     Verifique informações
                     importantes.
 

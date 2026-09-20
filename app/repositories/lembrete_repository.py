@@ -107,3 +107,34 @@ class LembreteRepository:
         db.refresh(lembrete)
 
         return lembrete
+
+    @staticmethod
+    def excluir_todos_por_usuario(
+        db: Session,
+        id_usuario: int
+    ) -> int:
+        """
+        Exclui fisicamente todos os lembretes
+        pertencentes ao usuário.
+
+        As tarefas vinculadas NÃO são excluídas.
+        """
+
+        lembretes = (
+            LembreteRepository.listar_por_usuario(
+                db,
+                id_usuario
+            )
+        )
+
+        quantidade = len(lembretes)
+
+        if quantidade == 0:
+            return 0
+
+        for lembrete in lembretes:
+            db.delete(lembrete)
+
+        db.commit()
+
+        return quantidade

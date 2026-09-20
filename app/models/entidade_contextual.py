@@ -5,7 +5,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
-    String
+    String,
 )
 
 from sqlalchemy.orm import (
@@ -27,7 +27,7 @@ class EntidadeContextual(Base):
     )
 
     id_usuario: Mapped[int] = mapped_column(
-        BigInteger,
+        Integer,
         ForeignKey(
             "usuario.id_usuario",
             ondelete="CASCADE"
@@ -36,7 +36,7 @@ class EntidadeContextual(Base):
     )
 
     id_conversa: Mapped[int] = mapped_column(
-        BigInteger,
+        Integer,
         ForeignKey(
             "conversa.id_conversa",
             ondelete="CASCADE"
@@ -50,7 +50,7 @@ class EntidadeContextual(Base):
     )
 
     id_entidade: Mapped[int] = mapped_column(
-        BigInteger,
+        Integer,
         nullable=False
     )
 

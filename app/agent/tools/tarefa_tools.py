@@ -73,6 +73,45 @@ def limpar_titulo(
     return titulo
 
 
+
+
+# =========================================================
+# CONSULTAR TAREFA — SOMENTE LEITURA
+# =========================================================
+
+def consultar_tarefa(
+    db: Session,
+    id_usuario: int,
+    titulo: str,
+    campo: str | None = None
+) -> dict:
+
+    titulo = limpar_titulo(
+        titulo
+    )
+
+    tarefa = TarefaService.buscar_por_titulo(
+        db,
+        id_usuario,
+        titulo
+    )
+
+    return {
+        "sucesso": True,
+        "id_tarefa": tarefa.id_tarefa,
+        "titulo": tarefa.titulo,
+        "descricao": tarefa.descricao,
+        "prioridade": tarefa.prioridade,
+        "status": tarefa.status.value,
+        "data_limite": (
+            tarefa.data_limite.isoformat()
+            if tarefa.data_limite
+            else None
+        ),
+        "somente_leitura": True,
+        "campo_consultado": campo
+    }
+
 # =========================================================
 # CRIAR TAREFA
 # =========================================================

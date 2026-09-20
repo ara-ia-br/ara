@@ -9,6 +9,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     id_conversa: int
     mensagem_usuario: str
-    resposta_jarvis: str
+    resposta_ara: str
     modelo: str
+    ferramenta: str | None = None
     tempo_processamento: float

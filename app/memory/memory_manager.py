@@ -312,6 +312,151 @@ class MemoryManager:
 
 
     # =========================================================
+    # DETECTAR INTENÇÕES DE MEMÓRIA
+    #
+    # Permite recuperar memórias mesmo quando a pergunta
+    # não compartilha palavras literais com o conteúdo salvo.
+    #
+    # Exemplo:
+    # "qual é meu nome?" -> PESSOAL
+    # "qual minha linguagem favorita?" -> PREFERENCIA
+    # =========================================================
+
+    @staticmethod
+    def _detectar_intencoes_memoria(
+        mensagem: str
+    ) -> set[str]:
+
+        texto = MemoryManager._normalizar(
+            mensagem
+        )
+
+        intencoes = set()
+
+        # -------------------------------------------------
+        # INFORMAÇÕES PESSOAIS
+        # -------------------------------------------------
+
+        termos_pessoais = (
+            "meu nome",
+            "qual meu nome",
+            "qual e meu nome",
+            "qual e o meu nome",
+            "como eu me chamo",
+            "quem sou eu",
+            "sobre mim"
+        )
+
+        if any(
+            termo in texto
+            for termo in termos_pessoais
+        ):
+            intencoes.add("PESSOAL")
+
+        # -------------------------------------------------
+        # PREFERÊNCIAS
+        # -------------------------------------------------
+
+        termos_preferencia = (
+            "minha preferencia",
+            "minhas preferencias",
+            "eu prefiro",
+            "que eu prefiro",
+            "preferida",
+            "preferido",
+            "favorita",
+            "favorito",
+            "gosto mais",
+            "qual linguagem eu gosto",
+            "linguagem de programacao favorita",
+            "linguagem de programacao preferida"
+        )
+
+        if any(
+            termo in texto
+            for termo in termos_preferencia
+        ):
+            intencoes.add("PREFERENCIA")
+
+        # -------------------------------------------------
+        # OBJETIVOS
+        # -------------------------------------------------
+
+        termos_objetivo = (
+            "meu objetivo",
+            "meus objetivos",
+            "minha meta",
+            "minhas metas",
+            "quero alcancar",
+            "quero conseguir"
+        )
+
+        if any(
+            termo in texto
+            for termo in termos_objetivo
+        ):
+            intencoes.add("OBJETIVO")
+
+        # -------------------------------------------------
+        # TRABALHO
+        # -------------------------------------------------
+
+        termos_trabalho = (
+            "meu trabalho",
+            "onde eu trabalho",
+            "com o que eu trabalho",
+            "minha profissao",
+            "meu emprego"
+        )
+
+        if any(
+            termo in texto
+            for termo in termos_trabalho
+        ):
+            intencoes.add("TRABALHO")
+
+        # -------------------------------------------------
+        # ESTUDO
+        # -------------------------------------------------
+
+        termos_estudo = (
+            "o que eu estudo",
+            "oque eu estudo",
+            "onde eu estudo",
+            "minha faculdade",
+            "meu curso",
+            "meus estudos"
+        )
+
+        if any(
+            termo in texto
+            for termo in termos_estudo
+        ):
+            intencoes.add("ESTUDO")
+
+        # -------------------------------------------------
+        # PROJETOS
+        # -------------------------------------------------
+
+        termos_projeto = (
+            "meu projeto",
+            "meus projetos",
+            "projeto que estou fazendo",
+            "projeto que eu estou fazendo",
+            "projeto que estou desenvolvendo",
+            "projeto que eu estou desenvolvendo"
+        )
+
+        if any(
+            termo in texto
+            for termo in termos_projeto
+        ):
+            intencoes.add("PROJETO")
+
+        return intencoes
+
+
+    # =========================================================
     # CALCULAR PONTUAÇÃO DE MEMÓRIA
     # =========================================================
 
@@ -544,11 +689,45 @@ class MemoryManager:
             )
 
 
-            # Sem nenhuma palavra relacionada, normalmente
-            # não queremos enviar essa memória.
-            if not correspondencias:
+            # =================================================
+            # RELEVÂNCIA POR INTENÇÃO
+            #
+            # Uma memória pode ser relevante semanticamente
+            # mesmo sem compartilhar palavras literais.
+            #
+            # Exemplo:
+            # "qual é meu nome?"
+            # memória: "Usuário se chama Brayan."
+            # =================================================
+
+            intencoes = (
+                MemoryManager
+                ._detectar_intencoes_memoria(
+                    mensagem_atual
+                )
+            )
+
+            tipo_memoria = str(
+                memoria.tipo_memoria
+                or ""
+            ).upper()
+
+            relevante_por_intencao = (
+                tipo_memoria
+                in intencoes
+            )
+
+            # Sem correspondência lexical E sem intenção
+            # compatível, a memória continua sendo descartada.
+            if (
+                not correspondencias
+                and not relevante_por_intencao
+            ):
                 continue
 
+            # Intenção explícita recebe peso forte.
+            if relevante_por_intencao:
+                pontuacao += 40
 
             if pontuacao < 20:
                 continue

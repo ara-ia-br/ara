@@ -91,3 +91,53 @@ class ContextoAgenteService:
         )
 
         return contexto.ultima_tarefa_id
+
+    @staticmethod
+    def registrar_lembrete(
+        db: Session,
+        id_usuario: int,
+        id_conversa: int,
+        id_lembrete: int,
+        ferramenta: str | None = None
+    ) -> ContextoAgente:
+
+        contexto = (
+            ContextoAgenteService.obter(
+                db=db,
+                id_usuario=id_usuario,
+                id_conversa=id_conversa
+            )
+        )
+
+        contexto.ultimo_lembrete_id = (
+            id_lembrete
+        )
+
+        contexto.ultima_ferramenta = (
+            ferramenta
+        )
+
+        return (
+            ContextoAgenteRepository.salvar(
+                db,
+                contexto
+            )
+        )
+
+
+    @staticmethod
+    def obter_ultimo_lembrete_id(
+        db: Session,
+        id_usuario: int,
+        id_conversa: int
+    ) -> int | None:
+
+        contexto = (
+            ContextoAgenteService.obter(
+                db=db,
+                id_usuario=id_usuario,
+                id_conversa=id_conversa
+            )
+        )
+
+        return contexto.ultimo_lembrete_id
