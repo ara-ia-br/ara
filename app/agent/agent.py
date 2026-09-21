@@ -6,6 +6,7 @@ from app.services.lembrete_service import (
     LembreteService
 )
 
+
 from datetime import timedelta
 
 from sqlalchemy.orm import Session
@@ -14,6 +15,8 @@ from sqlalchemy.orm import Session
 
 from app.agent.intent import (
     AgentDecision,
+    AgentPlan,
+    AgentPlanStep,
     TipoAcao
 )
 
@@ -41,6 +44,156 @@ from app.services.time_service import (
 from app.services.contexto_agente_service import ContextoAgenteService
 
 class JarvisAgent:
+    
+    '''
+    ===========================================================
+    PLANEJAR
+    ===========================================================
+    '''
+    
+    @staticmethod
+    def planejar(
+        mensagem: str,
+        db:Session | None = None,
+        id_usuario: int | None = None,
+        id_conversa: int | None = None
+    ) -> AgentPlan | None:
+        """
+        Detecta mensagens que exigem várias ações
+        coordenadas.
+        
+        Retorna None quando a mensagem deve continuar pelo fluxo tradicional do decidir()
+        """
+        
+        # Perguntas instrucionais nunca geram  plano operacional
+        consulta_instrucional = (
+            ConsultaInstrucionalService.analisar(mensagem)
+        )
+        
+        if consulta_instrucional is not None:
+            return None
+        
+        texto = mensagem.strip()
+        
+        
+        '''
+        MULTI-INTENT:
+        Criar Tarefa + Lembrete antes da tarefa
+        
+        Ex:
+        
+        crie uma tarefa chamada reunião amanhã às 19h
+        e me lembre 30 minutos antes
+        '''
+        padrao = re.search(
+            r"^(?P<tarefa>.+?)"
+            r"\s+e\s+"
+            r"(?:me\s+)?"
+            r"(?:lembre|lembra)"
+            r"(?:\s+(?:"
+            r"dela|dele|ela|ele|"
+            r"dessa\s+tarefa|desta\s+tarefa|"
+            r"essa\s+tarefa|esta\s+tarefa"
+            r"))?"
+            r"\s+(?P<quantidade>\d+)\s*"
+            r"(?P<unidade>minuto|minutos|hora|horas)"
+            r"\s+antes"
+            r"\s*[.!?]*$",
+            texto,
+            flags=re.IGNORECASE
+)
+        if padrao is None:
+            return None
+        
+        
+        trecho_tarefa = (
+            padrao.group("tarefa").strip()
+        )
+        
+        quantidade = int(
+            padrao.group("quantidade")
+        )
+        
+        unidade = (
+            padrao.group("unidade").lower()
+        )
+        
+        
+        # REUTILIZANDO O DETECTOR DE TAREFA JÁ EXISTENTE
+        
+        decisao_tarefa = (
+            JarvisAgent._detectar_acao_tarefa(trecho_tarefa)
+        )
+        
+        if (
+            decisao_tarefa is None
+            or decisao_tarefa.acao != TipoAcao.EXECUTAR
+            or decisao_tarefa.ferramenta != "criar_tarefa"
+        ):
+            return None
+        
+        
+        data_limite = (
+            decisao_tarefa.argumentos.get("data_limite")
+        )
+        
+        if not data_limite:
+            return None
+        
+        
+        
+        if unidade.startswith("hora"):
+            offset_minutos = -(quantidade * 60)
+        else:
+            offset_minutos = -quantidade
+            
+            
+        
+        
+        # ETAPA 1 - CRIAR TAREFA
+        passo_tarefa = AgentPlanStep(decisao=decisao_tarefa)
+        
+        
+        # ETAPA 2 - CRIAR LEMBRETE
+        # id_tarefa, título e horário ainda NÃO existem aqui. Eles serão resolvidos usando o resultado da etapa 0.
+        
+        passo_lembrete = AgentPlanStep(
+            decisao=AgentDecision(
+                acao=TipoAcao.EXECUTAR,
+                ferramenta="criar_lembrete",
+                argumentos={
+                    "descricao": None,
+                    "recorrencia": None
+                }
+            ),
+            depende_de=0,
+            resolver_argumentos={
+                "id_tarefa": {
+                    "resultado_de": 0,
+                    "campo": "id_tarefa"
+                },
+                "titulo": {
+                    "resultado_de": 0,
+                    "campo": "titulo"
+                },
+                "data_hora": {
+                    "resultado_de": 0,
+                    "campo": "data_limite",
+                    "offset_minutos": offset_minutos
+                }
+            }
+        )
+        
+        return AgentPlan(
+            passos=[
+                passo_tarefa,
+                passo_lembrete
+            ]
+        )
+        
+
+        
+    
 
     # =========================================================
     # DECIDIR
