@@ -6,6 +6,8 @@ from app.services.lembrete_service import (
     LembreteService
 )
 
+from app.agent.multi_intent_parser import MultiIntentParser
+
 
 from datetime import timedelta
 
@@ -50,45 +52,88 @@ class JarvisAgent:
     PLANEJAR
     ===========================================================
     '''
-    
+
     @staticmethod
     def planejar(
-        mensagem: str,
-        db:Session | None = None,
-        id_usuario: int | None = None,
-        id_conversa: int | None = None
+            mensagem: str,
+            db: Session | None = None,
+            id_usuario: int | None = None,
+            id_conversa: int | None = None
     ) -> AgentPlan | None:
         """
-        Detecta mensagens que exigem várias ações
-        coordenadas.
-        
-        Retorna None quando a mensagem deve continuar pelo fluxo tradicional do decidir()
+        Detecta mensagens que exigem várias ações coordenadas.
+
+        Retorna None quando a mensagem deve continuar
+        pelo fluxo tradicional do decidir().
         """
-        
-        # Perguntas instrucionais nunca geram  plano operacional
+
+        # =====================================================
+        # INSTRUCTIONAL GUARD
+        # =====================================================
+
         consulta_instrucional = (
-            ConsultaInstrucionalService.analisar(mensagem)
+            ConsultaInstrucionalService.analisar(
+                mensagem
+            )
         )
-        
+
         if consulta_instrucional is not None:
             return None
-        
-        texto = mensagem.strip()
-        
-        
-        '''
-        MULTI-INTENT:
-        Criar Tarefa + Lembrete antes da tarefa
-        
-        Ex:
-        
-        crie uma tarefa chamada reunião amanhã às 19h
-        e me lembre 30 minutos antes
-        '''
-        padrao = re.search(
-            r"^(?P<tarefa>.+?)"
-            r"\s+e\s+"
-            r"(?:me\s+)?"
+
+        # =====================================================
+        # DIVIDE POSSÍVEIS INTENTS
+        # =====================================================
+
+        segmentos = (
+            MultiIntentParser.dividir(
+                mensagem
+            )
+        )
+
+        # Uma única intenção continua pelo fluxo tradicional.
+        if len(segmentos) < 2:
+            return None
+
+        # Primeira generalização suportada:
+        # tarefa -> lembrete relativo à tarefa.
+        segmento_tarefa = segmentos[0]
+        segmento_lembrete = segmentos[1]
+
+        if not segmento_lembrete.referencia_anterior:
+            return None
+
+        # =====================================================
+        # PASSO 1 - DETECTA TAREFA
+        # =====================================================
+
+        decisao_tarefa = (
+            JarvisAgent._detectar_acao_tarefa(
+                segmento_tarefa.texto
+            )
+        )
+
+        if (
+                decisao_tarefa is None
+                or decisao_tarefa.acao != TipoAcao.EXECUTAR
+                or decisao_tarefa.ferramenta != "criar_tarefa"
+        ):
+            return None
+
+        data_limite = (
+            decisao_tarefa.argumentos.get(
+                "data_limite"
+            )
+        )
+
+        if not data_limite:
+            return None
+
+        # =====================================================
+        # PASSO 2 - INTERPRETA LEMBRETE RELATIVO
+        # =====================================================
+
+        match_lembrete = re.search(
+            r"^(?:me\s+)?"
             r"(?:lembre|lembra)"
             r"(?:\s+(?:"
             r"dela|dele|ela|ele|"
@@ -99,64 +144,41 @@ class JarvisAgent:
             r"(?P<unidade>minuto|minutos|hora|horas)"
             r"\s+antes"
             r"\s*[.!?]*$",
-            texto,
+            segmento_lembrete.texto,
             flags=re.IGNORECASE
-)
-        if padrao is None:
-            return None
-        
-        
-        trecho_tarefa = (
-            padrao.group("tarefa").strip()
         )
-        
+
+        if match_lembrete is None:
+            return None
+
         quantidade = int(
-            padrao.group("quantidade")
+            match_lembrete.group(
+                "quantidade"
+            )
         )
-        
+
         unidade = (
-            padrao.group("unidade").lower()
+            match_lembrete.group(
+                "unidade"
+            )
+            .lower()
         )
-        
-        
-        # REUTILIZANDO O DETECTOR DE TAREFA JÁ EXISTENTE
-        
-        decisao_tarefa = (
-            JarvisAgent._detectar_acao_tarefa(trecho_tarefa)
-        )
-        
-        if (
-            decisao_tarefa is None
-            or decisao_tarefa.acao != TipoAcao.EXECUTAR
-            or decisao_tarefa.ferramenta != "criar_tarefa"
-        ):
-            return None
-        
-        
-        data_limite = (
-            decisao_tarefa.argumentos.get("data_limite")
-        )
-        
-        if not data_limite:
-            return None
-        
-        
-        
+
         if unidade.startswith("hora"):
-            offset_minutos = -(quantidade * 60)
+            offset_minutos = -(
+                    quantidade * 60
+            )
         else:
             offset_minutos = -quantidade
-            
-            
-        
-        
-        # ETAPA 1 - CRIAR TAREFA
-        passo_tarefa = AgentPlanStep(decisao=decisao_tarefa)
-        
-        
-        # ETAPA 2 - CRIAR LEMBRETE
-        # id_tarefa, título e horário ainda NÃO existem aqui. Eles serão resolvidos usando o resultado da etapa 0.
-        
+
+        # =====================================================
+        # MONTA PLANO
+        # =====================================================
+
+        passo_tarefa = AgentPlanStep(
+            decisao=decisao_tarefa
+        )
+
         passo_lembrete = AgentPlanStep(
             decisao=AgentDecision(
                 acao=TipoAcao.EXECUTAR,
@@ -179,20 +201,18 @@ class JarvisAgent:
                 "data_hora": {
                     "resultado_de": 0,
                     "campo": "data_limite",
-                    "offset_minutos": offset_minutos
+                    "offset_minutos":
+                        offset_minutos
                 }
             }
         )
-        
+
         return AgentPlan(
             passos=[
                 passo_tarefa,
                 passo_lembrete
             ]
         )
-        
-
-        
     
 
     # =========================================================
