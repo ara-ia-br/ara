@@ -31,6 +31,7 @@ from app.ai.engine import ai_engine
 from app.agent.agent import JarvisAgent
 from app.agent.intent import TipoAcao
 from app.agent.tool_registry import ToolRegistry
+from app.agent.plan_executor import AgentPlanExecutor
 from app.services.action_guard_service import ActionGuardService
 
 from app.memory.memory_extractor import MemoryExtractor
@@ -924,6 +925,260 @@ class ChatService:
             }
 
         inicio_agent = perf_counter()
+
+
+        # SPRINT 9 - PLANEJAMENTO MULTI-INTENT
+
+        plano = JarvisAgent.planejar(
+            mensagem=conteudo,
+            db=db,
+            id_usuario=id_usuario,
+            id_conversa=id_conversa
+        )
+
+        if plano is not None:
+            for passo in plano.passos:
+                decisao_passo = passo.decisao
+                ferramenta_passo = decisao_passo.ferramenta
+
+
+                # EXECUTOR SEGURO DAS ETAPAS DO PLANO
+                def executar_passo_plano(decisao_passo, argumentos_passo):
+                    ferramenta = decisao_passo.ferramenta
+
+                    if not ferramenta:
+                        raise ValueError("Etapa do plano sem ferramenta definida.")
+
+
+                    argumentos = (
+                        argumentos_passo.copy()
+                        if argumentos_passo
+                        else {}
+                    )
+
+                    #Segunda barreira de confirmação com argumentos já resolvidos
+
+                    dados_confirmacao = (
+                        ConfirmationPolicyService.preparar(
+                            ferramenta=ferramenta,
+                            argumentos=argumentos
+                        )
+                    )
+
+                    if dados_confirmacao is not None:
+                        raise ValueError("Uma etapa do plano exige confirmação antes"
+                                         "de ser executada.")
+
+
+                    # DADOS INTERNOS
+
+                    argumentos["db"] = db
+                    argumentos["id_usuario"] = id_usuario
+
+                    if "titulo" in argumentos:
+                        argumentos["titulo"] = (
+                            ChatService._limpar_titulo(argumentos["titulo"])
+                        )
+
+                        resultado = ToolRegistry.executar(
+                            ferramenta, **argumentos
+                        )
+
+                        if not isinstance(resultado, dict):
+                            raise ValueError("A ferramenta não retornou um resultado válido.")
+
+                        if resultado.get("sucesso") is False:
+                            raise ValueError(resultado.get("erro", "A operação não foi concluída."))
+
+
+                        # CONTEXTO DE TAREFA
+
+                        id_tarefa_resultado = resultado.get("id_tarefa")
+
+                        if (isinstance(id_tarefa_resultado, int) and "tarefa" in ferramenta):
+                            ContextoAgenteService.registrar_tarefa(
+                                db=db,
+                                id_usuario=id_usuario,
+                                id_conversa=id_conversa,
+                                id_tarefa=id_tarefa_resultado,
+                                ferramenta=ferramenta
+                            )
+
+
+                            EntidadeContextualService.registrar(
+                                db=db,
+                                id_usuario=id_usuario,
+                                id_conversa=id_conversa,
+                                tipo_entidade="TAREFA",
+                                id_entidade=id_tarefa_resultado,
+                                titulo=resultado.get("titulo")
+                            )
+
+
+                    # CONTEXTO DE LEMBRETE
+
+                    id_lembrete_resultado = resultado.get("id_lembrete")
+
+                    if (isinstance(id_lembrete_resultado, int) and "lembrete" in ferramenta):
+                        EntidadeContextualService.registrar(
+                            db=db,
+                            id_usuario=id_usuario,
+                            id_conversa=id_conversa,
+                            tipo_entidade="LEMBRETE",
+                            id_entidade=id_lembrete_resultado,
+                            titulo=resultado.get("titulo")
+                        )
+
+
+                        ContextoAgenteService.registrar_lembrete(
+                            db=db,
+                            id_usuario=id_usuario,
+                            id_conversa=id_conversa,
+                            id_lembrete=id_lembrete_resultado,
+                            ferramenta=ferramenta
+                        )
+
+                    return resultado
+
+                # EXECUTAR PLANO MULTI-INTENT
+
+                try:
+                    resultados_planos = AgentPlanExecutor.executar(
+                        plano=plano,
+                        executar_passo=executar_passo_plano
+                    )
+                except ValueError as erro:
+                    resposta = str(erro)
+
+                    ChatService._salvar_interacao_agent(
+                        db=db,
+                        id_conversa=id_conversa,
+                        conteudo_usuario=conteudo,
+                        resposta_jarvis=resposta
+                    )
+
+                    return {
+                        "id_conversa": id_conversa,
+                        "mensagem_usuario": conteudo,
+                        "resposta_ara": resposta,
+                        "modelo": "AGENT",
+                        "ferramenta": None,
+                        "tempo_processamento": 0
+                    }
+
+                except TypeError as erro:
+                    print(f"Erro de argumentos no plano: {erro}")
+
+                    resposta = (
+                        "Eita! Faltou uma informação para eu executar "
+                        "todas as ações desse pedido."
+                    )
+
+                    ChatService._salvar_interacao_agent(
+                        db=db,
+                        id_conversa=id_conversa,
+                        conteudo_usuario=conteudo,
+                        resposta_jarvis=resposta
+                    )
+
+                    return {
+                        "id_conversa": id_conversa,
+                        "mensagem_usuario": conteudo,
+                        "resposta_ara": resposta,
+                        "modelo": "AGENT",
+                        "ferramenta": None,
+                        "tempo_processamento": 0
+                    }
+
+                # MONTA UMA ÚNICA RESPOSTA
+                resposta_plano = []
+
+                for passo, resultado in zip(
+                    plano.passos,
+                    resultados_planos
+                ):
+
+                    ferramenta = passo.decisao.ferramenta
+
+                    if ferramenta is None:
+                        continue
+
+                    resposta_etapa = (
+                        ChatService._formatar_resposta_tool(
+                            ferramenta, resultado
+                        )
+                    )
+
+                    resposta_plano.append(resposta_etapa)
+
+                    resposta = "\n".join(resposta_plano)
+
+                    #SALVAR INTERAÇÃO
+                    ChatService._salvar_interacao_agent(
+                        db=db,
+                        id_conversa=id_conversa,
+                        conteudo_usuario=conteudo,
+                        resposta_jarvis=resposta
+                    )
+
+
+                    # MEMÓRIA
+                    ChatService._extrair_memoria(
+                        db=db,
+                        id_usuario=id_usuario,
+                        conteudo=conteudo
+                    )
+
+                    print(f"[PERFOMANCE] Agent Plan: "
+                          f"{perf_counter() - inicio_agent:.2f}s")
+
+
+                    return {
+                        "id_conversa": id_conversa,
+                        "mensagem_usuario": conteudo,
+                        "resposta_ara": resposta,
+                        "modelo": "AGENT",
+                        "ferramenta": "MULTI_INTENT",
+                        "tempo_processamento": 0
+                    }
+
+                if (decisao_passo.acao != TipoAcao.EXECUTAR or ferramenta_passo is None):
+                    raise ValueError("O plano contém uma etapa operacional inválida.")
+
+                argumentos_passo = (decisao_passo.argumentos.copy()
+                                    if decisao_passo.argumentos
+                                    else {})
+
+
+                dados_confirmacao = (
+                    ConfirmationPolicyService.preparar(
+                        ferramenta=ferramenta_passo,
+                        argumentos=argumentos_passo
+                    )
+                )
+
+                if dados_confirmacao is not None:
+                    resposta = (
+                        "Esse pedido contém várias ações e uma delas"
+                        "precisa de confirmação. Por segurança, nenhuma"
+                        "ação foi executada."
+                    )
+
+                    ChatService._salvar_interacao_agent(
+                        db=db,
+                        id_conversa=id_conversa,
+                        conteudo_usuario=conteudo,
+                        resposta_jarvis=resposta
+                    )
+
+                    return {
+                        "id_conversa": id_conversa,
+                        "mensagem_usuario": conteudo,
+                        "resposta_ara": resposta,
+                        "modelo": "AGENT",
+                        "ferramenta": None,
+                        "tempo_processamento": 0
+                    }
 
         decisao = JarvisAgent.decidir(
             mensagem=conteudo,
