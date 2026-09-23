@@ -1,10 +1,10 @@
 from datetime import datetime
 
-from app.agent.agent import JarvisAgent
+from app.agent.agent import AraAgent
 from app.agent.plan_resolver import AgentPlanResolver
 
 def testar_planejar_tarefa_com_lembrete():
-    plano = JarvisAgent.planejar(
+    plano = AraAgent.planejar(
         "crie uma tarefa chamada reuniao amanha as 19h e me lembre dela 30 minutos antes"
     )
     
@@ -47,7 +47,7 @@ def testar_planejar_tarefa_com_lembrete():
     
     
 def testar_resolver_argumentos_lembrete():
-    plano = JarvisAgent.planejar(
+    plano = AraAgent.planejar(
         "crie uma tarefa chamada reuniao amanha as 19h e me lembre dela 30 minutos antes"
     )
     
@@ -78,7 +78,7 @@ def testar_resolver_argumentos_lembrete():
     
     
 def test_mensagem_simples_nao_gera_plano():
-    plano = JarvisAgent.planejar(
+    plano = AraAgent.planejar(
         "liste minhas tarefas"
     )
     
@@ -87,7 +87,7 @@ def test_mensagem_simples_nao_gera_plano():
 
 def test_planejar_duas_acoes_indepedentes():
 
-    plano = JarvisAgent.planejar(
+    plano = AraAgent.planejar(
         "liste minhas tarefas "
         "e liste meus lembretes"
     )
@@ -104,7 +104,7 @@ def test_planejar_duas_acoes_indepedentes():
 
 def test_planejar_tres_acoes_independentes():
 
-    plano = JarvisAgent.planejar(
+    plano = AraAgent.planejar(
         "liste minhas tarefas "
         "e liste meus lembretes "
         "e crie uma tarefa chamada revisar"
@@ -132,7 +132,7 @@ def test_planejar_tres_acoes_independentes():
 
 def test_planeja_plano_misto_com_dependencia():
 
-    plano = JarvisAgent.planejar(
+    plano = AraAgent.planejar(
         "crie uma tarefa chamada estudar amanhã às 19h "
         "e me lembre dela 30 minutos antes "
         "e liste meus lembretes"

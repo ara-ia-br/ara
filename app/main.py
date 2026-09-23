@@ -15,7 +15,7 @@ from app.api.tarefa_router import router as tarefa_router
 
 
 app = FastAPI(
-    title="JARVIS",
+    title="A.R.A",
     description="Assistente de Inteligência Artificial",
     version="1.0"
 )

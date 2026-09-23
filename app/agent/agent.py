@@ -1,4 +1,4 @@
-from app.services.consulta_instrucional_service import ConsultaInstrucionalService
+﻿from app.services.consulta_instrucional_service import ConsultaInstrucionalService
 import json
 import re
 
@@ -42,7 +42,7 @@ from app.services.time_service import (
 from app.services.contexto_agente_service import ContextoAgenteService
 
 
-class JarvisAgent:
+class AraAgent:
     '''
     ===========================================================
     PLANEJAR
@@ -57,12 +57,12 @@ class JarvisAgent:
             id_conversa: int | None = None
     ) -> AgentPlan | None:
         """
-        Monta um plano para mensagens com múltiplas intenções.
+        Monta um plano para mensagens com mÃºltiplas intenÃ§Ãµes.
 
         Suporta:
-        - ações independentes;
+        - aÃ§Ãµes independentes;
         - tarefa -> lembrete relativo;
-        - mistura de ações dependentes e independentes.
+        - mistura de aÃ§Ãµes dependentes e independentes.
         """
 
         # =====================================================
@@ -98,13 +98,13 @@ class JarvisAgent:
         for segmento in segmentos:
 
             # =================================================
-            # REFERÊNCIA A UMA AÇÃO ANTERIOR
+            # REFERÃŠNCIA A UMA AÃ‡ÃƒO ANTERIOR
             # =================================================
 
             if segmento.referencia_anterior:
 
-                # Por enquanto, a dependência contextual
-                # suportada no plano é:
+                # Por enquanto, a dependÃªncia contextual
+                # suportada no plano Ã©:
                 #
                 # criar_tarefa -> criar_lembrete
 
@@ -112,7 +112,7 @@ class JarvisAgent:
                 decisao_tarefa = None
 
                 # Procura a tarefa criada mais recentemente
-                # dentro do próprio plano.
+                # dentro do prÃ³prio plano.
                 for indice in range(
                         len(passos) - 1,
                         -1,
@@ -237,11 +237,11 @@ class JarvisAgent:
                 continue
 
             # =================================================
-            # AÇÃO INDEPENDENTE
+            # AÃ‡ÃƒO INDEPENDENTE
             # =================================================
 
             decisao_segmento = (
-                JarvisAgent
+                AraAgent
                 ._detectar_segmento_independente(
                     mensagem=segmento.texto,
                     db=db,
@@ -287,10 +287,10 @@ class JarvisAgent:
     ) -> AgentDecision | None:
         """
         Converte um segmento independente em AgentDecision usando
-        os detectores determinísticos já existentes.
+        os detectores determinÃ­sticos jÃ¡ existentes.
 
-        Não chama decidir(), porque decidir() também valida o
-        ToolRegistry e executa o pipeline público completo do Agent.
+        NÃ£o chama decidir(), porque decidir() tambÃ©m valida o
+        ToolRegistry e executa o pipeline pÃºblico completo do Agent.
         O planner precisa apenas classificar cada segmento.
         """
 
@@ -299,7 +299,7 @@ class JarvisAgent:
         # -----------------------------------------------------
 
         decisao_tarefa = (
-            JarvisAgent._detectar_acao_tarefa(
+            AraAgent._detectar_acao_tarefa(
                 mensagem
             )
         )
@@ -312,11 +312,11 @@ class JarvisAgent:
             return decisao_tarefa
 
         # -----------------------------------------------------
-        # EXCLUSÃO EM MASSA DE LEMBRETES
+        # EXCLUSÃƒO EM MASSA DE LEMBRETES
         # -----------------------------------------------------
 
         decisao_exclusao = (
-            JarvisAgent._detectar_exclusao_todos_lembretes(
+            AraAgent._detectar_exclusao_todos_lembretes(
                 mensagem
             )
         )
@@ -329,11 +329,11 @@ class JarvisAgent:
             return decisao_exclusao
 
         # -----------------------------------------------------
-        # AÇÕES DE LEMBRETE
+        # AÃ‡Ã•ES DE LEMBRETE
         # -----------------------------------------------------
 
         decisao_lembrete = (
-            JarvisAgent._detectar_acao_lembrete(
+            AraAgent._detectar_acao_lembrete(
                 mensagem
             )
         )
@@ -346,11 +346,11 @@ class JarvisAgent:
             return decisao_lembrete
 
         # -----------------------------------------------------
-        # CRIAÇÃO DIRETA DE LEMBRETE
+        # CRIAÃ‡ÃƒO DIRETA DE LEMBRETE
         # -----------------------------------------------------
 
         decisao_direta = (
-            JarvisAgent._detectar_lembrete(
+            AraAgent._detectar_lembrete(
                 mensagem=mensagem,
                 db=db,
                 id_usuario=id_usuario,
@@ -380,7 +380,7 @@ class JarvisAgent:
     ) -> AgentDecision:
 
         # =====================================================
-        # FAST PATH — CONVERSAS TRIVIAIS
+        # FAST PATH â€” CONVERSAS TRIVIAIS
         # =====================================================
 
         texto = (
@@ -391,9 +391,9 @@ class JarvisAgent:
 
         mensagens_diretas = {
             "oi",
-            "olá",
+            "olÃ¡",
             "ola",
-            "e aí",
+            "e aÃ­",
             "e ai",
             "opa",
             "blz",
@@ -431,8 +431,8 @@ class JarvisAgent:
         # INSTRUCTIONAL GUARD GLOBAL
         # =====================================================
         #
-        # Perguntar COMO executar uma ação não autoriza sua
-        # execução. Esta barreira ocorre antes de todos os
+        # Perguntar COMO executar uma aÃ§Ã£o nÃ£o autoriza sua
+        # execuÃ§Ã£o. Esta barreira ocorre antes de todos os
         # detectores operacionais.
         # =====================================================
 
@@ -458,13 +458,13 @@ class JarvisAgent:
         #
         # Exemplos:
         # "coloque a primeira como urgente"
-        # "joga a segunda para sexta às 19h"
+        # "joga a segunda para sexta Ã s 19h"
         # "conclua ela"
         # "cancela essa"
         # =====================================================
 
         decisao_contextual = (
-            JarvisAgent
+            AraAgent
             ._detectar_acao_contextual_tarefa(
                 mensagem=mensagem,
                 db=db,
@@ -483,8 +483,8 @@ class JarvisAgent:
         ):
             return decisao_contextual
 
-        # Se o contextual identificou a intenção,
-        # mas precisa conversar/solicitar informação.
+        # Se o contextual identificou a intenÃ§Ã£o,
+        # mas precisa conversar/solicitar informaÃ§Ã£o.
         if (
                 decisao_contextual is not None
                 and decisao_contextual.acao == TipoAcao.CONVERSAR
@@ -492,11 +492,11 @@ class JarvisAgent:
             return decisao_contextual
 
         # =====================================================
-        # 2. AÇÕES DE TAREFA
+        # 2. AÃ‡Ã•ES DE TAREFA
         # =====================================================
 
         decisao_tarefa = (
-            JarvisAgent._detectar_acao_tarefa(
+            AraAgent._detectar_acao_tarefa(
                 mensagem
             )
         )
@@ -518,7 +518,7 @@ class JarvisAgent:
             return decisao_tarefa
 
         decisao_contextual_lembrete = (
-            JarvisAgent
+            AraAgent
             ._detectar_acao_contextual_lembrete(
                 mensagem=mensagem,
                 db=db,
@@ -537,11 +537,11 @@ class JarvisAgent:
             return decisao_contextual_lembrete
 
         # =====================================================
-        # 3. EXCLUSÃO EM MASSA DE LEMBRETES
+        # 3. EXCLUSÃƒO EM MASSA DE LEMBRETES
         # =====================================================
 
         decisao_exclusao_lembretes = (
-            JarvisAgent
+            AraAgent
             ._detectar_exclusao_todos_lembretes(
                 mensagem
             )
@@ -559,11 +559,11 @@ class JarvisAgent:
             return decisao_exclusao_lembretes
 
         # =====================================================
-        # 4. AÇÕES DE LEMBRETE
+        # 4. AÃ‡Ã•ES DE LEMBRETE
         # =====================================================
 
         decisao_lembrete = (
-            JarvisAgent._detectar_acao_lembrete(
+            AraAgent._detectar_acao_lembrete(
                 mensagem
             )
         )
@@ -579,11 +579,11 @@ class JarvisAgent:
             return decisao_lembrete
 
         # =====================================================
-        # 4. CRIAÇÃO DIRETA DE LEMBRETE
+        # 4. CRIAÃ‡ÃƒO DIRETA DE LEMBRETE
         # =====================================================
 
         decisao_direta = (
-            JarvisAgent._detectar_lembrete(
+            AraAgent._detectar_lembrete(
                 mensagem=mensagem,
                 db=db,
                 id_usuario=id_usuario,
@@ -600,12 +600,12 @@ class JarvisAgent:
             return decisao_direta
 
         # =====================================================
-        # 5. FALLBACK DETERMINÍSTICO
+        # 5. FALLBACK DETERMINÃSTICO
         # =====================================================
         #
-        # Nenhuma intenção operacional conhecida foi detectada.
+        # Nenhuma intenÃ§Ã£o operacional conhecida foi detectada.
         # A mensagem segue diretamente para o fluxo normal de
-        # conversação.
+        # conversaÃ§Ã£o.
         #
         # Isso evita uma chamada adicional ao modelo apenas para
         # classificar mensagens comuns como CONVERSAR.
@@ -767,7 +767,7 @@ class JarvisAgent:
         )
 
     # =========================================================
-    # LIMPAR TÍTULO
+    # LIMPAR TÃTULO
     # =========================================================
 
     @staticmethod
@@ -781,7 +781,7 @@ class JarvisAgent:
         titulo = titulo.strip()
 
         # =====================================================
-        # EXPRESSÕES DE EDUCAÇÃO
+        # EXPRESSÃ•ES DE EDUCAÃ‡ÃƒO
         # =====================================================
 
         titulo = re.sub(
@@ -819,12 +819,12 @@ class JarvisAgent:
         )
 
         # =====================================================
-        # EXPRESSÕES DE PRIORIDADE
+        # EXPRESSÃ•ES DE PRIORIDADE
         # =====================================================
 
         titulo = re.sub(
             r"\bprioridade\s+"
-            r"(máxima|maxima|alta|baixa|muito baixa|[1-5])\b",
+            r"(mÃ¡xima|maxima|alta|baixa|muito baixa|[1-5])\b",
             "",
             titulo,
             flags=re.IGNORECASE
@@ -845,7 +845,7 @@ class JarvisAgent:
         )
 
         # =====================================================
-        # NORMALIZA ESPAÇOS
+        # NORMALIZA ESPAÃ‡OS
         # =====================================================
 
         titulo = re.sub(
@@ -892,7 +892,7 @@ class JarvisAgent:
             "muito urgente",
             "urgentemente",
             "urgente",
-            "prioridade máxima",
+            "prioridade mÃ¡xima",
             "prioridade maxima",
             "prioridade 5"
         ]
@@ -941,8 +941,8 @@ class JarvisAgent:
             "prioridade baixa",
             "baixa prioridade",
             "prioridade 2",
-            "não é importante",
-            "nao é importante",
+            "nÃ£o Ã© importante",
+            "nao Ã© importante",
             "nao e importante"
         ]
 
@@ -975,7 +975,7 @@ class JarvisAgent:
         # -----------------------------------------------------
         # QUERY / INSTRUCTION GUARD
         #
-        # Perguntar COMO fazer uma operação não significa
+        # Perguntar COMO fazer uma operaÃ§Ã£o nÃ£o significa
         # solicitar que ela seja executada.
         #
         # Exemplos:
@@ -995,9 +995,9 @@ class JarvisAgent:
             r"^gostaria\s+de\s+saber\s+como\b",
             r"^posso\b",
             r"^eu\s+consigo\b",
-            r"^qual\s+(?:e|é|seria)\s+"
+            r"^qual\s+(?:e|Ã©|seria)\s+"
             r"(?:a\s+)?(?:forma|maneira)\b",
-            r"^qual\s+(?:e|é|seria)\s+"
+            r"^qual\s+(?:e|Ã©|seria)\s+"
             r"(?:o\s+)?jeito\b",
         )
 
@@ -1011,14 +1011,14 @@ class JarvisAgent:
             return None
 
         # -----------------------------------------------------
-        # A intenção precisa conter:
+        # A intenÃ§Ã£o precisa conter:
         #
-        # 1. verbo explícito de exclusão;
+        # 1. verbo explÃ­cito de exclusÃ£o;
         # 2. quantificador de totalidade;
-        # 3. domínio lembrete.
+        # 3. domÃ­nio lembrete.
         #
-        # Isso evita interpretar exclusões individuais como
-        # exclusões em massa.
+        # Isso evita interpretar exclusÃµes individuais como
+        # exclusÃµes em massa.
         # -----------------------------------------------------
 
         verbo_exclusao = bool(
@@ -1092,14 +1092,14 @@ class JarvisAgent:
             return None
 
         # =====================================================
-        # REMINDER BRIDGE — REFERÊNCIA À ÚLTIMA TAREFA
+        # REMINDER BRIDGE â€” REFERÃŠNCIA Ã€ ÃšLTIMA TAREFA
         #
         # Exemplos:
         # "crie um lembrete para ela 30 minutos antes"
         # "me lembre dela 1 hora antes"
         #
-        # A referência contextual aponta para a última tarefa
-        # válida da conversa. O horário do lembrete é calculado
+        # A referÃªncia contextual aponta para a Ãºltima tarefa
+        # vÃ¡lida da conversa. O horÃ¡rio do lembrete Ã© calculado
         # a partir de data_limite da tarefa.
         # =====================================================
 
@@ -1203,14 +1203,14 @@ class JarvisAgent:
             )
 
             # =====================================================
-            # NORMALIZAÇÃO DE TIMEZONE
+            # NORMALIZAÃ‡ÃƒO DE TIMEZONE
             #
-            # MariaDB/MySQL DATETIME não preserva timezone.
+            # MariaDB/MySQL DATETIME nÃ£o preserva timezone.
             # TimeService.agora(), por outro lado, pode retornar
             # um datetime timezone-aware.
             #
             # Antes de comparar, os dois valores precisam usar
-            # a mesma referência temporal.
+            # a mesma referÃªncia temporal.
             # =====================================================
 
             agora_referencia = TimeService.agora()
@@ -1231,7 +1231,7 @@ class JarvisAgent:
                     tzinfo=data_lembrete.tzinfo
                 )
 
-            # Não cria lembrete contextual já vencido.
+            # NÃ£o cria lembrete contextual jÃ¡ vencido.
             if data_lembrete <= agora_referencia:
                 return AgentDecision(
                     acao=TipoAcao.CONVERSAR
@@ -1253,7 +1253,7 @@ class JarvisAgent:
         agora = TimeService.agora()
 
         if (
-                "depois de amanhã" in texto
+                "depois de amanhÃ£" in texto
                 or "depois de amanha" in texto
         ):
 
@@ -1263,7 +1263,7 @@ class JarvisAgent:
             )
 
         elif (
-                "amanhã" in texto
+                "amanhÃ£" in texto
                 or "amanha" in texto
         ):
 
@@ -1278,7 +1278,7 @@ class JarvisAgent:
 
         else:
 
-            # Tenta interpretação mais avançada.
+            # Tenta interpretaÃ§Ã£o mais avanÃ§ada.
             data_alvo = (
                 NaturalTimeService.interpretar(
                     mensagem
@@ -1289,7 +1289,7 @@ class JarvisAgent:
                 return None
 
         # =====================================================
-        # HORÁRIO
+        # HORÃRIO
         # =====================================================
 
         horario = re.search(
@@ -1317,13 +1317,13 @@ class JarvisAgent:
             )
 
         # =====================================================
-        # TÍTULO
+        # TÃTULO
         # =====================================================
 
         titulo = mensagem
 
         titulo = re.sub(
-            r"(?i)\bjarvis\b[,\s]*",
+            r"(?i)\b(?:a\.?r\.?a\.?|ara)\b[,\s]*",
             "",
             titulo
         )
@@ -1349,7 +1349,7 @@ class JarvisAgent:
         )
 
         titulo = (
-            JarvisAgent._limpar_titulo(
+            AraAgent._limpar_titulo(
                 titulo
             )
         )
@@ -1369,7 +1369,7 @@ class JarvisAgent:
         )
 
     # =========================================================
-    # AÇÕES DE LEMBRETES
+    # AÃ‡Ã•ES DE LEMBRETES
     # =========================================================
 
     @staticmethod
@@ -1431,7 +1431,7 @@ class JarvisAgent:
                 )
 
                 titulo = (
-                    JarvisAgent._limpar_titulo(
+                    AraAgent._limpar_titulo(
                         titulo
                     )
                 )
@@ -1452,8 +1452,8 @@ class JarvisAgent:
         gatilhos_concluir = [
             "conclui o lembrete",
             "concluir lembrete",
-            "marque como concluído",
-            "marca como concluído",
+            "marque como concluÃ­do",
+            "marca como concluÃ­do",
             "marque como concluido",
             "marca como concluido"
         ]
@@ -1474,7 +1474,7 @@ class JarvisAgent:
                 )
 
                 titulo = (
-                    JarvisAgent._limpar_titulo(
+                    AraAgent._limpar_titulo(
                         titulo
                     )
                 )
@@ -1522,17 +1522,17 @@ class JarvisAgent:
         if entidade is None:
 
             # =================================================
-            # CONTINUAÇÃO IMPLÍCITA DE PRIORIDADE
+            # CONTINUAÃ‡ÃƒO IMPLÃCITA DE PRIORIDADE
             # =================================================
             #
             # Exemplos:
             #
-            # "prioridade alta também"
-            # "coloque prioridade alta também"
+            # "prioridade alta tambÃ©m"
+            # "coloque prioridade alta tambÃ©m"
             #
-            # Não usamos a última tarefa como fallback global.
-            # Isso só ocorre quando há evidência clara de uma
-            # continuação de prioridade.
+            # NÃ£o usamos a Ãºltima tarefa como fallback global.
+            # Isso sÃ³ ocorre quando hÃ¡ evidÃªncia clara de uma
+            # continuaÃ§Ã£o de prioridade.
 
             texto_contextual = (
                 EntidadeContextualService
@@ -1614,7 +1614,7 @@ class JarvisAgent:
             return None
 
         # =====================================================
-        # SEGURANÇA
+        # SEGURANÃ‡A
         # =====================================================
 
         if tarefa.id_usuario != id_usuario:
@@ -1623,7 +1623,7 @@ class JarvisAgent:
         return tarefa
 
     # =========================================================
-    # DETECTAR AÇÃO CONTEXTUAL DE TAREFA
+    # DETECTAR AÃ‡ÃƒO CONTEXTUAL DE TAREFA
     # =========================================================
 
     @staticmethod
@@ -1644,16 +1644,16 @@ class JarvisAgent:
         texto = mensagem.lower().strip()
 
         # Se a mensagem fala explicitamente de lembrete,
-        # ela não pode ser capturada pelo contexto de tarefa.
+        # ela nÃ£o pode ser capturada pelo contexto de tarefa.
         if "lembrete" in texto:
             return None
 
         # =====================================================
-        # RESOLVE REFERÊNCIA
+        # RESOLVE REFERÃŠNCIA
         # =====================================================
 
         tarefa = (
-            JarvisAgent._resolver_tarefa_contextual(
+            AraAgent._resolver_tarefa_contextual(
                 mensagem=mensagem,
                 db=db,
                 id_usuario=id_usuario,
@@ -1662,7 +1662,7 @@ class JarvisAgent:
         )
 
         # =====================================================
-        # DEBUG TEMPORÁRIO
+        # DEBUG TEMPORÃRIO
         # =====================================================
 
         print(
@@ -1738,7 +1738,7 @@ class JarvisAgent:
             "passa para",
             "passe para",
 
-            # continuações naturais
+            # continuaÃ§Ãµes naturais
             "muda ela para",
             "mude ela para",
             "muda ela pra",
@@ -1800,15 +1800,15 @@ class JarvisAgent:
             )
 
             # =================================================
-            # HORÁRIO ISOLADO
+            # HORÃRIO ISOLADO
             # =================================================
             #
-            # NaturalTimeService pode não interpretar:
+            # NaturalTimeService pode nÃ£o interpretar:
             #
             # "mude ela para 21h"
             # "coloque ela para 22h30"
             #
-            # Se a tarefa já possui data_limite, preservamos
+            # Se a tarefa jÃ¡ possui data_limite, preservamos
             # sua data e alteramos apenas hora/minuto.
 
             if (
@@ -1869,7 +1869,7 @@ class JarvisAgent:
                 )
 
         # =====================================================
-        # CONSULTA CONTEXTUAL DA TAREFA — READ-ONLY
+        # CONSULTA CONTEXTUAL DA TAREFA â€” READ-ONLY
         # =====================================================
 
         texto_consulta = (
@@ -1974,7 +1974,7 @@ class JarvisAgent:
                 for termo in termos_prioridade
         ):
             prioridade = (
-                JarvisAgent._detectar_prioridade(
+                AraAgent._detectar_prioridade(
                     mensagem
                 )
             )
@@ -1997,7 +1997,7 @@ class JarvisAgent:
             "reabra",
             "reabrir",
             "refaz",
-            "refaça",
+            "refaÃ§a",
             "refazer",
             "fazer de novo"
         ]
@@ -2025,9 +2025,9 @@ class JarvisAgent:
             "finalize",
             "termina",
             "terminei",
-            "marque como concluída",
+            "marque como concluÃ­da",
             "marque como concluida",
-            "marca como concluída",
+            "marca como concluÃ­da",
             "marca como concluida"
         ]
 
@@ -2050,9 +2050,9 @@ class JarvisAgent:
         gatilhos_iniciar = [
             "inicia",
             "inicie",
-            "começa",
+            "comeÃ§a",
             "comece",
-            "começar"
+            "comeÃ§ar"
         ]
 
         if any(
@@ -2094,7 +2094,7 @@ class JarvisAgent:
         return None
 
     # =========================================================
-    # DETECTAR AÇÕES DE TAREFA
+    # DETECTAR AÃ‡Ã•ES DE TAREFA
     # =========================================================
 
     @staticmethod
@@ -2140,13 +2140,13 @@ class JarvisAgent:
             )
 
         # =====================================================
-        # TAREFAS DE AMANHÃ
+        # TAREFAS DE AMANHÃƒ
         # =====================================================
 
         if (
-                "tarefas de amanhã" in texto
+                "tarefas de amanhÃ£" in texto
                 or "tarefas de amanha" in texto
-                or "tarefas para amanhã" in texto
+                or "tarefas para amanhÃ£" in texto
                 or "tarefas para amanha" in texto
         ):
             agora = TimeService.agora()
@@ -2223,13 +2223,13 @@ class JarvisAgent:
 
             if match:
                 titulo = (
-                    JarvisAgent._limpar_titulo(
+                    AraAgent._limpar_titulo(
                         match.group(1)
                     )
                 )
 
                 novo_titulo = (
-                    JarvisAgent._limpar_titulo(
+                    AraAgent._limpar_titulo(
                         match.group(2)
                     )
                 )
@@ -2244,7 +2244,7 @@ class JarvisAgent:
                 )
 
         # =====================================================
-        # ALTERAR PRIORIDADE NUMÉRICA
+        # ALTERAR PRIORIDADE NUMÃ‰RICA
         # =====================================================
 
         padroes_prioridade = [
@@ -2264,7 +2264,7 @@ class JarvisAgent:
 
             if match:
                 titulo = (
-                    JarvisAgent._limpar_titulo(
+                    AraAgent._limpar_titulo(
                         match.group(1)
                     )
                 )
@@ -2283,13 +2283,13 @@ class JarvisAgent:
                 )
 
         # =====================================================
-        # ALTERAR DESCRIÇÃO
+        # ALTERAR DESCRIÃ‡ÃƒO
         # =====================================================
 
         padroes_descricao = [
-            r"altere a descrição da tarefa (.+?) para (.+)",
-            r"mude a descrição da tarefa (.+?) para (.+)",
-            r"coloque na descrição da tarefa (.+?):? (.+)"
+            r"altere a descriÃ§Ã£o da tarefa (.+?) para (.+)",
+            r"mude a descriÃ§Ã£o da tarefa (.+?) para (.+)",
+            r"coloque na descriÃ§Ã£o da tarefa (.+?):? (.+)"
         ]
 
         for padrao in padroes_descricao:
@@ -2302,7 +2302,7 @@ class JarvisAgent:
 
             if match:
                 titulo = (
-                    JarvisAgent._limpar_titulo(
+                    AraAgent._limpar_titulo(
                         match.group(1)
                     )
                 )
@@ -2342,7 +2342,7 @@ class JarvisAgent:
 
             if match:
                 titulo = (
-                    JarvisAgent._limpar_titulo(
+                    AraAgent._limpar_titulo(
                         match.group(1)
                     )
                 )
@@ -2380,7 +2380,7 @@ class JarvisAgent:
             if match:
 
                 titulo = (
-                    JarvisAgent._limpar_titulo(
+                    AraAgent._limpar_titulo(
                         match.group(1)
                     )
                 )
@@ -2456,7 +2456,7 @@ class JarvisAgent:
                 )
 
                 # =================================================
-                # REMOVE DATA/HORA DO TÍTULO
+                # REMOVE DATA/HORA DO TÃTULO
                 # =================================================
 
                 titulo = (
@@ -2467,24 +2467,24 @@ class JarvisAgent:
                 )
 
                 # =================================================
-                # LIMPA TÍTULO
+                # LIMPA TÃTULO
                 # =================================================
 
                 titulo = (
-                    JarvisAgent._limpar_titulo(
+                    AraAgent._limpar_titulo(
                         titulo
                     )
                 )
 
                 # =================================================
-                # NORMALIZAÇÃO DO TÍTULO
+                # NORMALIZAÃ‡ÃƒO DO TÃTULO
                 #
                 # Exemplos:
                 #
                 # "quero criar uma tarefa chamada estudar Java"
                 #     -> "estudar Java"
                 #
-                # "estudar Java para amanhã às 19h"
+                # "estudar Java para amanhÃ£ Ã s 19h"
                 #     -> "estudar Java"
                 # =================================================
 
@@ -2499,32 +2499,32 @@ class JarvisAgent:
                 ).strip()
 
                 # remover_tempo_do_texto pode deixar o conector
-                # imediatamente anterior à expressão temporal.
+                # imediatamente anterior Ã  expressÃ£o temporal.
                 if data_limite is not None:
                     titulo = re.sub(
                         r"(?i)\s+(?:"
                         r"para|pra|"
                         r"em|no|na|"
-                        r"às|as"
+                        r"Ã s|as"
                         r")\s*$",
                         "",
                         titulo
                     ).strip()
 
                 titulo = (
-                    JarvisAgent._limpar_titulo(
+                    AraAgent._limpar_titulo(
                         titulo
                     )
                 )
 
                 # =================================================
-                # PROTEÇÃO CONTRA TÍTULO RESIDUAL
+                # PROTEÃ‡ÃƒO CONTRA TÃTULO RESIDUAL
                 #
                 # Exemplo:
-                # "crie uma tarefa para amanhã às 15h"
+                # "crie uma tarefa para amanhÃ£ Ã s 15h"
                 #
-                # Depois da remoção da data pode sobrar somente
-                # "para". Isso não representa um título válido.
+                # Depois da remoÃ§Ã£o da data pode sobrar somente
+                # "para". Isso nÃ£o representa um tÃ­tulo vÃ¡lido.
                 # =================================================
 
                 titulo_normalizado = (
@@ -2541,14 +2541,14 @@ class JarvisAgent:
                         r"(?:"
                         r"para|pra|"
                         r"em|no|na|"
-                        r"a|o|as|às|"
+                        r"a|o|as|Ã s|"
                         r"ao|aos|"
                         r"de|do|da|dos|das"
                         r")"
                         r"(?:\s+(?:"
                         r"para|pra|"
                         r"em|no|na|"
-                        r"a|o|as|às|"
+                        r"a|o|as|Ã s|"
                         r"ao|aos|"
                         r"de|do|da|dos|das"
                         r"))*",
@@ -2569,7 +2569,7 @@ class JarvisAgent:
                 # =================================================
 
                 prioridade = (
-                    JarvisAgent._detectar_prioridade(
+                    AraAgent._detectar_prioridade(
                         mensagem
                     )
                 )
@@ -2593,7 +2593,7 @@ class JarvisAgent:
                 )
 
                 print(
-                    "Título final:",
+                    "TÃ­tulo final:",
                     titulo
                 )
 
@@ -2629,9 +2629,9 @@ class JarvisAgent:
         gatilhos_iniciar = [
             "inicia a tarefa",
             "inicie a tarefa",
-            "começa a tarefa",
+            "comeÃ§a a tarefa",
             "comece a tarefa",
-            "começar tarefa"
+            "comeÃ§ar tarefa"
         ]
 
         for gatilho in gatilhos_iniciar:
@@ -2650,7 +2650,7 @@ class JarvisAgent:
                 )
 
                 titulo = (
-                    JarvisAgent._limpar_titulo(
+                    AraAgent._limpar_titulo(
                         titulo
                     )
                 )
@@ -2670,7 +2670,7 @@ class JarvisAgent:
 
         gatilhos_reabrir = [
             "refaz a tarefa",
-            "refaça a tarefa",
+            "refaÃ§a a tarefa",
             "refazer tarefa",
             "reabre a tarefa",
             "reabra a tarefa",
@@ -2694,7 +2694,7 @@ class JarvisAgent:
                 )
 
                 titulo = (
-                    JarvisAgent._limpar_titulo(
+                    AraAgent._limpar_titulo(
                         titulo
                     )
                 )
@@ -2737,7 +2737,7 @@ class JarvisAgent:
                 )
 
                 titulo = (
-                    JarvisAgent._limpar_titulo(
+                    AraAgent._limpar_titulo(
                         titulo
                     )
                 )
@@ -2778,7 +2778,7 @@ class JarvisAgent:
                 )
 
                 titulo = (
-                    JarvisAgent._limpar_titulo(
+                    AraAgent._limpar_titulo(
                         titulo
                     )
                 )
@@ -2802,15 +2802,15 @@ class JarvisAgent:
             id_conversa: int | None
     ):
         """
-        Resolve referências contextuais de lembrete.
+        Resolve referÃªncias contextuais de lembrete.
 
         Prioridade:
         1. entidade contextual da conversa, se ainda estiver ativa;
         2. ultimo_lembrete_id do contexto operacional, se ativo;
-        3. lembrete pendente mais recente do usuário.
+        3. lembrete pendente mais recente do usuÃ¡rio.
 
-        Lembretes CONCLUIDOS ou CANCELADOS não podem assumir
-        uma referência genérica como "esse lembrete".
+        Lembretes CONCLUIDOS ou CANCELADOS nÃ£o podem assumir
+        uma referÃªncia genÃ©rica como "esse lembrete".
         """
 
         if (
@@ -2821,7 +2821,7 @@ class JarvisAgent:
             return None
 
         # ====================================================
-        # VALIDAÇÃO CENTRAL
+        # VALIDAÃ‡ÃƒO CENTRAL
         # ====================================================
 
         def lembrete_ativo(lembrete):
@@ -2940,7 +2940,7 @@ class JarvisAgent:
 
         texto = mensagem.lower().strip()
 
-        # Só tenta resolver contexto se claramente
+        # SÃ³ tenta resolver contexto se claramente
         # estivermos falando de lembrete.
         referencias = [
             "lembrete",
@@ -2959,7 +2959,7 @@ class JarvisAgent:
             return None
 
         lembrete = (
-            JarvisAgent._resolver_lembrete_contextual(
+            AraAgent._resolver_lembrete_contextual(
                 mensagem=mensagem,
                 db=db,
                 id_usuario=id_usuario,
@@ -2973,7 +2973,7 @@ class JarvisAgent:
         titulo = lembrete.titulo
 
         # =====================================================
-        # EDITAR DATA / HORÁRIO
+        # EDITAR DATA / HORÃRIO
         # =====================================================
 
         if any(
@@ -2992,7 +2992,7 @@ class JarvisAgent:
                 ]
         ):
             # Captura a parte temporal da mensagem.
-            # A própria tool resolve data completa ou apenas horário.
+            # A prÃ³pria tool resolve data completa ou apenas horÃ¡rio.
             temporal = texto
 
             return AgentDecision(
@@ -3053,4 +3053,5 @@ class JarvisAgent:
             )
 
         return None
+
 

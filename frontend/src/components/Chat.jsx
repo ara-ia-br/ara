@@ -1,4 +1,4 @@
-import {
+﻿import {
     useEffect,
     useRef,
     useState
@@ -29,7 +29,7 @@ function Chat({
 
 
     // =========================================================
-    // CARREGAR HISTÓRICO
+    // CARREGAR HISTÃ“RICO
     // =========================================================
 
     async function carregarHistorico() {
@@ -55,8 +55,8 @@ function Chat({
                         id: item.id_mensagem,
 
                         autor:
-                            item.remetente === "JARVIS"
-                                ? "jarvis"
+                            item.remetente === "ARA"
+                                ? "ara"
                                 : "user",
 
                         conteudo: item.conteudo
@@ -73,7 +73,7 @@ function Chat({
         } catch (erro) {
 
             console.error(
-                "Erro ao carregar histórico:",
+                "Erro ao carregar histÃ³rico:",
                 erro
             );
         }
@@ -99,7 +99,7 @@ function Chat({
 
 
         // =====================================================
-        // MENSAGEM TEMPORÁRIA DO USUÁRIO
+        // MENSAGEM TEMPORÃRIA DO USUÃRIO
         // =====================================================
 
         const mensagemUsuario = {
@@ -169,13 +169,13 @@ function Chat({
             ) {
 
                 console.error(
-                    "Resposta inválida do backend:",
+                    "Resposta invÃ¡lida do backend:",
                     resposta.data
                 );
 
 
                 throw new Error(
-                    "O backend não retornou resposta_ara."
+                    "O backend nÃ£o retornou resposta_ara."
                 );
             }
 
@@ -184,13 +184,13 @@ function Chat({
             // MOSTRA RESPOSTA PRIMEIRO
             // =================================================
 
-            const mensagemJarvis = {
+            const mensagemAra = {
 
                 id:
-                    `jarvis-${Date.now()}`,
+                    `ara-${Date.now()}`,
 
                 autor:
-                    "jarvis",
+                    "ara",
 
                 conteudo:
                     respostaAra
@@ -200,7 +200,7 @@ function Chat({
             setMensagens(
                 (anteriores) => [
                     ...anteriores,
-                    mensagemJarvis
+                    mensagemAra
                 ]
             );
 
@@ -216,9 +216,9 @@ function Chat({
 
 
             // =================================================
-            // NOTIFICA PÁGINA DE TAREFAS
+            // NOTIFICA PÃGINA DE TAREFAS
             //
-            // Isso não pode derrubar o chat.
+            // Isso nÃ£o pode derrubar o chat.
             // =================================================
 
             if (
@@ -233,7 +233,7 @@ function Chat({
 
                     window.dispatchEvent(
                         new CustomEvent(
-                            "jarvis:tarefas-atualizadas",
+                            "ara:tarefas-atualizadas",
                             {
                                 detail: {
                                     ferramenta
@@ -248,7 +248,7 @@ function Chat({
                 ) {
 
                     console.error(
-                        "Erro ao disparar atualização de tarefas:",
+                        "Erro ao disparar atualizaÃ§Ã£o de tarefas:",
                         erroEvento
                     );
                 }
@@ -260,7 +260,7 @@ function Chat({
             //
             // IMPORTANTE:
             // ocorre SOMENTE depois de mostrar
-            // a resposta do JARVIS.
+            // a resposta da A.R.A..
             // =================================================
 
             if (
@@ -305,7 +305,7 @@ function Chat({
             );
 
             console.error(
-                "Código:",
+                "CÃ³digo:",
                 erro?.code
             );
 
@@ -347,13 +347,13 @@ function Chat({
                     `erro-${Date.now()}`,
 
                 autor:
-                    "jarvis",
+                    "ara",
 
                 conteudo:
                     detalheBackend
                     || (
                         "Deu ruim por aqui. "
-                        + "Não consegui responder agora."
+                        + "NÃ£o consegui responder agora."
                     )
             };
 
@@ -394,7 +394,7 @@ function Chat({
 
 
     // =========================================================
-    // CARREGAR HISTÓRICO AO TROCAR DE CONVERSA
+    // CARREGAR HISTÃ“RICO AO TROCAR DE CONVERSA
     // =========================================================
 
     useEffect(
@@ -452,20 +452,20 @@ function Chat({
                 >
 
                     <div
-                        className="jarvis-symbol ara-symbol"
+                        className="ara-symbol ara-symbol"
                     >
                         J
                     </div>
 
 
                     <h2>
-                        Bem-vindo à A.R.A.
+                        Bem-vindo Ã  A.R.A.
                     </h2>
 
 
                     <p>
                         Crie uma conversa
-                        para começar.
+                        para comeÃ§ar.
                     </p>
 
                 </div>
@@ -527,21 +527,21 @@ function Chat({
                         <div className="welcome">
 
                             <div
-                                className="jarvis-symbol ara-symbol"
+                                className="ara-symbol ara-symbol"
                             >
                                 A
                             </div>
 
 
                             <h2>
-                                E aí! O que vamos
+                                E aÃ­! O que vamos
                                 fazer hoje?
                             </h2>
 
 
                             <p>
                                 Converse, pergunte ou
-                                peça para eu fazer
+                                peÃ§a para eu fazer
                                 alguma coisa.
                             </p>
 
@@ -575,7 +575,7 @@ function Chat({
 
 
                 {/* =================================================
-                    INDICADOR DE DIGITAÇÃO
+                    INDICADOR DE DIGITAÃ‡ÃƒO
                 ================================================= */}
 
                 {
@@ -585,7 +585,7 @@ function Chat({
                         <div
                             className="
                                 message
-                                jarvis-message
+                                ara-message
                             "
                         >
 
@@ -667,7 +667,7 @@ function Chat({
                         placeholder={
                             carregando
                                 ? (
-                                    "A.R.A. está "
+                                    "A.R.A. estÃ¡ "
                                     + "pensando..."
                                 )
                                 : (
@@ -729,7 +729,7 @@ function Chat({
                 <span className="disclaimer">
 
                     A.R.A. pode cometer erros.
-                    Verifique informações
+                    Verifique informaÃ§Ãµes
                     importantes.
 
                 </span>

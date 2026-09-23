@@ -334,7 +334,7 @@ class MemoryExtractor:
 
         prompt = f"""
 Você é o componente de extração de memória de longo prazo
-do assistente pessoal JARVIS.
+do assistente pessoal A.R.A.
 
 Analise SOMENTE a mensagem do usuário abaixo e identifique
 informações pessoais ou contextuais que provavelmente continuarão
@@ -396,7 +396,7 @@ OBJETIVO
 - objetivos pessoais relevantes.
 
 CONFIGURACAO
-- preferências persistentes sobre como o JARVIS
+- preferências persistentes sobre como a A.R.A
   deve se comportar ou responder.
 
 

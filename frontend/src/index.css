@@ -1,4 +1,4 @@
-* {
+﻿* {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
@@ -14,20 +14,20 @@
         sans-serif;
 
     /* =====================================================
-       JARVIS - PALETA OFICIAL
+       A.R.A. - PALETA OFICIAL
     ===================================================== */
 
-    --jarvis-blue: #67C7EB;
-    --jarvis-blue-rgb: 103, 199, 235;
+    --ara-blue: #67C7EB;
+    --ara-blue-rgb: 103, 199, 235;
 
-    --jarvis-cyan: #00A4B1;
-    --jarvis-cyan-rgb: 0, 164, 177;
+    --ara-cyan: #00A4B1;
+    --ara-cyan-rgb: 0, 164, 177;
 
-    --jarvis-amber: #FBCA03;
-    --jarvis-amber-rgb: 251, 202, 3;
+    --ara-amber: #FBCA03;
+    --ara-amber-rgb: 251, 202, 3;
 
-    --jarvis-red: #AA0505;
-    --jarvis-red-rgb: 170, 5, 5;
+    --ara-red: #AA0505;
+    --ara-red-rgb: 170, 5, 5;
 
 
     /* =====================================================
@@ -40,13 +40,13 @@
     --bg-hover: #132028;
 
     --bg-blue-soft:
-        rgba(var(--jarvis-blue-rgb), 0.08);
+        rgba(var(--ara-blue-rgb), 0.08);
 
     --bg-blue-medium:
-        rgba(var(--jarvis-blue-rgb), 0.14);
+        rgba(var(--ara-blue-rgb), 0.14);
 
     --bg-cyan-soft:
-        rgba(var(--jarvis-cyan-rgb), 0.10);
+        rgba(var(--ara-cyan-rgb), 0.10);
 
 
     /* =====================================================
@@ -63,13 +63,13 @@
     ===================================================== */
 
     --border:
-        rgba(var(--jarvis-blue-rgb), 0.12);
+        rgba(var(--ara-blue-rgb), 0.12);
 
     --border-light:
-        rgba(var(--jarvis-blue-rgb), 0.24);
+        rgba(var(--ara-blue-rgb), 0.24);
 
     --border-active:
-        rgba(var(--jarvis-blue-rgb), 0.60);
+        rgba(var(--ara-blue-rgb), 0.60);
 
 
     /* =====================================================
@@ -78,25 +78,25 @@
 
     --glow-blue:
         0 0 14px
-        rgba(var(--jarvis-blue-rgb), 0.22);
+        rgba(var(--ara-blue-rgb), 0.22);
 
     --glow-blue-strong:
         0 0 8px
-        rgba(var(--jarvis-blue-rgb), 0.50),
+        rgba(var(--ara-blue-rgb), 0.50),
         0 0 22px
-        rgba(var(--jarvis-blue-rgb), 0.20);
+        rgba(var(--ara-blue-rgb), 0.20);
 
     --glow-cyan:
         0 0 14px
-        rgba(var(--jarvis-cyan-rgb), 0.35);
+        rgba(var(--ara-cyan-rgb), 0.35);
 
     --glow-warning:
         0 0 14px
-        rgba(var(--jarvis-amber-rgb), 0.30);
+        rgba(var(--ara-amber-rgb), 0.30);
 
     --glow-danger:
         0 0 14px
-        rgba(var(--jarvis-red-rgb), 0.40);
+        rgba(var(--ara-red-rgb), 0.40);
 
 
     color: var(--text);
@@ -177,9 +177,9 @@ button {
     border-radius: 11px;
 
     background:
-        rgba(var(--jarvis-blue-rgb), 0.10);
+        rgba(var(--ara-blue-rgb), 0.10);
 
-    color: var(--jarvis-blue);
+    color: var(--ara-blue);
 
     box-shadow: var(--glow-blue);
 
@@ -188,7 +188,7 @@ button {
 }
 
 .sidebar-header h1 {
-    color: var(--jarvis-blue);
+    color: var(--ara-blue);
 
     font-size: 16px;
     letter-spacing: 1.5px;
@@ -222,9 +222,9 @@ button {
     border-radius: 9px;
 
     background:
-        rgba(var(--jarvis-blue-rgb), 0.09);
+        rgba(var(--ara-blue-rgb), 0.09);
 
-    color: var(--jarvis-blue);
+    color: var(--ara-blue);
 
     cursor: pointer;
 
@@ -235,7 +235,7 @@ button {
 
 .new-chat:hover {
     background:
-        rgba(var(--jarvis-blue-rgb), 0.15);
+        rgba(var(--ara-blue-rgb), 0.15);
 
     border-color: var(--border-active);
 
@@ -244,7 +244,7 @@ button {
 
 
 /* =========================================================
-   NAVEGAÇÃO
+   NAVEGAÃ‡ÃƒO
 ========================================================= */
 
 .sidebar-navigation {
@@ -284,12 +284,12 @@ button {
 
 .sidebar-nav-item.active {
     background:
-        rgba(var(--jarvis-blue-rgb), 0.10);
+        rgba(var(--ara-blue-rgb), 0.10);
 
-    color: var(--jarvis-blue);
+    color: var(--ara-blue);
 
     border-left:
-        2px solid var(--jarvis-blue);
+        2px solid var(--ara-blue);
 }
 
 
@@ -361,12 +361,12 @@ button {
 
 .conversation.active {
     background:
-        rgba(var(--jarvis-blue-rgb), 0.08);
+        rgba(var(--ara-blue-rgb), 0.08);
 
     color: var(--text);
 
     border-left:
-        2px solid var(--jarvis-blue);
+        2px solid var(--ara-blue);
 }
 
 .conversation-title {
@@ -416,7 +416,7 @@ button {
 
 .conversation-more:hover {
     background: var(--bg-hover);
-    color: var(--jarvis-blue);
+    color: var(--ara-blue);
 }
 
 .conversation-menu {
@@ -463,16 +463,16 @@ button {
 
 .conversation-menu > span:hover {
     background: var(--bg-hover);
-    color: var(--jarvis-blue);
+    color: var(--ara-blue);
 }
 
 .conversation-menu .danger {
-    color: var(--jarvis-red);
+    color: var(--ara-red);
 }
 
 .conversation-menu .danger:hover {
     background:
-        rgba(var(--jarvis-red-rgb), 0.10);
+        rgba(var(--ara-red-rgb), 0.10);
 
     color: #d23a3a;
 }
@@ -511,7 +511,7 @@ button {
 }
 
 .rename-conversation input:focus {
-    border-color: var(--jarvis-blue);
+    border-color: var(--ara-blue);
     box-shadow: var(--glow-blue);
 }
 
@@ -526,16 +526,16 @@ button {
     border-radius: 6px;
 
     background:
-        rgba(var(--jarvis-blue-rgb), 0.12);
+        rgba(var(--ara-blue-rgb), 0.12);
 
-    color: var(--jarvis-blue);
+    color: var(--ara-blue);
 
     cursor: pointer;
 }
 
 .rename-conversation button:hover {
     background:
-        rgba(var(--jarvis-blue-rgb), 0.20);
+        rgba(var(--ara-blue-rgb), 0.20);
 }
 
 
@@ -565,7 +565,7 @@ button {
 
 .archived-button:hover {
     background: var(--bg-hover);
-    color: var(--jarvis-blue);
+    color: var(--ara-blue);
 }
 
 .archived-list {
@@ -619,9 +619,9 @@ button {
     border-radius: 6px;
 
     background:
-        rgba(var(--jarvis-blue-rgb), 0.10);
+        rgba(var(--ara-blue-rgb), 0.10);
 
-    color: var(--jarvis-blue);
+    color: var(--ara-blue);
 
     cursor: pointer;
 
@@ -630,7 +630,7 @@ button {
 
 .archived-item button:hover {
     background:
-        rgba(var(--jarvis-blue-rgb), 0.18);
+        rgba(var(--ara-blue-rgb), 0.18);
 }
 
 
@@ -665,7 +665,7 @@ button {
 
 .sidebar-footer button:hover {
     background: var(--bg-hover);
-    color: var(--jarvis-blue);
+    color: var(--ara-blue);
 }
 
 
@@ -684,7 +684,7 @@ button {
     background:
         radial-gradient(
             circle at 50% -15%,
-            rgba(var(--jarvis-blue-rgb), 0.06),
+            rgba(var(--ara-blue-rgb), 0.06),
             transparent 35%
         ),
         var(--bg-main);
@@ -720,7 +720,7 @@ button {
 
     margin-top: 4px;
 
-    color: var(--jarvis-cyan);
+    color: var(--ara-cyan);
 
     font-size: 11px;
 }
@@ -731,7 +731,7 @@ button {
 
     border-radius: 50%;
 
-    background: var(--jarvis-cyan);
+    background: var(--ara-cyan);
 
     box-shadow: var(--glow-cyan);
 }
@@ -766,7 +766,7 @@ button {
     text-align: center;
 }
 
-.jarvis-symbol {
+.ara-symbol {
     width: 54px;
     height: 54px;
 
@@ -780,9 +780,9 @@ button {
     border-radius: 17px;
 
     background:
-        rgba(var(--jarvis-blue-rgb), 0.08);
+        rgba(var(--ara-blue-rgb), 0.08);
 
-    color: var(--jarvis-blue);
+    color: var(--ara-blue);
 
     box-shadow: var(--glow-blue-strong);
 
@@ -817,7 +817,7 @@ button {
 .message-author {
     margin-bottom: 8px;
 
-    color: var(--jarvis-blue);
+    color: var(--ara-blue);
 
     font-size: 11px;
     font-weight: 700;
@@ -844,12 +844,12 @@ button {
 
     border:
         1px solid
-        rgba(var(--jarvis-blue-rgb), 0.12);
+        rgba(var(--ara-blue-rgb), 0.12);
 
     border-radius: 17px 17px 4px 17px;
 
     background:
-        rgba(var(--jarvis-blue-rgb), 0.08);
+        rgba(var(--ara-blue-rgb), 0.08);
 
     color: var(--text);
 }
@@ -858,7 +858,7 @@ button {
     text-align: right;
 }
 
-.jarvis-message {
+.ara-message {
     margin-right: auto;
 }
 
@@ -903,7 +903,7 @@ button {
 }
 
 .composer:focus-within {
-    border-color: var(--jarvis-blue);
+    border-color: var(--ara-blue);
 
     box-shadow: var(--glow-blue);
 }
@@ -956,11 +956,11 @@ button {
 
 .composer-button:hover {
     background: var(--bg-hover);
-    color: var(--jarvis-blue);
+    color: var(--ara-blue);
 }
 
 .send-button {
-    background: var(--jarvis-blue);
+    background: var(--ara-blue);
     color: #041014;
 
     box-shadow: var(--glow-blue);
@@ -1013,7 +1013,7 @@ button {
 
     border-radius: 50%;
 
-    background: var(--jarvis-cyan);
+    background: var(--ara-cyan);
 
     box-shadow: var(--glow-cyan);
 
@@ -1082,7 +1082,7 @@ button {
 }
 
 .tasks-header h1 {
-    color: var(--jarvis-blue);
+    color: var(--ara-blue);
 
     font-size: 24px;
     font-weight: 600;
@@ -1119,9 +1119,9 @@ button {
     border-radius: 9px;
 
     background:
-        rgba(var(--jarvis-blue-rgb), 0.10);
+        rgba(var(--ara-blue-rgb), 0.10);
 
-    color: var(--jarvis-blue);
+    color: var(--ara-blue);
 
     cursor: pointer;
 
@@ -1132,7 +1132,7 @@ button {
 
 .task-create-button:hover {
     background:
-        rgba(var(--jarvis-blue-rgb), 0.17);
+        rgba(var(--ara-blue-rgb), 0.17);
 
     border-color: var(--border-active);
 
@@ -1166,14 +1166,14 @@ button {
 }
 
 .task-filter:hover {
-    color: var(--jarvis-blue);
+    color: var(--ara-blue);
 }
 
 .task-filter.active {
     background:
-        rgba(var(--jarvis-blue-rgb), 0.12);
+        rgba(var(--ara-blue-rgb), 0.12);
 
-    color: var(--jarvis-blue);
+    color: var(--ara-blue);
 
     border-color: var(--border-active);
 }
@@ -1207,7 +1207,7 @@ button {
 
     box-shadow:
         0 0 20px
-        rgba(var(--jarvis-blue-rgb), 0.05);
+        rgba(var(--ara-blue-rgb), 0.05);
 }
 
 .task-card-top {
@@ -1249,14 +1249,14 @@ button {
 
     border:
         1px solid
-        rgba(var(--jarvis-amber-rgb), 0.35);
+        rgba(var(--ara-amber-rgb), 0.35);
 
     border-radius: 6px;
 
     background:
-        rgba(var(--jarvis-amber-rgb), 0.06);
+        rgba(var(--ara-amber-rgb), 0.06);
 
-    color: var(--jarvis-amber);
+    color: var(--ara-amber);
 
     font-size: 10px;
     font-weight: 700;
@@ -1288,7 +1288,7 @@ button {
 
 
 /* =========================================================
-   AÇÕES
+   AÃ‡Ã•ES
 ========================================================= */
 
 .task-actions {
@@ -1309,9 +1309,9 @@ button {
     border-radius: 7px;
 
     background:
-        rgba(var(--jarvis-blue-rgb), 0.10);
+        rgba(var(--ara-blue-rgb), 0.10);
 
-    color: var(--jarvis-blue);
+    color: var(--ara-blue);
 
     cursor: pointer;
 
@@ -1320,11 +1320,11 @@ button {
 
 .task-actions button:hover {
     background:
-        rgba(var(--jarvis-blue-rgb), 0.18);
+        rgba(var(--ara-blue-rgb), 0.18);
 }
 
 .task-actions button.primary {
-    background: var(--jarvis-blue);
+    background: var(--ara-blue);
     color: #041014;
 }
 
@@ -1339,13 +1339,13 @@ button {
     align-items: center;
     gap: 6px;
 
-    color: var(--jarvis-cyan);
+    color: var(--ara-cyan);
 
     font-size: 12px;
 }
 
 .task-cancelled {
-    color: var(--jarvis-red);
+    color: var(--ara-red);
 
     font-size: 12px;
 }
@@ -1377,7 +1377,7 @@ button {
 
 .task-menu-button:hover {
     background: var(--bg-hover);
-    color: var(--jarvis-blue);
+    color: var(--ara-blue);
 }
 
 .task-menu {
@@ -1423,11 +1423,11 @@ button {
 
 .task-menu button:hover {
     background: var(--bg-hover);
-    color: var(--jarvis-blue);
+    color: var(--ara-blue);
 }
 
 .task-menu button.danger {
-    color: var(--jarvis-red);
+    color: var(--ara-red);
 }
 
 
@@ -1492,7 +1492,7 @@ button {
 }
 
 .task-modal-header h2 {
-    color: var(--jarvis-blue);
+    color: var(--ara-blue);
 
     font-size: 19px;
 }
@@ -1523,7 +1523,7 @@ button {
 
 .task-modal-header button:hover {
     background: var(--bg-hover);
-    color: var(--jarvis-blue);
+    color: var(--ara-blue);
 }
 
 
@@ -1567,11 +1567,11 @@ button {
 .task-modal input:focus,
 .task-modal textarea:focus,
 .task-modal select:focus {
-    border-color: var(--jarvis-blue);
+    border-color: var(--ara-blue);
 
     box-shadow:
         0 0 0 2px
-        rgba(var(--jarvis-blue-rgb), 0.07);
+        rgba(var(--ara-blue-rgb), 0.07);
 }
 
 .task-form-row {
@@ -1613,11 +1613,11 @@ button {
 }
 
 .task-modal-actions button:hover {
-    color: var(--jarvis-blue);
+    color: var(--ara-blue);
 }
 
 .task-modal-actions button.primary {
-    background: var(--jarvis-blue);
+    background: var(--ara-blue);
     color: #041014;
 
     font-weight: 700;
@@ -1645,7 +1645,7 @@ button {
     background:
         radial-gradient(
             circle at center,
-            rgba(var(--jarvis-blue-rgb), 0.06),
+            rgba(var(--ara-blue-rgb), 0.06),
             transparent 38%
         ),
         var(--bg-main);
@@ -1686,9 +1686,9 @@ button {
     border-radius: 15px;
 
     background:
-        rgba(var(--jarvis-blue-rgb), 0.10);
+        rgba(var(--ara-blue-rgb), 0.10);
 
-    color: var(--jarvis-blue);
+    color: var(--ara-blue);
 
     box-shadow: var(--glow-blue-strong);
 
@@ -1697,7 +1697,7 @@ button {
 }
 
 .login-card h1 {
-    color: var(--jarvis-blue);
+    color: var(--ara-blue);
 
     text-align: center;
 
@@ -1745,11 +1745,11 @@ button {
 }
 
 .login-field input:focus {
-    border-color: var(--jarvis-blue);
+    border-color: var(--ara-blue);
 
     box-shadow:
         0 0 0 2px
-        rgba(var(--jarvis-blue-rgb), 0.07);
+        rgba(var(--ara-blue-rgb), 0.07);
 }
 
 .login-error {
@@ -1759,12 +1759,12 @@ button {
 
     border:
         1px solid
-        rgba(var(--jarvis-red-rgb), 0.30);
+        rgba(var(--ara-red-rgb), 0.30);
 
     border-radius: 8px;
 
     background:
-        rgba(var(--jarvis-red-rgb), 0.08);
+        rgba(var(--ara-red-rgb), 0.08);
 
     color: #dc5050;
 
@@ -1783,7 +1783,7 @@ button {
 
     border-radius: 10px;
 
-    background: var(--jarvis-blue);
+    background: var(--ara-blue);
     color: #041014;
 
     cursor: pointer;
@@ -1821,22 +1821,22 @@ button {
     border-radius: 10px;
 
     background:
-        rgba(var(--jarvis-blue-rgb), 0.25);
+        rgba(var(--ara-blue-rgb), 0.25);
 }
 
 ::-webkit-scrollbar-thumb:hover {
     background:
-        rgba(var(--jarvis-blue-rgb), 0.50);
+        rgba(var(--ara-blue-rgb), 0.50);
 }
 
 
 /* =========================================================
-   SELEÇÃO
+   SELEÃ‡ÃƒO
 ========================================================= */
 
 ::selection {
     background:
-        rgba(var(--jarvis-blue-rgb), 0.30);
+        rgba(var(--ara-blue-rgb), 0.30);
 
     color: #ffffff;
 }
@@ -1893,7 +1893,7 @@ button {
     }
 }
 /* =========================================================
-   A.R.A. PRODUCT SYSTEM — 2026
+   A.R.A. PRODUCT SYSTEM â€” 2026
    Identity: neon mint + deep navy, deliberate contrast,
    functional motion and dense operational surfaces.
 ========================================================= */
@@ -1921,10 +1921,10 @@ button {
     --ara-radius: 16px;
     --ara-radius-lg: 24px;
 
-    --jarvis-blue: var(--ara-primary);
-    --jarvis-blue-rgb: var(--ara-primary-rgb);
-    --jarvis-cyan: var(--ara-primary-bright);
-    --jarvis-cyan-rgb: 72, 245, 201;
+    --ara-blue: var(--ara-primary);
+    --ara-blue-rgb: var(--ara-primary-rgb);
+    --ara-cyan: var(--ara-primary-bright);
+    --ara-cyan-rgb: 72, 245, 201;
     --bg-main: var(--ara-navy);
     --bg-secondary: var(--ara-navy-2);
     --bg-card: var(--ara-surface);
@@ -1965,7 +1965,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
     var(--ara-navy); }
 
 /* =========================================================
-   A.R.A. — BRAND / LOGOS OFICIAIS
+   A.R.A. â€” BRAND / LOGOS OFICIAIS
 ========================================================= */
 
 .ara-brand {
@@ -2188,7 +2188,7 @@ kbd { font-family: inherit; font-size: 10px; color: var(--ara-text-muted); borde
 .ara-login-button:disabled { opacity: .6; cursor: wait; }
 .login-footnote { display: block; margin-top: 12px; color: var(--ara-text-muted); font-size: 9px; line-height: 1.5; }
 
-/* CHAT — keeps existing API behavior, changes product surface */
+/* CHAT â€” keeps existing API behavior, changes product surface */
 .chat { background: transparent; }
 .chat-header { min-height: 68px; padding: 14px clamp(18px, 4vw, 44px); background: color-mix(in srgb, var(--ara-navy) 88%, transparent); border-bottom: 1px solid var(--ara-border); backdrop-filter: blur(16px); }
 .chat-header h2 { font-size: 14px; letter-spacing: -.01em; }
@@ -2196,13 +2196,13 @@ kbd { font-family: inherit; font-size: 10px; color: var(--ara-text-muted); borde
 .online-dot { background: var(--ara-primary); box-shadow: 0 0 10px rgba(var(--ara-primary-rgb), .52); }
 .messages { padding: 30px max(20px, calc((100% - 850px) / 2)); }
 .message { max-width: 780px; }
-.jarvis-message { align-self: stretch; max-width: 850px; padding: 3px 0 17px; background: transparent; border: 0; }
+.ara-message { align-self: stretch; max-width: 850px; padding: 3px 0 17px; background: transparent; border: 0; }
 .user-message { align-self: flex-end; max-width: min(680px, 82%); border: 1px solid var(--ara-border); background: var(--ara-surface); border-radius: 17px 17px 4px 17px; }
 .message-author { display: flex; align-items: center; gap: 7px; color: var(--ara-text-muted); font-size: 9px; font-weight: 900; letter-spacing: .1em; }
 .message-signal { width: 7px; height: 7px; border-radius: 50%; background: var(--ara-primary); box-shadow: 0 0 10px rgba(var(--ara-primary-rgb), .45); }
 .ara-message .message-content { color: var(--ara-text); line-height: 1.7; }
 .welcome { max-width: 640px; }
-.jarvis-symbol.ara-symbol { width: 48px; height: 48px; border-radius: 14px 5px 14px 5px; border: 1px solid var(--ara-border-strong); background: var(--ara-primary-soft); color: var(--ara-primary); box-shadow: none; transform: skewX(-6deg); }
+.ara-symbol.ara-symbol { width: 48px; height: 48px; border-radius: 14px 5px 14px 5px; border: 1px solid var(--ara-border-strong); background: var(--ara-primary-soft); color: var(--ara-primary); box-shadow: none; transform: skewX(-6deg); }
 .welcome h2 { font-size: clamp(28px, 4vw, 43px); letter-spacing: -.045em; }
 .welcome p { color: var(--ara-text-muted); }
 .composer-container { background: linear-gradient(to top, var(--ara-navy) 72%, transparent); padding-inline: max(18px, calc((100% - 850px) / 2)); }
@@ -2214,7 +2214,7 @@ kbd { font-family: inherit; font-size: 10px; color: var(--ara-text-muted); borde
 .disclaimer { color: var(--ara-text-muted); font-size: 8px; }
 .typing span { background: var(--ara-primary); }
 
-/* TASKS — reskin existing functional screen */
+/* TASKS â€” reskin existing functional screen */
 .tasks-page, .tasks { background: transparent !important; }
 .tasks-header, .tasks-toolbar, .task-card, .task-modal { border-color: var(--ara-border) !important; }
 .task-card { background: var(--ara-surface) !important; border-radius: 15px !important; box-shadow: none !important; }
@@ -2261,3 +2261,5 @@ kbd { font-family: inherit; font-size: 10px; color: var(--ara-text-muted); borde
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
 }
+
+

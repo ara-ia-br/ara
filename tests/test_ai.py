@@ -7,14 +7,14 @@ mensagens = [
     {
         "role": "system",
         "content": (
-            "Você é JARVIS, um assistente "
-            "pessoal inteligente e objetivo."
+            "Você é A.R.A, uma assistente "
+            "pessoal inteligente e objetiva."
         )
     },
     {
         "role": "user",
         "content": (
-            "Olá JARVIS. "
+            "Olá A.R.A. "
             "Se apresente em uma frase."
         )
     }

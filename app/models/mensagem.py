@@ -20,7 +20,7 @@ from app.database.base import Base
 
 class RemetenteMensagem(str, Enum):
     USUARIO = "USUARIO"
-    JARVIS = "JARVIS"
+    ARA = "ARA"
     SISTEMA = "SISTEMA"
 
 
