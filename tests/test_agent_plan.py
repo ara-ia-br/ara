@@ -128,3 +128,50 @@ def test_planejar_tres_acoes_independentes():
         passo.depende_de is None
         for passo in plano.passos
     )
+
+
+def test_planeja_plano_misto_com_dependencia():
+
+    plano = JarvisAgent.planejar(
+        "crie uma tarefa chamada estudar amanhã às 19h "
+        "e me lembre dela 30 minutos antes "
+        "e liste meus lembretes"
+    )
+
+    assert plano is not None
+    assert len(plano.passos) == 3
+
+    ferramentas = [
+        passo.decisao.ferramenta
+        for passo in plano.passos
+    ]
+
+    assert ferramentas == [
+        "criar_tarefa",
+        "criar_lembrete",
+        "listar_lembretes"
+    ]
+
+    # Tarefa independente
+    assert (
+        plano.passos[0].depende_de is None
+    )
+
+    # Lembrete depende da tarefa
+    assert (
+        plano.passos[1].depende_de == 0
+    )
+
+    # Listagem independente
+    assert (
+        plano.passos[2].depende_de is None
+    )
+
+    resolver = (
+        plano.passos[1].resolver_argumentos
+    )
+
+    assert (resolver["id_tarefa"]["resultado_de"] == 0)
+
+    assert (resolver["data_hora"]["offset_minutos"] == -30)
+

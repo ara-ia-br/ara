@@ -57,10 +57,12 @@ class JarvisAgent:
             id_conversa: int | None = None
     ) -> AgentPlan | None:
         """
-        Detecta mensagens que exigem várias ações coordenadas.
+        Monta um plano para mensagens com múltiplas intenções.
 
-        Retorna None quando a mensagem deve continuar
-        pelo fluxo tradicional do decidir().
+        Suporta:
+        - ações independentes;
+        - tarefa -> lembrete relativo;
+        - mistura de ações dependentes e independentes.
         """
 
         # =====================================================
@@ -77,143 +79,170 @@ class JarvisAgent:
             return None
 
         # =====================================================
-        # DIVIDE POSSÍVEIS INTENTS
+        # DIVIDE A MENSAGEM
         # =====================================================
 
         segmentos = MultiIntentParser.dividir(
             mensagem
         )
 
-        # Uma única intenção continua pelo fluxo tradicional.
         if len(segmentos) < 2:
-            return None
-
-        # =====================================================
-        # CASO DEPENDENTE:
-        # TAREFA -> LEMBRETE RELATIVO
-        # =====================================================
-
-        if (
-                len(segmentos) == 2
-                and segmentos[1].referencia_anterior
-        ):
-            segmento_tarefa = segmentos[0]
-            segmento_lembrete = segmentos[1]
-
-            decisao_tarefa = (
-                JarvisAgent._detectar_acao_tarefa(
-                    segmento_tarefa.texto
-                )
-            )
-
-            if (
-                    decisao_tarefa is None
-                    or decisao_tarefa.acao != TipoAcao.EXECUTAR
-                    or decisao_tarefa.ferramenta != "criar_tarefa"
-            ):
-                return None
-
-            data_limite = (
-                decisao_tarefa.argumentos.get(
-                    "data_limite"
-                )
-            )
-
-            if not data_limite:
-                return None
-
-            match_lembrete = re.search(
-                r"^(?:me\s+)?"
-                r"(?:lembre|lembra)"
-                r"(?:\s+(?:"
-                r"dela|dele|ela|ele|"
-                r"dessa\s+tarefa|desta\s+tarefa|"
-                r"essa\s+tarefa|esta\s+tarefa"
-                r"))?"
-                r"\s+(?P<quantidade>\d+)\s*"
-                r"(?P<unidade>minuto|minutos|hora|horas)"
-                r"\s+antes"
-                r"\s*[.!?]*$",
-                segmento_lembrete.texto,
-                flags=re.IGNORECASE
-            )
-
-            if match_lembrete is None:
-                return None
-
-            quantidade = int(
-                match_lembrete.group(
-                    "quantidade"
-                )
-            )
-
-            unidade = (
-                match_lembrete.group(
-                    "unidade"
-                ).lower()
-            )
-
-            if unidade.startswith("hora"):
-                offset_minutos = -(quantidade * 60)
-            else:
-                offset_minutos = -quantidade
-
-            passo_tarefa = AgentPlanStep(
-                decisao=decisao_tarefa
-            )
-
-            passo_lembrete = AgentPlanStep(
-                decisao=AgentDecision(
-                    acao=TipoAcao.EXECUTAR,
-                    ferramenta="criar_lembrete",
-                    argumentos={
-                        "descricao": None,
-                        "recorrencia": None
-                    }
-                ),
-                depende_de=0,
-                resolver_argumentos={
-                    "id_tarefa": {
-                        "resultado_de": 0,
-                        "campo": "id_tarefa"
-                    },
-                    "titulo": {
-                        "resultado_de": 0,
-                        "campo": "titulo"
-                    },
-                    "data_hora": {
-                        "resultado_de": 0,
-                        "campo": "data_limite",
-                        "offset_minutos": offset_minutos
-                    }
-                }
-            )
-
-            return AgentPlan(
-                passos=[
-                    passo_tarefa,
-                    passo_lembrete
-                ]
-            )
-
-        # =====================================================
-        # CASOS GENÉRICOS INDEPENDENTES
-        # =====================================================
-
-        # Referências a uma ação anterior exigem uma regra
-        # explícita de dependência. Por enquanto, fora do caso
-        # tarefa -> lembrete acima, o planner não tenta adivinhar.
-        if any(
-                segmento.referencia_anterior
-                for segmento in segmentos[1:]
-        ):
             return None
 
         passos: list[AgentPlanStep] = []
 
+        # =====================================================
+        # PROCESSA CADA SEGMENTO
+        # =====================================================
+
         for segmento in segmentos:
+
+            # =================================================
+            # REFERÊNCIA A UMA AÇÃO ANTERIOR
+            # =================================================
+
+            if segmento.referencia_anterior:
+
+                # Por enquanto, a dependência contextual
+                # suportada no plano é:
+                #
+                # criar_tarefa -> criar_lembrete
+
+                indice_tarefa = None
+                decisao_tarefa = None
+
+                # Procura a tarefa criada mais recentemente
+                # dentro do próprio plano.
+                for indice in range(
+                        len(passos) - 1,
+                        -1,
+                        -1
+                ):
+                    decisao_anterior = (
+                        passos[indice].decisao
+                    )
+
+                    if (
+                            decisao_anterior.ferramenta
+                            == "criar_tarefa"
+                    ):
+                        indice_tarefa = indice
+                        decisao_tarefa = (
+                            decisao_anterior
+                        )
+                        break
+
+                if (
+                        indice_tarefa is None
+                        or decisao_tarefa is None
+                ):
+                    return None
+
+                data_limite = (
+                    decisao_tarefa.argumentos.get(
+                        "data_limite"
+                    )
+                )
+
+                if not data_limite:
+                    return None
+
+                # =============================================
+                # LEMBRETE RELATIVO
+                # =============================================
+
+                match_lembrete = re.search(
+                    r"^(?:me\s+)?"
+                    r"(?:lembre|lembra)"
+                    r"(?:\s+(?:"
+                    r"dela|dele|ela|ele|"
+                    r"dessa\s+tarefa|"
+                    r"desta\s+tarefa|"
+                    r"essa\s+tarefa|"
+                    r"esta\s+tarefa"
+                    r"))?"
+                    r"\s+(?P<quantidade>\d+)\s*"
+                    r"(?P<unidade>"
+                    r"minuto|minutos|hora|horas"
+                    r")"
+                    r"\s+antes"
+                    r"\s*[.!?]*$",
+                    segmento.texto,
+                    flags=re.IGNORECASE
+                )
+
+                if match_lembrete is None:
+                    return None
+
+                quantidade = int(
+                    match_lembrete.group(
+                        "quantidade"
+                    )
+                )
+
+                unidade = (
+                    match_lembrete.group(
+                        "unidade"
+                    )
+                    .lower()
+                )
+
+                if unidade.startswith("hora"):
+                    offset_minutos = -(
+                            quantidade * 60
+                    )
+                else:
+                    offset_minutos = (
+                        -quantidade
+                    )
+
+                passo_lembrete = AgentPlanStep(
+                    decisao=AgentDecision(
+                        acao=TipoAcao.EXECUTAR,
+                        ferramenta="criar_lembrete",
+                        argumentos={
+                            "descricao": None,
+                            "recorrencia": None
+                        }
+                    ),
+                    depende_de=indice_tarefa,
+                    resolver_argumentos={
+                        "id_tarefa": {
+                            "resultado_de":
+                                indice_tarefa,
+                            "campo":
+                                "id_tarefa"
+                        },
+                        "titulo": {
+                            "resultado_de":
+                                indice_tarefa,
+                            "campo":
+                                "titulo"
+                        },
+                        "data_hora": {
+                            "resultado_de":
+                                indice_tarefa,
+                            "campo":
+                                "data_limite",
+                            "offset_minutos":
+                                offset_minutos
+                        }
+                    }
+                )
+
+                passos.append(
+                    passo_lembrete
+                )
+
+                continue
+
+            # =================================================
+            # AÇÃO INDEPENDENTE
+            # =================================================
+
             decisao_segmento = (
-                JarvisAgent._detectar_segmento_independente(
+                JarvisAgent
+                ._detectar_segmento_independente(
                     mensagem=segmento.texto,
                     db=db,
                     id_usuario=id_usuario,
@@ -223,7 +252,8 @@ class JarvisAgent:
 
             if (
                     decisao_segmento is None
-                    or decisao_segmento.acao != TipoAcao.EXECUTAR
+                    or decisao_segmento.acao
+                    != TipoAcao.EXECUTAR
                     or not decisao_segmento.ferramenta
             ):
                 return None
@@ -234,13 +264,16 @@ class JarvisAgent:
                 )
             )
 
+        # =====================================================
+        # VALIDA PLANO
+        # =====================================================
+
         if len(passos) < 2:
             return None
 
         return AgentPlan(
             passos=passos
         )
-
     # =========================================================
     # DETECTAR SEGMENTO INDEPENDENTE
     # =========================================================
