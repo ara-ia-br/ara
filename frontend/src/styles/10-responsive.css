@@ -1,0 +1,39 @@
+/* 10-responsive.css — Media queries responsivas (versão nova) (linhas originais 2229-2265) */
+
+/* RESPONSIVE */
+@media (max-width: 1050px) {
+    .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .home-grid { grid-template-columns: 1fr; }
+    .ara-login-page { grid-template-columns: 1fr; }
+    .login-showcase { min-height: 42vh; }
+    .login-signals { display: none; }
+}
+
+@media (max-width: 760px) {
+    .ara-sidebar { width: 72px; min-width: 72px; padding-inline: 10px; }
+    .ara-sidebar .ara-brand-copy,
+    .ara-sidebar .ara-new-chat span,
+    .ara-sidebar .command-trigger span,
+    .ara-sidebar .command-trigger kbd,
+    .ara-sidebar .ara-nav-item span,
+    .ara-sidebar .conversation-section,
+    .ara-sidebar .profile-copy,
+    .ara-sidebar .profile-card > svg,
+    .ara-sidebar .logout-link,
+    .sidebar-collapse { display: none; }
+    .ara-sidebar .ara-new-chat, .ara-sidebar .command-trigger, .ara-sidebar .ara-nav-item { justify-content: center; padding-inline: 0; }
+    .ara-page { padding: 22px 18px 35px; }
+    .home-hero { align-items: flex-start; flex-direction: column; }
+    .feature-grid, .metric-grid { grid-template-columns: 1fr; }
+    .setting-card { align-items: flex-start; flex-direction: column; }
+    .ara-login-page { display: block; overflow: auto; }
+    .login-showcase { min-height: 360px; padding: 28px; }
+    .login-copy h1 { font-size: 50px; }
+    .login-access { padding: 18px; }
+    .messages { padding-inline: 18px; }
+    .composer-container { padding-inline: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}

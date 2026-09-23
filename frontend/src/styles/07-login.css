@@ -1,0 +1,32 @@
+/* 07-login.css — Tela de login ATUAL (a que você tem editado — RegisterPage/LoginPage usam esta) (linhas originais 2163-2192) */
+
+/* LOGIN */
+.ara-login-page { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(360px, .85fr); background: var(--ara-navy); overflow: hidden; }
+.login-showcase { position: relative; padding: clamp(28px, 5vw, 70px); display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; background:
+    radial-gradient(circle at 75% 22%, rgba(var(--ara-primary-rgb), .18), transparent 27%),
+    linear-gradient(145deg, #061823, #08131f 58%, #07131f); }
+.login-showcase::after { content: ""; position: absolute; right: -18%; bottom: -33%; width: 65vw; height: 65vw; max-width: 760px; max-height: 760px; border: 1px solid rgba(var(--ara-primary-rgb), .14); border-radius: 50%; box-shadow: 0 0 0 55px rgba(var(--ara-primary-rgb), .025), 0 0 0 110px rgba(var(--ara-primary-rgb), .018); }
+.login-showcase-grid { position: absolute; inset: 0; opacity: .11; background-image: linear-gradient(rgba(var(--ara-primary-rgb), .15) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--ara-primary-rgb), .15) 1px, transparent 1px); background-size: 44px 44px; mask-image: linear-gradient(to bottom right, black, transparent 72%); }
+.login-showcase > *:not(.login-showcase-grid) { position: relative; z-index: 2; }
+.login-copy { max-width: 660px; }
+.login-copy h1 { margin-top: 16px; font-size: clamp(45px, 6vw, 86px); line-height: .88; letter-spacing: -.065em; color: #edfff9; }
+.login-copy p { margin-top: 24px; max-width: 500px; color: #93b8ad; font-size: 14px; line-height: 1.7; }
+.login-signals { display: flex; gap: 22px; color: #749a90; font-size: 9px; font-weight: 900; letter-spacing: .14em; }
+.login-signals span { display: flex; align-items: center; gap: 7px; }
+.login-signals i { width: 6px; height: 6px; border-radius: 50%; background: var(--ara-primary); box-shadow: 0 0 10px rgba(var(--ara-primary-rgb), .5); }
+.login-access { display: grid; place-items: center; padding: 28px; background: var(--ara-navy-2); }
+.ara-login-card { width: min(400px, 100%); padding: 29px; border: 1px solid var(--ara-border); border-radius: 22px; background: var(--ara-surface); box-shadow: var(--ara-shadow); }
+.login-security { display: inline-flex; flex-direction: row !important; align-items: center; gap: 6px; color: var(--ara-primary); font-size: 9px; font-weight: 900; letter-spacing: .12em; }
+.login-card-heading h2 { margin-top: 13px; font-size: 27px; letter-spacing: -.035em; }
+.login-card-heading p { margin-top: 4px; color: var(--ara-text-muted); font-size: 11px; }
+.ara-field { display: block; margin-top: 19px; }
+.ara-field > span { display: block; margin-bottom: 7px; color: var(--ara-text-soft); font-size: 10px; font-weight: 700; }
+.ara-field > div { height: 44px; display: flex; align-items: center; gap: 9px; padding: 0 12px; border: 1px solid var(--ara-border); border-radius: 11px; background: var(--ara-navy-2); color: var(--ara-text-muted); }
+.ara-field > div:focus-within { border-color: var(--ara-border-strong); box-shadow: 0 0 0 3px rgba(var(--ara-primary-rgb), .05); }
+.ara-field input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--ara-text); }
+.ara-login-button { width: 100%; height: 44px; margin-top: 21px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; border-radius: 11px; background: var(--ara-primary); color: #061611; font-weight: 900; cursor: pointer; }
+.ara-login-button:disabled { opacity: .6; cursor: wait; }
+.login-footnote { display: block; margin-top: 12px; color: var(--ara-text-muted); font-size: 13px; line-height: 1.5; }
+.login-footnote a { color: #2ee6a6; font-weight: 600; text-decoration: none; }
+.login-footnote a:hover { text-decoration: underline; }
+

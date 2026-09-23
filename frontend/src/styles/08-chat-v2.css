@@ -1,0 +1,28 @@
+/* 08-chat-v2.css — Ajustes novos de chat por cima do antigo (linhas originais 2193-2218) */
+
+/* CHAT — keeps existing API behavior, changes product surface */
+.chat { background: transparent; }
+.chat-header { min-height: 68px; padding: 14px clamp(18px, 4vw, 44px); background: color-mix(in srgb, var(--ara-navy) 88%, transparent); border-bottom: 1px solid var(--ara-border); backdrop-filter: blur(16px); }
+.chat-header h2 { font-size: 14px; letter-spacing: -.01em; }
+.online { color: var(--ara-text-muted); font-size: 9px; letter-spacing: .05em; }
+.online-dot { background: var(--ara-primary); box-shadow: 0 0 10px rgba(var(--ara-primary-rgb), .52); }
+.messages { padding: 30px max(20px, calc((100% - 850px) / 2)); }
+.message { max-width: 780px; }
+.jarvis-message { align-self: stretch; max-width: 850px; padding: 3px 0 17px; background: transparent; border: 0; }
+.user-message { align-self: flex-end; max-width: min(680px, 82%); border: 1px solid var(--ara-border); background: var(--ara-surface); border-radius: 17px 17px 4px 17px; }
+.message-author { display: flex; align-items: center; gap: 7px; color: var(--ara-text-muted); font-size: 9px; font-weight: 900; letter-spacing: .1em; }
+.message-signal { width: 7px; height: 7px; border-radius: 50%; background: var(--ara-primary); box-shadow: 0 0 10px rgba(var(--ara-primary-rgb), .45); }
+.ara-message .message-content { color: var(--ara-text); line-height: 1.7; }
+.welcome { max-width: 640px; }
+.jarvis-symbol.ara-symbol { width: 48px; height: 48px; border-radius: 14px 5px 14px 5px; border: 1px solid var(--ara-border-strong); background: var(--ara-primary-soft); color: var(--ara-primary); box-shadow: none; transform: skewX(-6deg); }
+.welcome h2 { font-size: clamp(28px, 4vw, 43px); letter-spacing: -.045em; }
+.welcome p { color: var(--ara-text-muted); }
+.composer-container { background: linear-gradient(to top, var(--ara-navy) 72%, transparent); padding-inline: max(18px, calc((100% - 850px) / 2)); }
+.composer { border: 1px solid var(--ara-border-strong); border-radius: 17px; background: color-mix(in srgb, var(--ara-surface) 94%, transparent); box-shadow: 0 15px 50px rgba(0,0,0,.18); }
+.composer:focus-within { box-shadow: 0 0 0 3px rgba(var(--ara-primary-rgb), .04), 0 18px 55px rgba(0,0,0,.23); }
+.composer-button { color: var(--ara-text-muted); }
+.composer-button:hover { color: var(--ara-primary); background: var(--ara-primary-soft); }
+.send-button { background: var(--ara-primary); color: #061611; border-radius: 10px; }
+.disclaimer { color: var(--ara-text-muted); font-size: 8px; }
+.typing span { background: var(--ara-primary); }
+

@@ -1,0 +1,532 @@
+/* 01-sidebar.css — Sidebar antiga: menu, nova conversa, navegação, lista de conversas, arquivadas, rodapé (linhas originais 142-671) */
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+.sidebar {
+    width: 270px;
+    min-width: 270px;
+
+    display: flex;
+    flex-direction: column;
+
+    padding: 18px 14px;
+
+    background: #05080b;
+
+    border-right: 1px solid var(--border);
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 6px 8px 22px;
+}
+
+.logo {
+    width: 38px;
+    height: 38px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid var(--border-active);
+    border-radius: 11px;
+
+    background:
+        rgba(var(--jarvis-blue-rgb), 0.10);
+
+    color: var(--jarvis-blue);
+
+    box-shadow: var(--glow-blue);
+
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.sidebar-header h1 {
+    color: var(--jarvis-blue);
+
+    font-size: 16px;
+    letter-spacing: 1.5px;
+}
+
+.sidebar-header span {
+    display: block;
+
+    margin-top: 2px;
+
+    color: var(--text-muted);
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   NOVA CONVERSA
+========================================================= */
+
+.new-chat {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 11px 13px;
+
+    border: 1px solid var(--border-light);
+    border-radius: 9px;
+
+    background:
+        rgba(var(--jarvis-blue-rgb), 0.09);
+
+    color: var(--jarvis-blue);
+
+    cursor: pointer;
+
+    font-weight: 600;
+
+    transition: 0.15s;
+}
+
+.new-chat:hover {
+    background:
+        rgba(var(--jarvis-blue-rgb), 0.15);
+
+    border-color: var(--border-active);
+
+    box-shadow: var(--glow-blue);
+}
+
+
+/* =========================================================
+   NAVEGAÇÃO
+========================================================= */
+
+.sidebar-navigation {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    margin: 10px 0 16px;
+}
+
+.sidebar-nav-item {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 10px 12px;
+
+    border-radius: 8px;
+
+    background: transparent;
+    color: var(--text-secondary);
+
+    cursor: pointer;
+
+    font-size: 14px;
+    text-align: left;
+
+    transition: 0.15s;
+}
+
+.sidebar-nav-item:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+}
+
+.sidebar-nav-item.active {
+    background:
+        rgba(var(--jarvis-blue-rgb), 0.10);
+
+    color: var(--jarvis-blue);
+
+    border-left:
+        2px solid var(--jarvis-blue);
+}
+
+
+/* =========================================================
+   CONVERSAS
+========================================================= */
+
+.sidebar-section {
+    flex: 1;
+
+    margin-top: 28px;
+
+    overflow-y: auto;
+}
+
+.section-title {
+    display: block;
+
+    padding: 0 10px 9px;
+
+    color: var(--text-muted);
+
+    font-size: 10px;
+    font-weight: 700;
+
+    letter-spacing: 1.3px;
+}
+
+.no-conversations {
+    padding: 10px;
+
+    color: var(--text-muted);
+
+    font-size: 13px;
+}
+
+.conversation-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.conversation {
+    position: relative;
+
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 10px 11px;
+    margin-bottom: 3px;
+
+    border-radius: 8px;
+
+    background: transparent;
+    color: var(--text-secondary);
+
+    cursor: pointer;
+    text-align: left;
+
+    transition: 0.15s;
+}
+
+.conversation:hover {
+    background: var(--bg-hover);
+    color: var(--text);
+}
+
+.conversation.active {
+    background:
+        rgba(var(--jarvis-blue-rgb), 0.08);
+
+    color: var(--text);
+
+    border-left:
+        2px solid var(--jarvis-blue);
+}
+
+.conversation-title {
+    flex: 1;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   MENU DAS CONVERSAS
+========================================================= */
+
+.conversation-menu-container {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+}
+
+.conversation-more {
+    width: 26px;
+    height: 26px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-left: auto;
+
+    border-radius: 6px;
+
+    opacity: 0;
+
+    color: var(--text-muted);
+
+    transition: 0.15s;
+}
+
+.conversation:hover .conversation-more,
+.conversation.active .conversation-more {
+    opacity: 1;
+}
+
+.conversation-more:hover {
+    background: var(--bg-hover);
+    color: var(--jarvis-blue);
+}
+
+.conversation-menu {
+    position: absolute;
+
+    z-index: 100;
+
+    top: 32px;
+    right: 0;
+
+    width: 150px;
+
+    padding: 6px;
+
+    border: 1px solid var(--border);
+    border-radius: 10px;
+
+    background: var(--bg-secondary);
+
+    box-shadow:
+        0 15px 40px
+        rgba(0, 0, 0, 0.45);
+}
+
+.conversation-menu > span {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    width: 100%;
+
+    padding: 9px 10px;
+
+    border-radius: 7px;
+
+    color: var(--text-secondary);
+
+    font-size: 12px;
+
+    cursor: pointer;
+
+    transition: 0.15s;
+}
+
+.conversation-menu > span:hover {
+    background: var(--bg-hover);
+    color: var(--jarvis-blue);
+}
+
+.conversation-menu .danger {
+    color: var(--jarvis-red);
+}
+
+.conversation-menu .danger:hover {
+    background:
+        rgba(var(--jarvis-red-rgb), 0.10);
+
+    color: #d23a3a;
+}
+
+
+/* =========================================================
+   RENOMEAR CONVERSA
+========================================================= */
+
+.rename-conversation {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    padding: 5px;
+}
+
+.rename-conversation input {
+    flex: 1;
+
+    min-width: 0;
+
+    padding: 8px 9px;
+
+    border: 1px solid var(--border-light);
+    border-radius: 7px;
+
+    outline: none;
+
+    background: var(--bg-card);
+    color: var(--text);
+
+    font-size: 13px;
+}
+
+.rename-conversation input:focus {
+    border-color: var(--jarvis-blue);
+    box-shadow: var(--glow-blue);
+}
+
+.rename-conversation button {
+    width: 30px;
+    height: 30px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 6px;
+
+    background:
+        rgba(var(--jarvis-blue-rgb), 0.12);
+
+    color: var(--jarvis-blue);
+
+    cursor: pointer;
+}
+
+.rename-conversation button:hover {
+    background:
+        rgba(var(--jarvis-blue-rgb), 0.20);
+}
+
+
+/* =========================================================
+   ARQUIVADAS
+========================================================= */
+
+.archived-button {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    padding: 10px 11px;
+    margin-top: 10px;
+
+    border-radius: 8px;
+
+    background: transparent;
+    color: var(--text-muted);
+
+    cursor: pointer;
+
+    transition: 0.15s;
+}
+
+.archived-button:hover {
+    background: var(--bg-hover);
+    color: var(--jarvis-blue);
+}
+
+.archived-list {
+    max-height: 220px;
+
+    overflow-y: auto;
+
+    margin-top: 6px;
+    padding: 6px;
+
+    border-radius: 8px;
+
+    background: var(--bg-secondary);
+}
+
+.archived-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+
+    padding: 8px;
+
+    border-radius: 7px;
+}
+
+.archived-item:hover {
+    background: var(--bg-hover);
+}
+
+.archived-item span {
+    flex: 1;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    color: var(--text-secondary);
+
+    font-size: 12px;
+}
+
+.archived-item button {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+
+    padding: 5px 8px;
+
+    border-radius: 6px;
+
+    background:
+        rgba(var(--jarvis-blue-rgb), 0.10);
+
+    color: var(--jarvis-blue);
+
+    cursor: pointer;
+
+    font-size: 11px;
+}
+
+.archived-item button:hover {
+    background:
+        rgba(var(--jarvis-blue-rgb), 0.18);
+}
+
+
+/* =========================================================
+   SIDEBAR FOOTER
+========================================================= */
+
+.sidebar-footer {
+    display: flex;
+    flex-direction: column;
+
+    padding-top: 12px;
+
+    border-top: 1px solid var(--border);
+}
+
+.sidebar-footer button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 10px;
+
+    border-radius: 8px;
+
+    background: transparent;
+    color: var(--text-muted);
+
+    cursor: pointer;
+    text-align: left;
+}
+
+.sidebar-footer button:hover {
+    background: var(--bg-hover);
+    color: var(--jarvis-blue);
+}
+
+

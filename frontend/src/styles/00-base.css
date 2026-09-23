@@ -1,0 +1,143 @@
+/* 00-base.css — Reset global + variáveis de cor/tema (:root) (linhas originais 1-141) */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    font-family:
+        Inter,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    /* =====================================================
+       JARVIS - PALETA OFICIAL
+    ===================================================== */
+
+    --jarvis-blue: #67C7EB;
+    --jarvis-blue-rgb: 103, 199, 235;
+
+    --jarvis-cyan: #00A4B1;
+    --jarvis-cyan-rgb: 0, 164, 177;
+
+    --jarvis-amber: #FBCA03;
+    --jarvis-amber-rgb: 251, 202, 3;
+
+    --jarvis-red: #AA0505;
+    --jarvis-red-rgb: 170, 5, 5;
+
+
+    /* =====================================================
+       BACKGROUNDS
+    ===================================================== */
+
+    --bg-main: #06090c;
+    --bg-secondary: #091016;
+    --bg-card: #0d151b;
+    --bg-hover: #132028;
+
+    --bg-blue-soft:
+        rgba(var(--jarvis-blue-rgb), 0.08);
+
+    --bg-blue-medium:
+        rgba(var(--jarvis-blue-rgb), 0.14);
+
+    --bg-cyan-soft:
+        rgba(var(--jarvis-cyan-rgb), 0.10);
+
+
+    /* =====================================================
+       TEXTOS
+    ===================================================== */
+
+    --text: #f4fbfd;
+    --text-secondary: #a7bdc6;
+    --text-muted: #607781;
+
+
+    /* =====================================================
+       BORDAS
+    ===================================================== */
+
+    --border:
+        rgba(var(--jarvis-blue-rgb), 0.12);
+
+    --border-light:
+        rgba(var(--jarvis-blue-rgb), 0.24);
+
+    --border-active:
+        rgba(var(--jarvis-blue-rgb), 0.60);
+
+
+    /* =====================================================
+       GLOW
+    ===================================================== */
+
+    --glow-blue:
+        0 0 14px
+        rgba(var(--jarvis-blue-rgb), 0.22);
+
+    --glow-blue-strong:
+        0 0 8px
+        rgba(var(--jarvis-blue-rgb), 0.50),
+        0 0 22px
+        rgba(var(--jarvis-blue-rgb), 0.20);
+
+    --glow-cyan:
+        0 0 14px
+        rgba(var(--jarvis-cyan-rgb), 0.35);
+
+    --glow-warning:
+        0 0 14px
+        rgba(var(--jarvis-amber-rgb), 0.30);
+
+    --glow-danger:
+        0 0 14px
+        rgba(var(--jarvis-red-rgb), 0.40);
+
+
+    color: var(--text);
+    background: var(--bg-main);
+
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+}
+
+body {
+    margin: 0;
+
+    min-width: 320px;
+    min-height: 100vh;
+
+    overflow: hidden;
+
+    background: var(--bg-main);
+    color: var(--text);
+}
+
+button,
+textarea,
+input,
+select {
+    font: inherit;
+}
+
+button {
+    border: none;
+}
+
+.app {
+    width: 100vw;
+    height: 100vh;
+
+    display: flex;
+
+    background: var(--bg-main);
+}
+
+

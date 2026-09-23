@@ -1,0 +1,17 @@
+/* =========================================================
+   ÍNDICE DE ESTILOS — A.R.A.
+   A ordem dos imports importa (define quem sobrescreve quem).
+   NÃO reordene sem checar o efeito visual em todas as páginas.
+========================================================= */
+
+@import "./00-base.css";
+@import "./01-sidebar.css";
+@import "./02-chat.css";
+@import "./03-tasks.css";
+@import "./04-login-legacy.css";
+@import "./05-utilities.css";
+@import "./06-ara-system.css";
+@import "./07-login.css";
+@import "./08-chat-v2.css";
+@import "./09-tasks-v2.css";
+@import "./10-responsive.css";
