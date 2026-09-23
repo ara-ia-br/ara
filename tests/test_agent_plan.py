@@ -83,3 +83,48 @@ def test_mensagem_simples_nao_gera_plano():
     )
     
     assert plano is None
+
+
+def test_planejar_duas_acoes_indepedentes():
+
+    plano = JarvisAgent.planejar(
+        "liste minhas tarefas "
+        "e liste meus lembretes"
+    )
+
+    assert plano is not None
+    assert len(plano.passos) == 2
+
+    assert (plano.passos[0].decisao.ferramenta == "listar_tarefas")
+
+    assert (plano.passos[1].decisao.ferramenta == "listar_lembretes")
+
+    assert plano.passos[0].depende_de is None
+    assert plano.passos[1].depende_de is None
+
+def test_planejar_tres_acoes_independentes():
+
+    plano = JarvisAgent.planejar(
+        "liste minhas tarefas "
+        "e liste meus lembretes "
+        "e crie uma tarefa chamada revisar"
+    )
+
+    assert plano is not None
+    assert len(plano.passos) == 3
+
+    ferramentas = [
+        passo.decisao.ferramenta
+        for passo in plano.passos
+    ]
+
+    assert ferramentas == [
+        "listar_tarefas",
+        "listar_lembretes",
+        "criar_tarefa"
+    ]
+
+    assert all(
+        passo.depende_de is None
+        for passo in plano.passos
+    )

@@ -8,12 +8,9 @@ from app.services.lembrete_service import (
 
 from app.agent.multi_intent_parser import MultiIntentParser
 
-
 from datetime import timedelta
 
 from sqlalchemy.orm import Session
-
-
 
 from app.agent.intent import (
     AgentDecision,
@@ -42,11 +39,10 @@ from app.services.time_service import (
     TimeService
 )
 
-
 from app.services.contexto_agente_service import ContextoAgenteService
 
+
 class JarvisAgent:
-    
     '''
     ===========================================================
     PLANEJAR
@@ -84,136 +80,259 @@ class JarvisAgent:
         # DIVIDE POSSÍVEIS INTENTS
         # =====================================================
 
-        segmentos = (
-            MultiIntentParser.dividir(
-                mensagem
-            )
+        segmentos = MultiIntentParser.dividir(
+            mensagem
         )
 
         # Uma única intenção continua pelo fluxo tradicional.
         if len(segmentos) < 2:
             return None
 
-        # Primeira generalização suportada:
-        # tarefa -> lembrete relativo à tarefa.
-        segmento_tarefa = segmentos[0]
-        segmento_lembrete = segmentos[1]
+        # =====================================================
+        # CASO DEPENDENTE:
+        # TAREFA -> LEMBRETE RELATIVO
+        # =====================================================
 
-        if not segmento_lembrete.referencia_anterior:
+        if (
+                len(segmentos) == 2
+                and segmentos[1].referencia_anterior
+        ):
+            segmento_tarefa = segmentos[0]
+            segmento_lembrete = segmentos[1]
+
+            decisao_tarefa = (
+                JarvisAgent._detectar_acao_tarefa(
+                    segmento_tarefa.texto
+                )
+            )
+
+            if (
+                    decisao_tarefa is None
+                    or decisao_tarefa.acao != TipoAcao.EXECUTAR
+                    or decisao_tarefa.ferramenta != "criar_tarefa"
+            ):
+                return None
+
+            data_limite = (
+                decisao_tarefa.argumentos.get(
+                    "data_limite"
+                )
+            )
+
+            if not data_limite:
+                return None
+
+            match_lembrete = re.search(
+                r"^(?:me\s+)?"
+                r"(?:lembre|lembra)"
+                r"(?:\s+(?:"
+                r"dela|dele|ela|ele|"
+                r"dessa\s+tarefa|desta\s+tarefa|"
+                r"essa\s+tarefa|esta\s+tarefa"
+                r"))?"
+                r"\s+(?P<quantidade>\d+)\s*"
+                r"(?P<unidade>minuto|minutos|hora|horas)"
+                r"\s+antes"
+                r"\s*[.!?]*$",
+                segmento_lembrete.texto,
+                flags=re.IGNORECASE
+            )
+
+            if match_lembrete is None:
+                return None
+
+            quantidade = int(
+                match_lembrete.group(
+                    "quantidade"
+                )
+            )
+
+            unidade = (
+                match_lembrete.group(
+                    "unidade"
+                ).lower()
+            )
+
+            if unidade.startswith("hora"):
+                offset_minutos = -(quantidade * 60)
+            else:
+                offset_minutos = -quantidade
+
+            passo_tarefa = AgentPlanStep(
+                decisao=decisao_tarefa
+            )
+
+            passo_lembrete = AgentPlanStep(
+                decisao=AgentDecision(
+                    acao=TipoAcao.EXECUTAR,
+                    ferramenta="criar_lembrete",
+                    argumentos={
+                        "descricao": None,
+                        "recorrencia": None
+                    }
+                ),
+                depende_de=0,
+                resolver_argumentos={
+                    "id_tarefa": {
+                        "resultado_de": 0,
+                        "campo": "id_tarefa"
+                    },
+                    "titulo": {
+                        "resultado_de": 0,
+                        "campo": "titulo"
+                    },
+                    "data_hora": {
+                        "resultado_de": 0,
+                        "campo": "data_limite",
+                        "offset_minutos": offset_minutos
+                    }
+                }
+            )
+
+            return AgentPlan(
+                passos=[
+                    passo_tarefa,
+                    passo_lembrete
+                ]
+            )
+
+        # =====================================================
+        # CASOS GENÉRICOS INDEPENDENTES
+        # =====================================================
+
+        # Referências a uma ação anterior exigem uma regra
+        # explícita de dependência. Por enquanto, fora do caso
+        # tarefa -> lembrete acima, o planner não tenta adivinhar.
+        if any(
+                segmento.referencia_anterior
+                for segmento in segmentos[1:]
+        ):
             return None
 
-        # =====================================================
-        # PASSO 1 - DETECTA TAREFA
-        # =====================================================
+        passos: list[AgentPlanStep] = []
+
+        for segmento in segmentos:
+            decisao_segmento = (
+                JarvisAgent._detectar_segmento_independente(
+                    mensagem=segmento.texto,
+                    db=db,
+                    id_usuario=id_usuario,
+                    id_conversa=id_conversa
+                )
+            )
+
+            if (
+                    decisao_segmento is None
+                    or decisao_segmento.acao != TipoAcao.EXECUTAR
+                    or not decisao_segmento.ferramenta
+            ):
+                return None
+
+            passos.append(
+                AgentPlanStep(
+                    decisao=decisao_segmento
+                )
+            )
+
+        if len(passos) < 2:
+            return None
+
+        return AgentPlan(
+            passos=passos
+        )
+
+    # =========================================================
+    # DETECTAR SEGMENTO INDEPENDENTE
+    # =========================================================
+
+    @staticmethod
+    def _detectar_segmento_independente(
+            mensagem: str,
+            db: Session | None = None,
+            id_usuario: int | None = None,
+            id_conversa: int | None = None
+    ) -> AgentDecision | None:
+        """
+        Converte um segmento independente em AgentDecision usando
+        os detectores determinísticos já existentes.
+
+        Não chama decidir(), porque decidir() também valida o
+        ToolRegistry e executa o pipeline público completo do Agent.
+        O planner precisa apenas classificar cada segmento.
+        """
+
+        # -----------------------------------------------------
+        # TAREFAS
+        # -----------------------------------------------------
 
         decisao_tarefa = (
             JarvisAgent._detectar_acao_tarefa(
-                segmento_tarefa.texto
+                mensagem
             )
         )
 
         if (
-                decisao_tarefa is None
-                or decisao_tarefa.acao != TipoAcao.EXECUTAR
-                or decisao_tarefa.ferramenta != "criar_tarefa"
+                decisao_tarefa is not None
+                and decisao_tarefa.acao == TipoAcao.EXECUTAR
+                and decisao_tarefa.ferramenta
         ):
-            return None
+            return decisao_tarefa
 
-        data_limite = (
-            decisao_tarefa.argumentos.get(
-                "data_limite"
+        # -----------------------------------------------------
+        # EXCLUSÃO EM MASSA DE LEMBRETES
+        # -----------------------------------------------------
+
+        decisao_exclusao = (
+            JarvisAgent._detectar_exclusao_todos_lembretes(
+                mensagem
             )
         )
 
-        if not data_limite:
-            return None
+        if (
+                decisao_exclusao is not None
+                and decisao_exclusao.acao == TipoAcao.EXECUTAR
+                and decisao_exclusao.ferramenta
+        ):
+            return decisao_exclusao
 
-        # =====================================================
-        # PASSO 2 - INTERPRETA LEMBRETE RELATIVO
-        # =====================================================
+        # -----------------------------------------------------
+        # AÇÕES DE LEMBRETE
+        # -----------------------------------------------------
 
-        match_lembrete = re.search(
-            r"^(?:me\s+)?"
-            r"(?:lembre|lembra)"
-            r"(?:\s+(?:"
-            r"dela|dele|ela|ele|"
-            r"dessa\s+tarefa|desta\s+tarefa|"
-            r"essa\s+tarefa|esta\s+tarefa"
-            r"))?"
-            r"\s+(?P<quantidade>\d+)\s*"
-            r"(?P<unidade>minuto|minutos|hora|horas)"
-            r"\s+antes"
-            r"\s*[.!?]*$",
-            segmento_lembrete.texto,
-            flags=re.IGNORECASE
-        )
-
-        if match_lembrete is None:
-            return None
-
-        quantidade = int(
-            match_lembrete.group(
-                "quantidade"
+        decisao_lembrete = (
+            JarvisAgent._detectar_acao_lembrete(
+                mensagem
             )
         )
 
-        unidade = (
-            match_lembrete.group(
-                "unidade"
+        if (
+                decisao_lembrete is not None
+                and decisao_lembrete.acao == TipoAcao.EXECUTAR
+                and decisao_lembrete.ferramenta
+        ):
+            return decisao_lembrete
+
+        # -----------------------------------------------------
+        # CRIAÇÃO DIRETA DE LEMBRETE
+        # -----------------------------------------------------
+
+        decisao_direta = (
+            JarvisAgent._detectar_lembrete(
+                mensagem=mensagem,
+                db=db,
+                id_usuario=id_usuario,
+                id_conversa=id_conversa
             )
-            .lower()
         )
 
-        if unidade.startswith("hora"):
-            offset_minutos = -(
-                    quantidade * 60
-            )
-        else:
-            offset_minutos = -quantidade
+        if (
+                decisao_direta is not None
+                and decisao_direta.acao == TipoAcao.EXECUTAR
+                and decisao_direta.ferramenta
+        ):
+            return decisao_direta
 
-        # =====================================================
-        # MONTA PLANO
-        # =====================================================
-
-        passo_tarefa = AgentPlanStep(
-            decisao=decisao_tarefa
-        )
-
-        passo_lembrete = AgentPlanStep(
-            decisao=AgentDecision(
-                acao=TipoAcao.EXECUTAR,
-                ferramenta="criar_lembrete",
-                argumentos={
-                    "descricao": None,
-                    "recorrencia": None
-                }
-            ),
-            depende_de=0,
-            resolver_argumentos={
-                "id_tarefa": {
-                    "resultado_de": 0,
-                    "campo": "id_tarefa"
-                },
-                "titulo": {
-                    "resultado_de": 0,
-                    "campo": "titulo"
-                },
-                "data_hora": {
-                    "resultado_de": 0,
-                    "campo": "data_limite",
-                    "offset_minutos":
-                        offset_minutos
-                }
-            }
-        )
-
-        return AgentPlan(
-            passos=[
-                passo_tarefa,
-                passo_lembrete
-            ]
-        )
-    
+        return None
 
     # =========================================================
     # DECIDIR
@@ -221,10 +340,10 @@ class JarvisAgent:
 
     @staticmethod
     def decidir(
-        mensagem: str,
-        db: Session | None = None,
-        id_usuario: int | None = None,
-        id_conversa: int | None = None
+            mensagem: str,
+            db: Session | None = None,
+            id_usuario: int | None = None,
+            id_conversa: int | None = None
     ) -> AgentDecision:
 
         # =====================================================
@@ -275,11 +394,6 @@ class JarvisAgent:
                 acao=TipoAcao.CONVERSAR
             )
 
-
-
-
-
-
         # =====================================================
         # INSTRUCTIONAL GUARD GLOBAL
         # =====================================================
@@ -327,20 +441,20 @@ class JarvisAgent:
         )
 
         if (
-            decisao_contextual is not None
-            and decisao_contextual.acao == TipoAcao.EXECUTAR
-            and decisao_contextual.ferramenta
-            and ToolRegistry.existe(
-                decisao_contextual.ferramenta
-            )
+                decisao_contextual is not None
+                and decisao_contextual.acao == TipoAcao.EXECUTAR
+                and decisao_contextual.ferramenta
+                and ToolRegistry.existe(
+            decisao_contextual.ferramenta
+        )
         ):
             return decisao_contextual
 
         # Se o contextual identificou a intenção,
         # mas precisa conversar/solicitar informação.
         if (
-            decisao_contextual is not None
-            and decisao_contextual.acao == TipoAcao.CONVERSAR
+                decisao_contextual is not None
+                and decisao_contextual.acao == TipoAcao.CONVERSAR
         ):
             return decisao_contextual
 
@@ -355,18 +469,18 @@ class JarvisAgent:
         )
 
         if (
-            decisao_tarefa is not None
-            and decisao_tarefa.acao == TipoAcao.EXECUTAR
-            and decisao_tarefa.ferramenta
-            and ToolRegistry.existe(
-                decisao_tarefa.ferramenta
-            )
+                decisao_tarefa is not None
+                and decisao_tarefa.acao == TipoAcao.EXECUTAR
+                and decisao_tarefa.ferramenta
+                and ToolRegistry.existe(
+            decisao_tarefa.ferramenta
+        )
         ):
             return decisao_tarefa
 
         if (
-            decisao_tarefa is not None
-            and decisao_tarefa.acao == TipoAcao.CONVERSAR
+                decisao_tarefa is not None
+                and decisao_tarefa.acao == TipoAcao.CONVERSAR
         ):
             return decisao_tarefa
 
@@ -401,13 +515,13 @@ class JarvisAgent:
         )
 
         if (
-            decisao_exclusao_lembretes is not None
-            and decisao_exclusao_lembretes.acao
+                decisao_exclusao_lembretes is not None
+                and decisao_exclusao_lembretes.acao
                 == TipoAcao.EXECUTAR
-            and decisao_exclusao_lembretes.ferramenta
-            and ToolRegistry.existe(
-                decisao_exclusao_lembretes.ferramenta
-            )
+                and decisao_exclusao_lembretes.ferramenta
+                and ToolRegistry.existe(
+            decisao_exclusao_lembretes.ferramenta
+        )
         ):
             return decisao_exclusao_lembretes
 
@@ -422,12 +536,12 @@ class JarvisAgent:
         )
 
         if (
-            decisao_lembrete is not None
-            and decisao_lembrete.acao == TipoAcao.EXECUTAR
-            and decisao_lembrete.ferramenta
-            and ToolRegistry.existe(
-                decisao_lembrete.ferramenta
-            )
+                decisao_lembrete is not None
+                and decisao_lembrete.acao == TipoAcao.EXECUTAR
+                and decisao_lembrete.ferramenta
+                and ToolRegistry.existe(
+            decisao_lembrete.ferramenta
+        )
         ):
             return decisao_lembrete
 
@@ -445,30 +559,28 @@ class JarvisAgent:
         )
 
         if (
-            decisao_direta is not None
-            and ToolRegistry.existe(
-                "criar_lembrete"
-            )
+                decisao_direta is not None
+                and ToolRegistry.existe(
+            "criar_lembrete"
+        )
         ):
             return decisao_direta
 
-    # =====================================================
-    # 5. FALLBACK DETERMINÍSTICO
-    # =====================================================
-    #
-    # Nenhuma intenção operacional conhecida foi detectada.
-    # A mensagem segue diretamente para o fluxo normal de
-    # conversação.
-    #
-    # Isso evita uma chamada adicional ao modelo apenas para
-    # classificar mensagens comuns como CONVERSAR.
-    # =====================================================
+        # =====================================================
+        # 5. FALLBACK DETERMINÍSTICO
+        # =====================================================
+        #
+        # Nenhuma intenção operacional conhecida foi detectada.
+        # A mensagem segue diretamente para o fluxo normal de
+        # conversação.
+        #
+        # Isso evita uma chamada adicional ao modelo apenas para
+        # classificar mensagens comuns como CONVERSAR.
+        # =====================================================
 
         return AgentDecision(
             acao=TipoAcao.CONVERSAR
         )
-
-
 
     # =========================================================
     # INTERPRETAR RESPOSTA DO MODELO
@@ -476,7 +588,7 @@ class JarvisAgent:
 
     @staticmethod
     def _interpretar(
-        resposta: str
+            resposta: str
     ) -> AgentDecision:
 
         resposta = re.sub(
@@ -520,7 +632,6 @@ class JarvisAgent:
         ).upper().strip()
 
         if acao != "EXECUTAR":
-
             return AgentDecision(
                 acao=TipoAcao.CONVERSAR
             )
@@ -535,18 +646,17 @@ class JarvisAgent:
         )
 
         if not isinstance(
-            argumentos,
-            dict
+                argumentos,
+                dict
         ):
             argumentos = {}
 
         if (
-            not ferramenta
-            or not ToolRegistry.existe(
-                ferramenta
-            )
+                not ferramenta
+                or not ToolRegistry.existe(
+            ferramenta
+        )
         ):
-
             return AgentDecision(
                 acao=TipoAcao.CONVERSAR
             )
@@ -605,16 +715,14 @@ class JarvisAgent:
             )
 
             if valor is None:
-
                 return AgentDecision(
                     acao=TipoAcao.CONVERSAR
                 )
 
             if (
-                isinstance(valor, str)
-                and not valor.strip()
+                    isinstance(valor, str)
+                    and not valor.strip()
             ):
-
                 return AgentDecision(
                     acao=TipoAcao.CONVERSAR
                 )
@@ -631,7 +739,7 @@ class JarvisAgent:
 
     @staticmethod
     def _limpar_titulo(
-        titulo: str
+            titulo: str
     ) -> str:
 
         if not titulo:
@@ -672,8 +780,8 @@ class JarvisAgent:
             "",
             titulo,
             flags=(
-                re.IGNORECASE
-                | re.VERBOSE
+                    re.IGNORECASE
+                    | re.VERBOSE
             )
         )
 
@@ -738,7 +846,7 @@ class JarvisAgent:
 
     @staticmethod
     def _detectar_prioridade(
-        mensagem: str
+            mensagem: str
     ) -> int:
 
         texto = mensagem.lower()
@@ -822,7 +930,7 @@ class JarvisAgent:
 
     @staticmethod
     def _detectar_exclusao_todos_lembretes(
-        mensagem: str
+            mensagem: str
     ) -> AgentDecision | None:
 
         texto = (
@@ -861,11 +969,11 @@ class JarvisAgent:
         )
 
         if any(
-            re.search(
-                padrao,
-                texto
-            )
-            for padrao in padroes_instrucionais
+                re.search(
+                    padrao,
+                    texto
+                )
+                for padrao in padroes_instrucionais
         ):
             return None
 
@@ -909,9 +1017,9 @@ class JarvisAgent:
         )
 
         if not (
-            verbo_exclusao
-            and totalidade
-            and dominio_lembrete
+                verbo_exclusao
+                and totalidade
+                and dominio_lembrete
         ):
             return None
 
@@ -921,17 +1029,16 @@ class JarvisAgent:
             argumentos={}
         )
 
-
     # =========================================================
     # DETECTAR LEMBRETE
     # =========================================================
 
     @staticmethod
     def _detectar_lembrete(
-        mensagem: str,
-        db: Session | None = None,
-        id_usuario: int | None = None,
-        id_conversa: int | None = None
+            mensagem: str,
+            db: Session | None = None,
+            id_usuario: int | None = None,
+            id_conversa: int | None = None
     ) -> AgentDecision | None:
 
         texto = mensagem.lower().strip()
@@ -946,8 +1053,8 @@ class JarvisAgent:
         ]
 
         if not any(
-            gatilho in texto
-            for gatilho in gatilhos
+                gatilho in texto
+                for gatilho in gatilhos
         ):
             return None
 
@@ -983,14 +1090,14 @@ class JarvisAgent:
         )
 
         if (
-            referencia_tarefa
-            and deslocamento_antes is not None
+                referencia_tarefa
+                and deslocamento_antes is not None
         ):
 
             if (
-                db is None
-                or id_usuario is None
-                or id_conversa is None
+                    db is None
+                    or id_usuario is None
+                    or id_conversa is None
             ):
                 return AgentDecision(
                     acao=TipoAcao.CONVERSAR
@@ -1058,8 +1165,8 @@ class JarvisAgent:
                 )
 
             data_lembrete = (
-                data_limite
-                - deslocamento
+                    data_limite
+                    - deslocamento
             )
 
             # =====================================================
@@ -1076,16 +1183,16 @@ class JarvisAgent:
             agora_referencia = TimeService.agora()
 
             if (
-                data_lembrete.tzinfo is None
-                and agora_referencia.tzinfo is not None
+                    data_lembrete.tzinfo is None
+                    and agora_referencia.tzinfo is not None
             ):
                 data_lembrete = data_lembrete.replace(
                     tzinfo=agora_referencia.tzinfo
                 )
 
             elif (
-                data_lembrete.tzinfo is not None
-                and agora_referencia.tzinfo is None
+                    data_lembrete.tzinfo is not None
+                    and agora_referencia.tzinfo is None
             ):
                 agora_referencia = agora_referencia.replace(
                     tzinfo=data_lembrete.tzinfo
@@ -1113,23 +1220,23 @@ class JarvisAgent:
         agora = TimeService.agora()
 
         if (
-            "depois de amanhã" in texto
-            or "depois de amanha" in texto
+                "depois de amanhã" in texto
+                or "depois de amanha" in texto
         ):
 
             data_alvo = (
-                agora
-                + timedelta(days=2)
+                    agora
+                    + timedelta(days=2)
             )
 
         elif (
-            "amanhã" in texto
-            or "amanha" in texto
+                "amanhã" in texto
+                or "amanha" in texto
         ):
 
             data_alvo = (
-                agora
-                + timedelta(days=1)
+                    agora
+                    + timedelta(days=1)
             )
 
         elif "hoje" in texto:
@@ -1160,7 +1267,6 @@ class JarvisAgent:
         )
 
         if horario is not None:
-
             hora = int(
                 horario.group(1)
             )
@@ -1235,7 +1341,7 @@ class JarvisAgent:
 
     @staticmethod
     def _detectar_acao_lembrete(
-        mensagem: str
+            mensagem: str
     ) -> AgentDecision | None:
 
         texto = mensagem.lower().strip()
@@ -1255,10 +1361,9 @@ class JarvisAgent:
         ]
 
         if any(
-            gatilho in texto
-            for gatilho in gatilhos_listar
+                gatilho in texto
+                for gatilho in gatilhos_listar
         ):
-
             return AgentDecision(
                 acao=TipoAcao.EXECUTAR,
                 ferramenta="listar_lembretes",
@@ -1299,7 +1404,6 @@ class JarvisAgent:
                 )
 
                 if titulo:
-
                     return AgentDecision(
                         acao=TipoAcao.EXECUTAR,
                         ferramenta="cancelar_lembrete",
@@ -1343,7 +1447,6 @@ class JarvisAgent:
                 )
 
                 if titulo:
-
                     return AgentDecision(
                         acao=TipoAcao.EXECUTAR,
                         ferramenta="concluir_lembrete",
@@ -1360,16 +1463,16 @@ class JarvisAgent:
 
     @staticmethod
     def _resolver_tarefa_contextual(
-        mensagem: str,
-        db: Session | None,
-        id_usuario: int | None,
-        id_conversa: int | None
+            mensagem: str,
+            db: Session | None,
+            id_usuario: int | None,
+            id_conversa: int | None
     ):
 
         if (
-            db is None
-            or id_usuario is None
-            or id_conversa is None
+                db is None
+                or id_usuario is None
+                or id_conversa is None
         ):
             return None
 
@@ -1428,8 +1531,8 @@ class JarvisAgent:
             )
 
             eh_continuacao_prioridade = (
-                possui_continuacao
-                and possui_prioridade
+                    possui_continuacao
+                    and possui_prioridade
             )
 
             if not eh_continuacao_prioridade:
@@ -1492,21 +1595,20 @@ class JarvisAgent:
 
     @staticmethod
     def _detectar_acao_contextual_tarefa(
-        mensagem: str,
-        db: Session | None,
-        id_usuario: int | None,
-        id_conversa: int | None
+            mensagem: str,
+            db: Session | None,
+            id_usuario: int | None,
+            id_conversa: int | None
     ) -> AgentDecision | None:
 
         if (
-            db is None
-            or id_usuario is None
-            or id_conversa is None
+                db is None
+                or id_usuario is None
+                or id_conversa is None
         ):
             return None
 
         texto = mensagem.lower().strip()
-
 
         # Se a mensagem fala explicitamente de lembrete,
         # ela não pode ser capturada pelo contexto de tarefa.
@@ -1575,10 +1677,9 @@ class JarvisAgent:
         ]
 
         if any(
-            gatilho in texto
-            for gatilho in gatilhos_remover_prazo
+                gatilho in texto
+                for gatilho in gatilhos_remover_prazo
         ):
-
             return AgentDecision(
                 acao=TipoAcao.EXECUTAR,
                 ferramenta="editar_tarefa",
@@ -1637,8 +1738,8 @@ class JarvisAgent:
         ]
 
         if any(
-            gatilho in texto
-            for gatilho in gatilhos_prazo
+                gatilho in texto
+                for gatilho in gatilhos_prazo
         ):
 
             data_limite = (
@@ -1678,8 +1779,8 @@ class JarvisAgent:
             # sua data e alteramos apenas hora/minuto.
 
             if (
-                data_limite is None
-                and tarefa.data_limite is not None
+                    data_limite is None
+                    and tarefa.data_limite is not None
             ):
 
                 horario_match = re.search(
@@ -1695,14 +1796,13 @@ class JarvisAgent:
                 )
 
                 if horario_match:
-
                     hora = int(
                         horario_match.group(1)
                     )
 
                     minuto_texto = (
-                        horario_match.group(2)
-                        or horario_match.group(3)
+                            horario_match.group(2)
+                            or horario_match.group(3)
                     )
 
                     minuto = (
@@ -1725,7 +1825,6 @@ class JarvisAgent:
                     )
 
             if data_limite is not None:
-
                 return AgentDecision(
                     acao=TipoAcao.EXECUTAR,
                     ferramenta="editar_tarefa",
@@ -1763,7 +1862,6 @@ class JarvisAgent:
         )
 
         if eh_consulta_prioridade:
-
             return AgentDecision(
                 acao=TipoAcao.EXECUTAR,
                 ferramenta="consultar_tarefa",
@@ -1789,7 +1887,6 @@ class JarvisAgent:
         )
 
         if eh_consulta_status:
-
             return AgentDecision(
                 acao=TipoAcao.EXECUTAR,
                 ferramenta="consultar_tarefa",
@@ -1816,7 +1913,6 @@ class JarvisAgent:
         )
 
         if eh_consulta_prazo:
-
             return AgentDecision(
                 acao=TipoAcao.EXECUTAR,
                 ferramenta="consultar_tarefa",
@@ -1841,10 +1937,9 @@ class JarvisAgent:
         ]
 
         if any(
-            termo in texto
-            for termo in termos_prioridade
+                termo in texto
+                for termo in termos_prioridade
         ):
-
             prioridade = (
                 JarvisAgent._detectar_prioridade(
                     mensagem
@@ -1875,10 +1970,9 @@ class JarvisAgent:
         ]
 
         if any(
-            gatilho in texto
-            for gatilho in gatilhos_reabrir
+                gatilho in texto
+                for gatilho in gatilhos_reabrir
         ):
-
             return AgentDecision(
                 acao=TipoAcao.EXECUTAR,
                 ferramenta="reabrir_tarefa",
@@ -1905,10 +1999,9 @@ class JarvisAgent:
         ]
 
         if any(
-            gatilho in texto
-            for gatilho in gatilhos_concluir
+                gatilho in texto
+                for gatilho in gatilhos_concluir
         ):
-
             return AgentDecision(
                 acao=TipoAcao.EXECUTAR,
                 ferramenta="concluir_tarefa",
@@ -1930,10 +2023,9 @@ class JarvisAgent:
         ]
 
         if any(
-            gatilho in texto
-            for gatilho in gatilhos_iniciar
+                gatilho in texto
+                for gatilho in gatilhos_iniciar
         ):
-
             return AgentDecision(
                 acao=TipoAcao.EXECUTAR,
                 ferramenta="iniciar_tarefa",
@@ -1955,10 +2047,9 @@ class JarvisAgent:
         ]
 
         if any(
-            gatilho in texto
-            for gatilho in gatilhos_cancelar
+                gatilho in texto
+                for gatilho in gatilhos_cancelar
         ):
-
             return AgentDecision(
                 acao=TipoAcao.EXECUTAR,
                 ferramenta="cancelar_tarefa",
@@ -1975,7 +2066,7 @@ class JarvisAgent:
 
     @staticmethod
     def _detectar_acao_tarefa(
-        mensagem: str
+            mensagem: str
     ) -> AgentDecision | None:
 
         texto = mensagem.lower().strip()
@@ -1985,12 +2076,11 @@ class JarvisAgent:
         # =====================================================
 
         if (
-            "tarefas de hoje" in texto
-            or "tarefas para hoje" in texto
-            or "o que tenho para hoje" in texto
-            or "o que eu tenho para hoje" in texto
+                "tarefas de hoje" in texto
+                or "tarefas para hoje" in texto
+                or "o que tenho para hoje" in texto
+                or "o que eu tenho para hoje" in texto
         ):
-
             agora = TimeService.agora()
 
             inicio = agora.replace(
@@ -2021,17 +2111,16 @@ class JarvisAgent:
         # =====================================================
 
         if (
-            "tarefas de amanhã" in texto
-            or "tarefas de amanha" in texto
-            or "tarefas para amanhã" in texto
-            or "tarefas para amanha" in texto
+                "tarefas de amanhã" in texto
+                or "tarefas de amanha" in texto
+                or "tarefas para amanhã" in texto
+                or "tarefas para amanha" in texto
         ):
-
             agora = TimeService.agora()
 
             amanha = (
-                agora
-                + timedelta(days=1)
+                    agora
+                    + timedelta(days=1)
             )
 
             inicio = amanha.replace(
@@ -2071,10 +2160,9 @@ class JarvisAgent:
         ]
 
         if any(
-            gatilho in texto
-            for gatilho in gatilhos_listar
+                gatilho in texto
+                for gatilho in gatilhos_listar
         ):
-
             return AgentDecision(
                 acao=TipoAcao.EXECUTAR,
                 ferramenta="listar_tarefas",
@@ -2101,7 +2189,6 @@ class JarvisAgent:
             )
 
             if match:
-
                 titulo = (
                     JarvisAgent._limpar_titulo(
                         match.group(1)
@@ -2143,7 +2230,6 @@ class JarvisAgent:
             )
 
             if match:
-
                 titulo = (
                     JarvisAgent._limpar_titulo(
                         match.group(1)
@@ -2182,7 +2268,6 @@ class JarvisAgent:
             )
 
             if match:
-
                 titulo = (
                     JarvisAgent._limpar_titulo(
                         match.group(1)
@@ -2223,7 +2308,6 @@ class JarvisAgent:
             )
 
             if match:
-
                 titulo = (
                     JarvisAgent._limpar_titulo(
                         match.group(1)
@@ -2280,7 +2364,6 @@ class JarvisAgent:
                 )
 
                 if data_limite is None:
-
                     return AgentDecision(
                         acao=TipoAcao.CONVERSAR
                     )
@@ -2321,8 +2404,8 @@ class JarvisAgent:
                 )
 
                 inicio = (
-                    indice
-                    + len(gatilho)
+                        indice
+                        + len(gatilho)
                 )
 
                 conteudo_tarefa = mensagem[
@@ -2385,7 +2468,6 @@ class JarvisAgent:
                 # remover_tempo_do_texto pode deixar o conector
                 # imediatamente anterior à expressão temporal.
                 if data_limite is not None:
-
                     titulo = re.sub(
                         r"(?i)\s+(?:"
                         r"para|pra|"
@@ -2442,8 +2524,8 @@ class JarvisAgent:
                 )
 
                 if (
-                    not titulo_normalizado
-                    or apenas_conectores
+                        not titulo_normalizado
+                        or apenas_conectores
                 ):
                     return AgentDecision(
                         acao=TipoAcao.CONVERSAR
@@ -2492,7 +2574,6 @@ class JarvisAgent:
                 )
 
                 if titulo:
-
                     return AgentDecision(
                         acao=TipoAcao.EXECUTAR,
                         ferramenta="criar_tarefa",
@@ -2542,7 +2623,6 @@ class JarvisAgent:
                 )
 
                 if titulo:
-
                     return AgentDecision(
                         acao=TipoAcao.EXECUTAR,
                         ferramenta="iniciar_tarefa",
@@ -2587,7 +2667,6 @@ class JarvisAgent:
                 )
 
                 if titulo:
-
                     return AgentDecision(
                         acao=TipoAcao.EXECUTAR,
                         ferramenta="reabrir_tarefa",
@@ -2631,7 +2710,6 @@ class JarvisAgent:
                 )
 
                 if titulo:
-
                     return AgentDecision(
                         acao=TipoAcao.EXECUTAR,
                         ferramenta="concluir_tarefa",
@@ -2673,7 +2751,6 @@ class JarvisAgent:
                 )
 
                 if titulo:
-
                     return AgentDecision(
                         acao=TipoAcao.EXECUTAR,
                         ferramenta="cancelar_tarefa",
@@ -2686,10 +2763,10 @@ class JarvisAgent:
 
     @staticmethod
     def _resolver_lembrete_contextual(
-        mensagem: str,
-        db: Session | None,
-        id_usuario: int | None,
-        id_conversa: int | None
+            mensagem: str,
+            db: Session | None,
+            id_usuario: int | None,
+            id_conversa: int | None
     ):
         """
         Resolve referências contextuais de lembrete.
@@ -2704,9 +2781,9 @@ class JarvisAgent:
         """
 
         if (
-            db is None
-            or id_usuario is None
-            or id_conversa is None
+                db is None
+                or id_usuario is None
+                or id_conversa is None
         ):
             return None
 
@@ -2820,7 +2897,6 @@ class JarvisAgent:
             key=lambda item: item.id_lembrete
         )
 
-
     @staticmethod
     def _detectar_acao_contextual_lembrete(
             mensagem: str,
@@ -2868,21 +2944,20 @@ class JarvisAgent:
         # =====================================================
 
         if any(
-            termo in texto
-            for termo in [
-                "adie",
-                "adiar",
-                "mude",
-                "mudar",
-                "altere",
-                "alterar",
-                "remarque",
-                "remarcar",
-                "reagende",
-                "reagendar"
-            ]
+                termo in texto
+                for termo in [
+                    "adie",
+                    "adiar",
+                    "mude",
+                    "mudar",
+                    "altere",
+                    "alterar",
+                    "remarque",
+                    "remarcar",
+                    "reagende",
+                    "reagendar"
+                ]
         ):
-
             # Captura a parte temporal da mensagem.
             # A própria tool resolve data completa ou apenas horário.
             temporal = texto
@@ -2945,3 +3020,4 @@ class JarvisAgent:
             )
 
         return None
+
