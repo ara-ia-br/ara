@@ -9,6 +9,7 @@ import {
     Workflow
 } from "lucide-react";
 import ChatPage from "./pages/ChatPage";
+import RegisterPage from "./pages/RegisterPage";
 import LoginPage from "./pages/LoginPage";
 import TasksPage from "./pages/TasksPage";
 import HomePage from "./pages/HomePage";
@@ -30,6 +31,8 @@ function App() {
         <BrowserRouter>
             <Routes>
                 <Route path="/login" element={usuario ? <Navigate to="/hoje" replace /> : <LoginPage />} />
+
+                <Route path="/cadastro" element={usuario ? <Navigate to="/hoje" replace /> : <RegisterPage />} />
 
                 {usuario && (
                     <Route element={<MainLayout />}>
