@@ -137,6 +137,98 @@ def listar_lembretes(
 
 
 # =========================================================
+# CONSULTAR LEMBRETE
+# =========================================================
+
+def consultar_lembrete(
+    db: Session,
+    id_usuario: int,
+    titulo: str
+) -> dict:
+
+    titulo = titulo.strip()
+
+    if not titulo:
+        raise ValueError(
+            "Informe qual lembrete deseja consultar."
+        )
+
+    lembretes = LembreteService.listar(
+        db,
+        id_usuario
+    )
+
+    def normalizar(valor: str) -> str:
+        return re.sub(
+            r"\s+",
+            " ",
+            valor.casefold()
+        ).strip()
+
+    titulo_normalizado = normalizar(titulo)
+
+    lembrete_encontrado = None
+
+    # Primeiro correspondência exata.
+    for lembrete in lembretes:
+        if normalizar(lembrete.titulo) == titulo_normalizado:
+            lembrete_encontrado = lembrete
+            break
+
+    # Depois correspondência parcial.
+    if lembrete_encontrado is None:
+        for lembrete in lembretes:
+
+            titulo_item = normalizar(
+                lembrete.titulo
+            )
+
+            if (
+                titulo_normalizado in titulo_item
+                or titulo_item in titulo_normalizado
+            ):
+                lembrete_encontrado = lembrete
+                break
+
+    if lembrete_encontrado is None:
+        return {
+            "sucesso": True,
+            "encontrado": False,
+            "titulo_consultado": titulo
+        }
+
+    status = (
+        lembrete_encontrado.status.value
+        if hasattr(
+            lembrete_encontrado.status,
+            "value"
+        )
+        else str(lembrete_encontrado.status)
+    )
+
+    return {
+        "sucesso": True,
+        "encontrado": True,
+        "id_lembrete":
+            lembrete_encontrado.id_lembrete,
+        "id_tarefa":
+            lembrete_encontrado.id_tarefa,
+        "titulo":
+            lembrete_encontrado.titulo,
+        "descricao":
+            lembrete_encontrado.descricao,
+        "data_hora": (
+            lembrete_encontrado.data_hora.isoformat()
+            if lembrete_encontrado.data_hora
+            else None
+        ),
+        "recorrencia":
+            lembrete_encontrado.recorrencia,
+        "status": status
+    }
+
+
+# =========================================================
 # CANCELAR LEMBRETE
 # =========================================================
 

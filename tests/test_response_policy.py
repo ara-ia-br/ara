@@ -54,7 +54,7 @@ def test_pergunta_tecnica_recebe_perfil_normal():
         == PoliticaMarkdown.ESTRUTURADO
     )
 
-    assert perfil.max_tokens == 700
+    assert perfil.max_tokens == 1000
 
 
 def test_codigo_e_detectado_como_contexto_tecnico():

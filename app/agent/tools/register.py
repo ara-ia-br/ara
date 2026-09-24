@@ -21,6 +21,16 @@ from app.agent.tools.tarefa_tools import (
     editar_tarefa
 )
 
+from app.agent.lembrete_tools import (
+    criar_lembrete,
+    listar_lembretes,
+    consultar_lembrete,
+    cancelar_lembrete,
+    concluir_lembrete,
+    editar_lembrete,
+    excluir_todos_lembretes
+)
+
 from app.agent.tools.tarefa_tools import (
     criar_tarefa,
     listar_tarefas,
@@ -45,6 +55,11 @@ def registrar_tools():
     ToolRegistry.registrar(
         "listar_lembretes",
         listar_lembretes
+    ),
+
+    ToolRegistry.registrar(
+        "consultar_lembrete",
+        consultar_lembrete
     )
 
     ToolRegistry.registrar(

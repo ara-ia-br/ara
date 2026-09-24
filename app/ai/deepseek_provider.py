@@ -10,7 +10,7 @@ class DeepSeekProvider(AIProvider):
 
     def __init__(self):
 
-        api_key = (setting.Setting.DEEPSEEK_API_KEY
+        api_key = (setting.DEEPSEEK_API_KEY
                    or ""
                    ).strip()
 
@@ -18,11 +18,11 @@ class DeepSeekProvider(AIProvider):
         or api_key == "PREENCHER AQUI"):
             raise ValueError("DEEPSEEK_API_KEY não configurada.")
 
-        self.modelo = setting.Setting.DEEPSEEK_API_KEY
+        self.modelo = setting.DEEPSEEK_API_KEY
 
         self.client = OpenAI(
             api_key=api_key,
-            base_url=setting.Setting.DEEPSEEK_BASE_URL,
+            base_url=setting.DEEPSEEK_BASE_URL,
             timeout=45.0,
             max_retries=0
         )

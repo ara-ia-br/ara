@@ -37,7 +37,10 @@ class Lembrete(Base):
     )
 
     id_tarefa: Mapped[int] = mapped_column(
-        ForeignKey("tarefa.id_tarefa"),
+        ForeignKey(
+            "tarefa.id_tarefa",
+            ondelete="CASCADE"
+        ),
         nullable=False
     )
 

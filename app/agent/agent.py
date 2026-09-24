@@ -1643,6 +1643,128 @@ class AraAgent:
 
         texto = mensagem.lower().strip()
 
+        # =====================================================
+        # CONSULTA CONTEXTUAL DE LISTAGEM
+        # =====================================================
+        #
+        # Continuação natural de uma conversa sobre lembretes:
+        #
+        # "todos"
+        # "todos eles"
+        # "mostra todos"
+        # "lista todos"
+        # "e os outros"
+        #
+        # Nunca deve cair no LLM, porque a lista precisa vir
+        # obrigatoriamente do banco.
+        # =====================================================
+
+        consultas_listagem = {
+            "todos",
+            "todos eles",
+            "todos os lembretes",
+            "lista todos",
+            "liste todos",
+            "mostra todos",
+            "mostre todos",
+            "e os outros",
+            "e os demais",
+        }
+
+        if texto in consultas_listagem:
+
+            id_ultimo_lembrete = (
+                ContextoAgenteService
+                .obter_ultimo_lembrete_id(
+                    db=db,
+                    id_usuario=id_usuario,
+                    id_conversa=id_conversa
+                )
+            )
+
+            if id_ultimo_lembrete is not None:
+                return AgentDecision(
+                    acao=TipoAcao.EXECUTAR,
+                    ferramenta="listar_lembretes",
+                    argumentos={}
+                )
+
+        # =====================================================
+        # GUARDA DE MUTAÇÃO CONTEXTUAL
+        # =====================================================
+        #
+        # O contexto pode resolver QUAL tarefa está em foco,
+        # mas nunca pode inventar QUAL ação o usuário deseja.
+        #
+        # Frases como:
+        # "está faltando..."
+        # "não apareceu..."
+        # "cadê..."
+        # "e aquela?"
+        #
+        # são observações/consultas, não comandos de alteração.
+        # =====================================================
+
+        gatilhos_operacionais = [
+            # prazo / edição
+            "muda",
+            "mude",
+            "altera",
+            "altere",
+            "troca",
+            "troque",
+            "joga",
+            "jogue",
+            "coloca",
+            "coloque",
+            "passa",
+            "passe",
+            "remove",
+            "remova",
+            "tira",
+            "tire",
+
+            # status
+            "inicia",
+            "inicie",
+            "começa",
+            "comece",
+            "conclui",
+            "conclua",
+            "finaliza",
+            "finalize",
+            "cancela",
+            "cancele",
+            "reabre",
+            "reabra",
+
+            # exclusão
+            "exclui",
+            "exclua",
+            "apaga",
+            "apague",
+
+            # prioridade
+            "prioridade",
+            "urgente",
+            "muito baixa",
+            "baixa",
+            "alta",
+        ]
+
+        tem_intencao_operacional = any(
+            re.search(
+                rf"(?<!\w){re.escape(gatilho)}(?!\w)",
+                texto,
+                flags=re.IGNORECASE
+            )
+            is not None
+            for gatilho in gatilhos_operacionais
+        )
+
+        if not tem_intencao_operacional:
+            return None
+
         # Se a mensagem fala explicitamente de lembrete,
         # ela não pode ser capturada pelo contexto de tarefa.
         if "lembrete" in texto:
@@ -1660,6 +1782,67 @@ class AraAgent:
                 id_conversa=id_conversa
             )
         )
+
+        # =====================================================
+        # CONSULTA CONTEXTUAL DE LEMBRETE
+        # =====================================================
+
+        contexto = ContextoAgenteService.obter(
+            db=db,
+            id_usuario=id_usuario,
+            id_conversa=id_conversa
+        )
+
+        ultima_ferramenta = getattr(
+            contexto,
+            "ultima_ferramenta",
+            None
+        )
+
+        contexto_lembrete = (
+                "lembrete" in texto
+                or ultima_ferramenta in {
+                    "criar_lembrete",
+                    "listar_lembretes",
+                    "consultar_lembrete",
+                    "editar_lembrete",
+                    "cancelar_lembrete",
+                    "concluir_lembrete"
+                }
+        )
+
+        if contexto_lembrete:
+
+            padroes_consulta = [
+                r"^(?:está|esta)\s+faltando\s+(?:o|a)?\s*(.+)$",
+                r"^faltando\s+(?:o|a)?\s*(.+)$",
+                r"^(?:não|nao)\s+apareceu\s+(?:o|a)?\s*(.+)$",
+                r"^(?:cadê|cade)\s+(?:o|a)?\s*(.+)$",
+            ]
+
+            for padrao in padroes_consulta:
+
+                match = re.match(
+                    padrao,
+                    texto,
+                    flags=re.IGNORECASE
+                )
+
+                if match:
+
+                    titulo = (
+                        match.group(1)
+                        .strip(" .?!")
+                    )
+
+                    if titulo:
+                        return AgentDecision(
+                            acao=TipoAcao.EXECUTAR,
+                            ferramenta="consultar_lembrete",
+                            argumentos={
+                                "titulo": titulo
+                            }
+                        )
 
         # =====================================================
         # DEBUG TEMPORÁRIO

@@ -215,7 +215,7 @@ class ResponsePolicy:
             return ResponseProfile(
                 tamanho=TamanhoResposta.NORMAL,
                 markdown=PoliticaMarkdown.ESTRUTURADO,
-                max_tokens=700,
+                max_tokens=1000,
                 temperatura=0.35
             )
 
