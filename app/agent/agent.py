@@ -1,4 +1,4 @@
-﻿from app.services.consulta_instrucional_service import ConsultaInstrucionalService
+from app.services.consulta_instrucional_service import ConsultaInstrucionalService
 import json
 import re
 
@@ -57,12 +57,12 @@ class AraAgent:
             id_conversa: int | None = None
     ) -> AgentPlan | None:
         """
-        Monta um plano para mensagens com mÃºltiplas intenÃ§Ãµes.
+        Monta um plano para mensagens com múltiplas intenções.
 
         Suporta:
-        - aÃ§Ãµes independentes;
+        - ações independentes;
         - tarefa -> lembrete relativo;
-        - mistura de aÃ§Ãµes dependentes e independentes.
+        - mistura de ações dependentes e independentes.
         """
 
         # =====================================================
@@ -98,13 +98,13 @@ class AraAgent:
         for segmento in segmentos:
 
             # =================================================
-            # REFERÃŠNCIA A UMA AÃ‡ÃƒO ANTERIOR
+            # REFERÊNCIA A UMA AÇÃO ANTERIOR
             # =================================================
 
             if segmento.referencia_anterior:
 
-                # Por enquanto, a dependÃªncia contextual
-                # suportada no plano Ã©:
+                # Por enquanto, a dependência contextual
+                # suportada no plano é:
                 #
                 # criar_tarefa -> criar_lembrete
 
@@ -112,7 +112,7 @@ class AraAgent:
                 decisao_tarefa = None
 
                 # Procura a tarefa criada mais recentemente
-                # dentro do prÃ³prio plano.
+                # dentro do próprio plano.
                 for indice in range(
                         len(passos) - 1,
                         -1,
@@ -237,7 +237,7 @@ class AraAgent:
                 continue
 
             # =================================================
-            # AÃ‡ÃƒO INDEPENDENTE
+            # AÇÃO INDEPENDENTE
             # =================================================
 
             decisao_segmento = (
@@ -287,10 +287,10 @@ class AraAgent:
     ) -> AgentDecision | None:
         """
         Converte um segmento independente em AgentDecision usando
-        os detectores determinÃ­sticos jÃ¡ existentes.
+        os detectores determinísticos já existentes.
 
-        NÃ£o chama decidir(), porque decidir() tambÃ©m valida o
-        ToolRegistry e executa o pipeline pÃºblico completo do Agent.
+        Não chama decidir(), porque decidir() também valida o
+        ToolRegistry e executa o pipeline público completo do Agent.
         O planner precisa apenas classificar cada segmento.
         """
 
@@ -312,7 +312,7 @@ class AraAgent:
             return decisao_tarefa
 
         # -----------------------------------------------------
-        # EXCLUSÃƒO EM MASSA DE LEMBRETES
+        # EXCLUSÃO EM MASSA DE LEMBRETES
         # -----------------------------------------------------
 
         decisao_exclusao = (
@@ -329,7 +329,7 @@ class AraAgent:
             return decisao_exclusao
 
         # -----------------------------------------------------
-        # AÃ‡Ã•ES DE LEMBRETE
+        # AÇÕES DE LEMBRETE
         # -----------------------------------------------------
 
         decisao_lembrete = (
@@ -346,7 +346,7 @@ class AraAgent:
             return decisao_lembrete
 
         # -----------------------------------------------------
-        # CRIAÃ‡ÃƒO DIRETA DE LEMBRETE
+        # CRIAÇÃO DIRETA DE LEMBRETE
         # -----------------------------------------------------
 
         decisao_direta = (
@@ -380,7 +380,7 @@ class AraAgent:
     ) -> AgentDecision:
 
         # =====================================================
-        # FAST PATH â€” CONVERSAS TRIVIAIS
+        # FAST PATH — CONVERSAS TRIVIAIS
         # =====================================================
 
         texto = (
@@ -391,9 +391,9 @@ class AraAgent:
 
         mensagens_diretas = {
             "oi",
-            "olÃ¡",
+            "olá",
             "ola",
-            "e aÃ­",
+            "e aí",
             "e ai",
             "opa",
             "blz",
@@ -431,8 +431,8 @@ class AraAgent:
         # INSTRUCTIONAL GUARD GLOBAL
         # =====================================================
         #
-        # Perguntar COMO executar uma aÃ§Ã£o nÃ£o autoriza sua
-        # execuÃ§Ã£o. Esta barreira ocorre antes de todos os
+        # Perguntar COMO executar uma ação não autoriza sua
+        # execução. Esta barreira ocorre antes de todos os
         # detectores operacionais.
         # =====================================================
 
@@ -458,7 +458,7 @@ class AraAgent:
         #
         # Exemplos:
         # "coloque a primeira como urgente"
-        # "joga a segunda para sexta Ã s 19h"
+        # "joga a segunda para sexta às 19h"
         # "conclua ela"
         # "cancela essa"
         # =====================================================
@@ -483,8 +483,8 @@ class AraAgent:
         ):
             return decisao_contextual
 
-        # Se o contextual identificou a intenÃ§Ã£o,
-        # mas precisa conversar/solicitar informaÃ§Ã£o.
+        # Se o contextual identificou a intenção,
+        # mas precisa conversar/solicitar informação.
         if (
                 decisao_contextual is not None
                 and decisao_contextual.acao == TipoAcao.CONVERSAR
@@ -492,7 +492,7 @@ class AraAgent:
             return decisao_contextual
 
         # =====================================================
-        # 2. AÃ‡Ã•ES DE TAREFA
+        # 2. AÇÕES DE TAREFA
         # =====================================================
 
         decisao_tarefa = (
@@ -537,7 +537,7 @@ class AraAgent:
             return decisao_contextual_lembrete
 
         # =====================================================
-        # 3. EXCLUSÃƒO EM MASSA DE LEMBRETES
+        # 3. EXCLUSÃO EM MASSA DE LEMBRETES
         # =====================================================
 
         decisao_exclusao_lembretes = (
@@ -559,7 +559,7 @@ class AraAgent:
             return decisao_exclusao_lembretes
 
         # =====================================================
-        # 4. AÃ‡Ã•ES DE LEMBRETE
+        # 4. AÇÕES DE LEMBRETE
         # =====================================================
 
         decisao_lembrete = (
@@ -579,7 +579,7 @@ class AraAgent:
             return decisao_lembrete
 
         # =====================================================
-        # 4. CRIAÃ‡ÃƒO DIRETA DE LEMBRETE
+        # 4. CRIAÇÃO DIRETA DE LEMBRETE
         # =====================================================
 
         decisao_direta = (
@@ -600,12 +600,12 @@ class AraAgent:
             return decisao_direta
 
         # =====================================================
-        # 5. FALLBACK DETERMINÃSTICO
+        # 5. FALLBACK DETERMINÍSTICO
         # =====================================================
         #
-        # Nenhuma intenÃ§Ã£o operacional conhecida foi detectada.
+        # Nenhuma intenção operacional conhecida foi detectada.
         # A mensagem segue diretamente para o fluxo normal de
-        # conversaÃ§Ã£o.
+        # conversação.
         #
         # Isso evita uma chamada adicional ao modelo apenas para
         # classificar mensagens comuns como CONVERSAR.
@@ -767,7 +767,7 @@ class AraAgent:
         )
 
     # =========================================================
-    # LIMPAR TÃTULO
+    # LIMPAR TÍTULO
     # =========================================================
 
     @staticmethod
@@ -781,7 +781,7 @@ class AraAgent:
         titulo = titulo.strip()
 
         # =====================================================
-        # EXPRESSÃ•ES DE EDUCAÃ‡ÃƒO
+        # EXPRESSÕES DE EDUCAÇÃO
         # =====================================================
 
         titulo = re.sub(
@@ -819,12 +819,12 @@ class AraAgent:
         )
 
         # =====================================================
-        # EXPRESSÃ•ES DE PRIORIDADE
+        # EXPRESSÕES DE PRIORIDADE
         # =====================================================
 
         titulo = re.sub(
             r"\bprioridade\s+"
-            r"(mÃ¡xima|maxima|alta|baixa|muito baixa|[1-5])\b",
+            r"(máxima|maxima|alta|baixa|muito baixa|[1-5])\b",
             "",
             titulo,
             flags=re.IGNORECASE
@@ -845,7 +845,7 @@ class AraAgent:
         )
 
         # =====================================================
-        # NORMALIZA ESPAÃ‡OS
+        # NORMALIZA ESPAÇOS
         # =====================================================
 
         titulo = re.sub(
@@ -892,7 +892,7 @@ class AraAgent:
             "muito urgente",
             "urgentemente",
             "urgente",
-            "prioridade mÃ¡xima",
+            "prioridade máxima",
             "prioridade maxima",
             "prioridade 5"
         ]
@@ -941,8 +941,8 @@ class AraAgent:
             "prioridade baixa",
             "baixa prioridade",
             "prioridade 2",
-            "nÃ£o Ã© importante",
-            "nao Ã© importante",
+            "não é importante",
+            "nao é importante",
             "nao e importante"
         ]
 
@@ -975,7 +975,7 @@ class AraAgent:
         # -----------------------------------------------------
         # QUERY / INSTRUCTION GUARD
         #
-        # Perguntar COMO fazer uma operaÃ§Ã£o nÃ£o significa
+        # Perguntar COMO fazer uma operação não significa
         # solicitar que ela seja executada.
         #
         # Exemplos:
@@ -995,9 +995,9 @@ class AraAgent:
             r"^gostaria\s+de\s+saber\s+como\b",
             r"^posso\b",
             r"^eu\s+consigo\b",
-            r"^qual\s+(?:e|Ã©|seria)\s+"
+            r"^qual\s+(?:e|é|seria)\s+"
             r"(?:a\s+)?(?:forma|maneira)\b",
-            r"^qual\s+(?:e|Ã©|seria)\s+"
+            r"^qual\s+(?:e|é|seria)\s+"
             r"(?:o\s+)?jeito\b",
         )
 
@@ -1011,14 +1011,14 @@ class AraAgent:
             return None
 
         # -----------------------------------------------------
-        # A intenÃ§Ã£o precisa conter:
+        # A intenção precisa conter:
         #
-        # 1. verbo explÃ­cito de exclusÃ£o;
+        # 1. verbo explícito de exclusão;
         # 2. quantificador de totalidade;
-        # 3. domÃ­nio lembrete.
+        # 3. domínio lembrete.
         #
-        # Isso evita interpretar exclusÃµes individuais como
-        # exclusÃµes em massa.
+        # Isso evita interpretar exclusões individuais como
+        # exclusões em massa.
         # -----------------------------------------------------
 
         verbo_exclusao = bool(
@@ -1092,14 +1092,14 @@ class AraAgent:
             return None
 
         # =====================================================
-        # REMINDER BRIDGE â€” REFERÃŠNCIA Ã€ ÃšLTIMA TAREFA
+        # REMINDER BRIDGE — REFERÊNCIA À ÚLTIMA TAREFA
         #
         # Exemplos:
         # "crie um lembrete para ela 30 minutos antes"
         # "me lembre dela 1 hora antes"
         #
-        # A referÃªncia contextual aponta para a Ãºltima tarefa
-        # vÃ¡lida da conversa. O horÃ¡rio do lembrete Ã© calculado
+        # A referência contextual aponta para a última tarefa
+        # válida da conversa. O horário do lembrete é calculado
         # a partir de data_limite da tarefa.
         # =====================================================
 
@@ -1203,14 +1203,14 @@ class AraAgent:
             )
 
             # =====================================================
-            # NORMALIZAÃ‡ÃƒO DE TIMEZONE
+            # NORMALIZAÇÃO DE TIMEZONE
             #
-            # MariaDB/MySQL DATETIME nÃ£o preserva timezone.
+            # MariaDB/MySQL DATETIME não preserva timezone.
             # TimeService.agora(), por outro lado, pode retornar
             # um datetime timezone-aware.
             #
             # Antes de comparar, os dois valores precisam usar
-            # a mesma referÃªncia temporal.
+            # a mesma referência temporal.
             # =====================================================
 
             agora_referencia = TimeService.agora()
@@ -1231,7 +1231,7 @@ class AraAgent:
                     tzinfo=data_lembrete.tzinfo
                 )
 
-            # NÃ£o cria lembrete contextual jÃ¡ vencido.
+            # Não cria lembrete contextual já vencido.
             if data_lembrete <= agora_referencia:
                 return AgentDecision(
                     acao=TipoAcao.CONVERSAR
@@ -1253,7 +1253,7 @@ class AraAgent:
         agora = TimeService.agora()
 
         if (
-                "depois de amanhÃ£" in texto
+                "depois de amanhã" in texto
                 or "depois de amanha" in texto
         ):
 
@@ -1263,7 +1263,7 @@ class AraAgent:
             )
 
         elif (
-                "amanhÃ£" in texto
+                "amanhã" in texto
                 or "amanha" in texto
         ):
 
@@ -1278,7 +1278,7 @@ class AraAgent:
 
         else:
 
-            # Tenta interpretaÃ§Ã£o mais avanÃ§ada.
+            # Tenta interpretação mais avançada.
             data_alvo = (
                 NaturalTimeService.interpretar(
                     mensagem
@@ -1289,7 +1289,7 @@ class AraAgent:
                 return None
 
         # =====================================================
-        # HORÃRIO
+        # HORÁRIO
         # =====================================================
 
         horario = re.search(
@@ -1317,7 +1317,7 @@ class AraAgent:
             )
 
         # =====================================================
-        # TÃTULO
+        # TÍTULO
         # =====================================================
 
         titulo = mensagem
@@ -1369,7 +1369,7 @@ class AraAgent:
         )
 
     # =========================================================
-    # AÃ‡Ã•ES DE LEMBRETES
+    # AÇÕES DE LEMBRETES
     # =========================================================
 
     @staticmethod
@@ -1452,8 +1452,8 @@ class AraAgent:
         gatilhos_concluir = [
             "conclui o lembrete",
             "concluir lembrete",
-            "marque como concluÃ­do",
-            "marca como concluÃ­do",
+            "marque como concluído",
+            "marca como concluído",
             "marque como concluido",
             "marca como concluido"
         ]
@@ -1522,17 +1522,17 @@ class AraAgent:
         if entidade is None:
 
             # =================================================
-            # CONTINUAÃ‡ÃƒO IMPLÃCITA DE PRIORIDADE
+            # CONTINUAÇÃO IMPLÍCITA DE PRIORIDADE
             # =================================================
             #
             # Exemplos:
             #
-            # "prioridade alta tambÃ©m"
-            # "coloque prioridade alta tambÃ©m"
+            # "prioridade alta também"
+            # "coloque prioridade alta também"
             #
-            # NÃ£o usamos a Ãºltima tarefa como fallback global.
-            # Isso sÃ³ ocorre quando hÃ¡ evidÃªncia clara de uma
-            # continuaÃ§Ã£o de prioridade.
+            # Não usamos a última tarefa como fallback global.
+            # Isso só ocorre quando há evidência clara de uma
+            # continuação de prioridade.
 
             texto_contextual = (
                 EntidadeContextualService
@@ -1614,7 +1614,7 @@ class AraAgent:
             return None
 
         # =====================================================
-        # SEGURANÃ‡A
+        # SEGURANÇA
         # =====================================================
 
         if tarefa.id_usuario != id_usuario:
@@ -1623,7 +1623,7 @@ class AraAgent:
         return tarefa
 
     # =========================================================
-    # DETECTAR AÃ‡ÃƒO CONTEXTUAL DE TAREFA
+    # DETECTAR AÇÃO CONTEXTUAL DE TAREFA
     # =========================================================
 
     @staticmethod
@@ -1644,12 +1644,12 @@ class AraAgent:
         texto = mensagem.lower().strip()
 
         # Se a mensagem fala explicitamente de lembrete,
-        # ela nÃ£o pode ser capturada pelo contexto de tarefa.
+        # ela não pode ser capturada pelo contexto de tarefa.
         if "lembrete" in texto:
             return None
 
         # =====================================================
-        # RESOLVE REFERÃŠNCIA
+        # RESOLVE REFERÊNCIA
         # =====================================================
 
         tarefa = (
@@ -1662,7 +1662,7 @@ class AraAgent:
         )
 
         # =====================================================
-        # DEBUG TEMPORÃRIO
+        # DEBUG TEMPORÁRIO
         # =====================================================
 
         print(
@@ -1738,7 +1738,7 @@ class AraAgent:
             "passa para",
             "passe para",
 
-            # continuaÃ§Ãµes naturais
+            # continuações naturais
             "muda ela para",
             "mude ela para",
             "muda ela pra",
@@ -1800,15 +1800,15 @@ class AraAgent:
             )
 
             # =================================================
-            # HORÃRIO ISOLADO
+            # HORÁRIO ISOLADO
             # =================================================
             #
-            # NaturalTimeService pode nÃ£o interpretar:
+            # NaturalTimeService pode não interpretar:
             #
             # "mude ela para 21h"
             # "coloque ela para 22h30"
             #
-            # Se a tarefa jÃ¡ possui data_limite, preservamos
+            # Se a tarefa já possui data_limite, preservamos
             # sua data e alteramos apenas hora/minuto.
 
             if (
@@ -1869,7 +1869,7 @@ class AraAgent:
                 )
 
         # =====================================================
-        # CONSULTA CONTEXTUAL DA TAREFA â€” READ-ONLY
+        # CONSULTA CONTEXTUAL DA TAREFA — READ-ONLY
         # =====================================================
 
         texto_consulta = (
@@ -1997,7 +1997,7 @@ class AraAgent:
             "reabra",
             "reabrir",
             "refaz",
-            "refaÃ§a",
+            "refaça",
             "refazer",
             "fazer de novo"
         ]
@@ -2025,9 +2025,9 @@ class AraAgent:
             "finalize",
             "termina",
             "terminei",
-            "marque como concluÃ­da",
+            "marque como concluída",
             "marque como concluida",
-            "marca como concluÃ­da",
+            "marca como concluída",
             "marca como concluida"
         ]
 
@@ -2050,9 +2050,9 @@ class AraAgent:
         gatilhos_iniciar = [
             "inicia",
             "inicie",
-            "comeÃ§a",
+            "começa",
             "comece",
-            "comeÃ§ar"
+            "começar"
         ]
 
         if any(
@@ -2094,7 +2094,7 @@ class AraAgent:
         return None
 
     # =========================================================
-    # DETECTAR AÃ‡Ã•ES DE TAREFA
+    # DETECTAR AÇÕES DE TAREFA
     # =========================================================
 
     @staticmethod
@@ -2140,13 +2140,13 @@ class AraAgent:
             )
 
         # =====================================================
-        # TAREFAS DE AMANHÃƒ
+        # TAREFAS DE AMANHÃ
         # =====================================================
 
         if (
-                "tarefas de amanhÃ£" in texto
+                "tarefas de amanhã" in texto
                 or "tarefas de amanha" in texto
-                or "tarefas para amanhÃ£" in texto
+                or "tarefas para amanhã" in texto
                 or "tarefas para amanha" in texto
         ):
             agora = TimeService.agora()
@@ -2244,7 +2244,7 @@ class AraAgent:
                 )
 
         # =====================================================
-        # ALTERAR PRIORIDADE NUMÃ‰RICA
+        # ALTERAR PRIORIDADE NUMÉRICA
         # =====================================================
 
         padroes_prioridade = [
@@ -2283,13 +2283,13 @@ class AraAgent:
                 )
 
         # =====================================================
-        # ALTERAR DESCRIÃ‡ÃƒO
+        # ALTERAR DESCRIÇÃO
         # =====================================================
 
         padroes_descricao = [
-            r"altere a descriÃ§Ã£o da tarefa (.+?) para (.+)",
-            r"mude a descriÃ§Ã£o da tarefa (.+?) para (.+)",
-            r"coloque na descriÃ§Ã£o da tarefa (.+?):? (.+)"
+            r"altere a descrição da tarefa (.+?) para (.+)",
+            r"mude a descrição da tarefa (.+?) para (.+)",
+            r"coloque na descrição da tarefa (.+?):? (.+)"
         ]
 
         for padrao in padroes_descricao:
@@ -2456,7 +2456,7 @@ class AraAgent:
                 )
 
                 # =================================================
-                # REMOVE DATA/HORA DO TÃTULO
+                # REMOVE DATA/HORA DO TÍTULO
                 # =================================================
 
                 titulo = (
@@ -2467,7 +2467,7 @@ class AraAgent:
                 )
 
                 # =================================================
-                # LIMPA TÃTULO
+                # LIMPA TÍTULO
                 # =================================================
 
                 titulo = (
@@ -2477,14 +2477,14 @@ class AraAgent:
                 )
 
                 # =================================================
-                # NORMALIZAÃ‡ÃƒO DO TÃTULO
+                # NORMALIZAÇÃO DO TÍTULO
                 #
                 # Exemplos:
                 #
                 # "quero criar uma tarefa chamada estudar Java"
                 #     -> "estudar Java"
                 #
-                # "estudar Java para amanhÃ£ Ã s 19h"
+                # "estudar Java para amanhã às 19h"
                 #     -> "estudar Java"
                 # =================================================
 
@@ -2499,13 +2499,13 @@ class AraAgent:
                 ).strip()
 
                 # remover_tempo_do_texto pode deixar o conector
-                # imediatamente anterior Ã  expressÃ£o temporal.
+                # imediatamente anterior à expressão temporal.
                 if data_limite is not None:
                     titulo = re.sub(
                         r"(?i)\s+(?:"
                         r"para|pra|"
                         r"em|no|na|"
-                        r"Ã s|as"
+                        r"às|as"
                         r")\s*$",
                         "",
                         titulo
@@ -2518,13 +2518,13 @@ class AraAgent:
                 )
 
                 # =================================================
-                # PROTEÃ‡ÃƒO CONTRA TÃTULO RESIDUAL
+                # PROTEÇÃO CONTRA TÍTULO RESIDUAL
                 #
                 # Exemplo:
-                # "crie uma tarefa para amanhÃ£ Ã s 15h"
+                # "crie uma tarefa para amanhã às 15h"
                 #
-                # Depois da remoÃ§Ã£o da data pode sobrar somente
-                # "para". Isso nÃ£o representa um tÃ­tulo vÃ¡lido.
+                # Depois da remoção da data pode sobrar somente
+                # "para". Isso não representa um título válido.
                 # =================================================
 
                 titulo_normalizado = (
@@ -2541,14 +2541,14 @@ class AraAgent:
                         r"(?:"
                         r"para|pra|"
                         r"em|no|na|"
-                        r"a|o|as|Ã s|"
+                        r"a|o|as|às|"
                         r"ao|aos|"
                         r"de|do|da|dos|das"
                         r")"
                         r"(?:\s+(?:"
                         r"para|pra|"
                         r"em|no|na|"
-                        r"a|o|as|Ã s|"
+                        r"a|o|as|às|"
                         r"ao|aos|"
                         r"de|do|da|dos|das"
                         r"))*",
@@ -2593,7 +2593,7 @@ class AraAgent:
                 )
 
                 print(
-                    "TÃ­tulo final:",
+                    "Título final:",
                     titulo
                 )
 
@@ -2629,9 +2629,9 @@ class AraAgent:
         gatilhos_iniciar = [
             "inicia a tarefa",
             "inicie a tarefa",
-            "comeÃ§a a tarefa",
+            "começa a tarefa",
             "comece a tarefa",
-            "comeÃ§ar tarefa"
+            "começar tarefa"
         ]
 
         for gatilho in gatilhos_iniciar:
@@ -2670,7 +2670,7 @@ class AraAgent:
 
         gatilhos_reabrir = [
             "refaz a tarefa",
-            "refaÃ§a a tarefa",
+            "refaça a tarefa",
             "refazer tarefa",
             "reabre a tarefa",
             "reabra a tarefa",
@@ -2802,15 +2802,15 @@ class AraAgent:
             id_conversa: int | None
     ):
         """
-        Resolve referÃªncias contextuais de lembrete.
+        Resolve referências contextuais de lembrete.
 
         Prioridade:
         1. entidade contextual da conversa, se ainda estiver ativa;
         2. ultimo_lembrete_id do contexto operacional, se ativo;
-        3. lembrete pendente mais recente do usuÃ¡rio.
+        3. lembrete pendente mais recente do usuário.
 
-        Lembretes CONCLUIDOS ou CANCELADOS nÃ£o podem assumir
-        uma referÃªncia genÃ©rica como "esse lembrete".
+        Lembretes CONCLUIDOS ou CANCELADOS não podem assumir
+        uma referência genérica como "esse lembrete".
         """
 
         if (
@@ -2821,7 +2821,7 @@ class AraAgent:
             return None
 
         # ====================================================
-        # VALIDAÃ‡ÃƒO CENTRAL
+        # VALIDAÇÃO CENTRAL
         # ====================================================
 
         def lembrete_ativo(lembrete):
@@ -2940,7 +2940,7 @@ class AraAgent:
 
         texto = mensagem.lower().strip()
 
-        # SÃ³ tenta resolver contexto se claramente
+        # Só tenta resolver contexto se claramente
         # estivermos falando de lembrete.
         referencias = [
             "lembrete",
@@ -2973,7 +2973,7 @@ class AraAgent:
         titulo = lembrete.titulo
 
         # =====================================================
-        # EDITAR DATA / HORÃRIO
+        # EDITAR DATA / HORÁRIO
         # =====================================================
 
         if any(
@@ -2992,7 +2992,7 @@ class AraAgent:
                 ]
         ):
             # Captura a parte temporal da mensagem.
-            # A prÃ³pria tool resolve data completa ou apenas horÃ¡rio.
+            # A própria tool resolve data completa ou apenas horário.
             temporal = texto
 
             return AgentDecision(

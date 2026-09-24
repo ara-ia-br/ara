@@ -1,4 +1,4 @@
-﻿import {
+import {
     useCallback,
     useEffect,
     useMemo,
@@ -139,7 +139,7 @@ function TasksPage() {
             );
 
             // Busca novamente do banco.
-            // Isso evita divergÃªncia entre frontend e backend.
+            // Isso evita divergência entre frontend e backend.
             await carregarTarefas(false);
 
             limparFormulario();
@@ -155,7 +155,7 @@ function TasksPage() {
 
             alert(
                 erro.response?.data?.detail
-                || "NÃ£o foi possÃ­vel criar a tarefa."
+                || "Não foi possível criar a tarefa."
             );
 
         } finally {
@@ -192,7 +192,7 @@ function TasksPage() {
 
             alert(
                 erro.response?.data?.detail
-                || "NÃ£o foi possÃ­vel iniciar a tarefa."
+                || "Não foi possível iniciar a tarefa."
             );
         }
     }
@@ -225,7 +225,7 @@ function TasksPage() {
 
             alert(
                 erro.response?.data?.detail
-                || "NÃ£o foi possÃ­vel concluir a tarefa."
+                || "Não foi possível concluir a tarefa."
             );
         }
     }
@@ -268,7 +268,7 @@ function TasksPage() {
 
             alert(
                 erro.response?.data?.detail
-                || "NÃ£o foi possÃ­vel cancelar a tarefa."
+                || "Não foi possível cancelar a tarefa."
             );
         }
     }
@@ -285,12 +285,12 @@ function TasksPage() {
         try {
 
             /*
-             * Caso vocÃª ainda nÃ£o tenha criado
+             * Caso você ainda não tenha criado
              * PATCH /tarefas/{id}/reabrir,
              * podemos adicionar depois.
              *
-             * Por enquanto este botÃ£o sÃ³ serÃ¡ exibido
-             * se vocÃª tiver esse endpoint.
+             * Por enquanto este botão só será exibido
+             * se você tiver esse endpoint.
              */
 
             const resposta = await api.patch(
@@ -312,7 +312,7 @@ function TasksPage() {
 
             alert(
                 erro.response?.data?.detail
-                || "NÃ£o foi possÃ­vel reabrir a tarefa."
+                || "Não foi possível reabrir a tarefa."
             );
         }
     }
@@ -360,7 +360,7 @@ function TasksPage() {
 
             alert(
                 erro.response?.data?.detail
-                || "NÃ£o foi possÃ­vel excluir a tarefa."
+                || "Não foi possível excluir a tarefa."
             );
         }
     }
@@ -394,7 +394,7 @@ function TasksPage() {
 
 
     // =========================================================
-    // LIMPAR FORMULÃRIO
+    // LIMPAR FORMULÁRIO
     // =========================================================
 
     function limparFormulario() {
@@ -437,7 +437,7 @@ function TasksPage() {
                 valor.getTime()
             )
         ) {
-            return "Data invÃ¡lida";
+            return "Data inválida";
         }
 
         return valor.toLocaleString(
@@ -470,7 +470,7 @@ function TasksPage() {
                 return "Em andamento";
 
             case "CONCLUIDA":
-                return "ConcluÃ­da";
+                return "Concluída";
 
             case "CANCELADA":
                 return "Cancelada";
@@ -506,7 +506,7 @@ function TasksPage() {
 
 
     // =========================================================
-    // CARREGAMENTO INICIAL + SINCRONIZAÃ‡ÃƒO
+    // CARREGAMENTO INICIAL + SINCRONIZAÇÃO
     // =========================================================
 
     useEffect(
@@ -523,7 +523,7 @@ function TasksPage() {
             }
 
 
-            // Quando o usuÃ¡rio volta para a janela.
+            // Quando o usuário volta para a janela.
             function janelaFocada() {
 
                 carregarTarefas(false);
@@ -588,7 +588,7 @@ function TasksPage() {
         <main className="tasks-page">
 
             {/* =================================================
-                CABEÃ‡ALHO
+                CABEÇALHO
             ================================================= */}
 
             <header className="tasks-header">
@@ -648,7 +648,7 @@ function TasksPage() {
                             ],
                             [
                                 "CONCLUIDA",
-                                "ConcluÃ­das"
+                                "Concluídas"
                             ],
                             [
                                 "CANCELADA",
@@ -930,7 +930,7 @@ function TasksPage() {
                                             </div>
 
 
-                                            {/* AÃ‡Ã•ES */}
+                                            {/* AÇÕES */}
 
                                             <div className="task-actions">
 
@@ -998,7 +998,7 @@ function TasksPage() {
                                                                 size={16}
                                                             />
 
-                                                            ConcluÃ­da
+                                                            Concluída
 
                                                         </span>
                                                     )
@@ -1091,7 +1091,7 @@ function TasksPage() {
 
                             <label>
 
-                                TÃ­tulo
+                                Título
 
                                 <input
                                     type="text"
@@ -1112,7 +1112,7 @@ function TasksPage() {
 
                             <label>
 
-                                DescriÃ§Ã£o
+                                Descrição
 
                                 <textarea
                                     value={descricao}

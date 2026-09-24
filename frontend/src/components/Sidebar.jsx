@@ -127,7 +127,7 @@ function Sidebar({
     }
 
     async function arquivarConversa(conversa) {
-        if (!window.confirm(`Arquivar “${conversa.titulo}”?`)) return;
+        if (!window.confirm(`Arquivar "${conversa.titulo}"?`)) return;
         try {
             await api.patch(`/conversas/${conversa.id_conversa}/arquivar`);
             setConversas((anteriores) => anteriores.filter((item) => item.id_conversa !== conversa.id_conversa));
@@ -152,7 +152,7 @@ function Sidebar({
     }
 
     async function excluirConversa(conversa) {
-        if (!window.confirm(`Excluir definitivamente “${conversa.titulo}”?`)) return;
+        if (!window.confirm(`Excluir definitivamente "${conversa.titulo}"?`)) return;
         try {
             await api.delete(`/conversas/${conversa.id_conversa}`);
             setConversas((anteriores) => anteriores.filter((item) => item.id_conversa !== conversa.id_conversa));

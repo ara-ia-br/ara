@@ -24,8 +24,13 @@ class Setting(BaseSettings):
 
     OPENAI_SERVICE_TIER: str = "fast"
 
-    OLLAMA_BASE_URL: str = "http://localhost:11434"
-    OLLAMA_MODEL: str = "qwen3.5:4b"
+    DEEPSEEK_API_KEY: str | None = None
+    DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
+    DEEPSEEK_MODEL: str = "deepseek-flash"
+    DEEPSEEK_REASONING_EFFORT: str = "low"
+
+    AI_PROVIDER: str = "deepseek"
+    AI_FALLBACK_PROVIDER: str = "groq"
 
     model_config = SettingsConfigDict(
         env_file="config.env",

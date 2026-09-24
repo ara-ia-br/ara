@@ -1,4 +1,4 @@
-﻿import {
+import {
     useEffect,
     useRef,
     useState
@@ -29,7 +29,7 @@ function Chat({
 
 
     // =========================================================
-    // CARREGAR HISTÃ“RICO
+    // CARREGAR HISTÓRICO
     // =========================================================
 
     async function carregarHistorico() {
@@ -73,7 +73,7 @@ function Chat({
         } catch (erro) {
 
             console.error(
-                "Erro ao carregar histÃ³rico:",
+                "Erro ao carregar histórico:",
                 erro
             );
         }
@@ -99,7 +99,7 @@ function Chat({
 
 
         // =====================================================
-        // MENSAGEM TEMPORÃRIA DO USUÃRIO
+        // MENSAGEM TEMPORÁRIA DO USUÁRIO
         // =====================================================
 
         const mensagemUsuario = {
@@ -169,13 +169,13 @@ function Chat({
             ) {
 
                 console.error(
-                    "Resposta invÃ¡lida do backend:",
+                    "Resposta inválida do backend:",
                     resposta.data
                 );
 
 
                 throw new Error(
-                    "O backend nÃ£o retornou resposta_ara."
+                    "O backend não retornou resposta_ara."
                 );
             }
 
@@ -216,9 +216,9 @@ function Chat({
 
 
             // =================================================
-            // NOTIFICA PÃGINA DE TAREFAS
+            // NOTIFICA PÁGINA DE TAREFAS
             //
-            // Isso nÃ£o pode derrubar o chat.
+            // Isso não pode derrubar o chat.
             // =================================================
 
             if (
@@ -248,7 +248,7 @@ function Chat({
                 ) {
 
                     console.error(
-                        "Erro ao disparar atualizaÃ§Ã£o de tarefas:",
+                        "Erro ao disparar atualização de tarefas:",
                         erroEvento
                     );
                 }
@@ -305,7 +305,7 @@ function Chat({
             );
 
             console.error(
-                "CÃ³digo:",
+                "Código:",
                 erro?.code
             );
 
@@ -353,7 +353,7 @@ function Chat({
                     detalheBackend
                     || (
                         "Deu ruim por aqui. "
-                        + "NÃ£o consegui responder agora."
+                        + "Não consegui responder agora."
                     )
             };
 
@@ -394,7 +394,7 @@ function Chat({
 
 
     // =========================================================
-    // CARREGAR HISTÃ“RICO AO TROCAR DE CONVERSA
+    // CARREGAR HISTÓRICO AO TROCAR DE CONVERSA
     // =========================================================
 
     useEffect(
@@ -459,13 +459,13 @@ function Chat({
 
 
                     <h2>
-                        Bem-vindo Ã  A.R.A.
+                        Bem-vindo à A.R.A.
                     </h2>
 
 
                     <p>
                         Crie uma conversa
-                        para comeÃ§ar.
+                        para começar.
                     </p>
 
                 </div>
@@ -534,14 +534,14 @@ function Chat({
 
 
                             <h2>
-                                E aÃ­! O que vamos
+                                E aí! O que vamos
                                 fazer hoje?
                             </h2>
 
 
                             <p>
                                 Converse, pergunte ou
-                                peÃ§a para eu fazer
+                                peça para eu fazer
                                 alguma coisa.
                             </p>
 
@@ -575,7 +575,7 @@ function Chat({
 
 
                 {/* =================================================
-                    INDICADOR DE DIGITAÃ‡ÃƒO
+                    INDICADOR DE DIGITAÇÃO
                 ================================================= */}
 
                 {
@@ -667,7 +667,7 @@ function Chat({
                         placeholder={
                             carregando
                                 ? (
-                                    "A.R.A. estÃ¡ "
+                                    "A.R.A. está "
                                     + "pensando..."
                                 )
                                 : (
@@ -729,7 +729,7 @@ function Chat({
                 <span className="disclaimer">
 
                     A.R.A. pode cometer erros.
-                    Verifique informaÃ§Ãµes
+                    Verifique informações
                     importantes.
 
                 </span>

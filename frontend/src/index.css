@@ -1,4 +1,4 @@
-﻿* {
+* {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
@@ -244,7 +244,7 @@ button {
 
 
 /* =========================================================
-   NAVEGAÃ‡ÃƒO
+   NAVEGAÇÃO
 ========================================================= */
 
 .sidebar-navigation {
@@ -1288,7 +1288,7 @@ button {
 
 
 /* =========================================================
-   AÃ‡Ã•ES
+   AÇÕES
 ========================================================= */
 
 .task-actions {
@@ -1831,7 +1831,7 @@ button {
 
 
 /* =========================================================
-   SELEÃ‡ÃƒO
+   SELEÇÃO
 ========================================================= */
 
 ::selection {
@@ -1893,7 +1893,7 @@ button {
     }
 }
 /* =========================================================
-   A.R.A. PRODUCT SYSTEM â€” 2026
+   A.R.A. PRODUCT SYSTEM — 2026
    Identity: neon mint + deep navy, deliberate contrast,
    functional motion and dense operational surfaces.
 ========================================================= */
@@ -1965,7 +1965,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
     var(--ara-navy); }
 
 /* =========================================================
-   A.R.A. â€” BRAND / LOGOS OFICIAIS
+   A.R.A. — BRAND / LOGOS OFICIAIS
 ========================================================= */
 
 .ara-brand {
@@ -2188,7 +2188,7 @@ kbd { font-family: inherit; font-size: 10px; color: var(--ara-text-muted); borde
 .ara-login-button:disabled { opacity: .6; cursor: wait; }
 .login-footnote { display: block; margin-top: 12px; color: var(--ara-text-muted); font-size: 9px; line-height: 1.5; }
 
-/* CHAT â€” keeps existing API behavior, changes product surface */
+/* CHAT — keeps existing API behavior, changes product surface */
 .chat { background: transparent; }
 .chat-header { min-height: 68px; padding: 14px clamp(18px, 4vw, 44px); background: color-mix(in srgb, var(--ara-navy) 88%, transparent); border-bottom: 1px solid var(--ara-border); backdrop-filter: blur(16px); }
 .chat-header h2 { font-size: 14px; letter-spacing: -.01em; }
@@ -2214,7 +2214,7 @@ kbd { font-family: inherit; font-size: 10px; color: var(--ara-text-muted); borde
 .disclaimer { color: var(--ara-text-muted); font-size: 8px; }
 .typing span { background: var(--ara-primary); }
 
-/* TASKS â€” reskin existing functional screen */
+/* TASKS — reskin existing functional screen */
 .tasks-page, .tasks { background: transparent !important; }
 .tasks-header, .tasks-toolbar, .task-card, .task-modal { border-color: var(--ara-border) !important; }
 .task-card { background: var(--ara-surface) !important; border-radius: 15px !important; box-shadow: none !important; }
