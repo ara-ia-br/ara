@@ -166,7 +166,7 @@ kbd { font-family: inherit; font-size: 10px; color: var(--ara-text-muted); borde
 .conversation-link:hover, .conversation-link.active { color: var(--ara-text); background: var(--ara-surface); }
 .conversation-link.active { color: var(--ara-primary-bright); }
 .conversation-more { width: 28px; height: 28px; display: grid; place-items: center; background: transparent; color: var(--ara-text-muted); border-radius: 8px; cursor: pointer; }
-.conversation-popover { position: absolute; right: 0; top: 31px; z-index: 30; width: 145px; padding: 5px; background: var(--ara-surface-2); border: 1px solid var(--ara-border); border-radius: 11px; box-shadow: var(--ara-shadow); }
+.conversation-popover { position: fixed; z-index: 500; width: 145px; padding: 5px; background: var(--ara-surface-2); border: 1px solid var(--ara-border); border-radius: 11px; box-shadow: var(--ara-shadow); }
 .conversation-popover button { width: 100%; display: flex; align-items: center; gap: 7px; padding: 8px; background: transparent; color: var(--ara-text-soft); border-radius: 7px; cursor: pointer; font-size: 11px; }
 .conversation-popover button:hover { background: var(--ara-surface-3); color: var(--ara-text); }
 .conversation-popover .danger { color: var(--ara-danger); }

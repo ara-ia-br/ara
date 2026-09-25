@@ -7,6 +7,7 @@ function ChatPage() {
 
     const {
         conversaSelecionada,
+        setConversaSelecionada,
         conversaCriada
     } = useOutletContext();
 
@@ -15,6 +16,9 @@ function ChatPage() {
         <Chat
             conversaSelecionada={
                 conversaSelecionada
+            }
+            setConversaSelecionada={
+                setConversaSelecionada
             }
             conversaCriada={
                 conversaCriada

@@ -6,8 +6,13 @@ import {
 
 import {
     ArrowUp,
+    Check,
+    Link2,
     Mic,
-    Paperclip
+    MoreHorizontal,
+    Paperclip,
+    Pencil,
+    Trash2
 } from "lucide-react";
 
 import api from "../services/api";
