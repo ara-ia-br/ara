@@ -1,12 +1,13 @@
 from app.services.natural_time_service import NaturalTimeService
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session
 
 from app.services.lembrete_service import (
     LembreteService
 )
+from app.services.time_service import TimeService
 
 
 # =========================================================
@@ -92,7 +93,8 @@ def criar_lembrete(
 
 def listar_lembretes(
     db: Session,
-    id_usuario: int
+    id_usuario: int,
+    filtro: str | None = None
 ) -> dict:
 
     lembretes = (
@@ -101,6 +103,98 @@ def listar_lembretes(
             id_usuario
         )
     )
+
+    filtro_normalizado = (
+        filtro or "PENDENTES"
+    ).upper()
+
+    if filtro_normalizado == "VENCIDOS":
+        agora = TimeService.agora()
+
+        lembretes_vencidos = []
+
+        for lembrete in lembretes:
+            data_hora = lembrete.data_hora
+
+            if data_hora is None:
+                continue
+
+            data_comparacao = data_hora
+            agora_comparacao = agora
+
+            if (data_comparacao.tzinfo is None
+            and agora_comparacao.tzinfo is not None):
+                data_comparacao = data_comparacao.replace(
+                    tzinfo=agora_comparacao.tzinfo
+                )
+
+            elif (
+                data_comparacao.tzinfo is not None
+                and agora_comparacao.tzinfo is None
+            ):
+                agora_comparacao = agora_comparacao.replace(
+                    tzinfo=data_comparacao.tzinfo
+                )
+
+            if data_comparacao < agora_comparacao:
+                lembretes_vencidos.append(lembrete)
+
+        lembretes = lembretes_vencidos
+
+    elif filtro_normalizado == "AMANHA":
+        agora = TimeService.agora()
+
+        data_amanha = (
+            agora + timedelta(days=1)
+        ).date()
+
+        lembretes = [
+            lembrete
+            for lembrete in lembretes
+            if (
+                lembrete.data_hora is not None
+                and lembrete.data_hora.date() == data_amanha
+            )
+        ]
+    elif filtro_normalizado == "HOJE":
+
+        agora = TimeService.agora()
+
+        data_hoje = agora.date()
+
+        lembretes = [
+            lembrete
+            for lembrete in lembretes
+            if (
+                lembrete.data_hora is not None
+                and lembrete.data_hora.date() == data_hoje
+            )
+        ]
+    elif filtro_normalizado == "SEMANA":
+
+        agora = TimeService.agora()
+
+        inicio_semana = (
+            agora.date()
+            - timedelta(days=agora.weekday())
+        )
+
+        fim_semana = (
+            inicio_semana
+            + timedelta(days=6)
+        )
+
+        lembretes = [
+            lembrete
+            for lembrete in lembretes
+            if (
+                lembrete.data_hora is not None
+                and inicio_semana
+                <= lembrete.data_hora.date()
+                <= fim_semana
+            )
+        ]
+
 
 
     return {
@@ -132,7 +226,9 @@ def listar_lembretes(
             }
 
             for lembrete in lembretes
-        ]
+        ],
+
+        "filtro": filtro_normalizado
     }
 
 

@@ -162,9 +162,7 @@ class AraAgent:
                     r"esta\s+tarefa"
                     r"))?"
                     r"\s+(?P<quantidade>\d+)\s*"
-                    r"(?P<unidade>"
-                    r"minuto|minutos|hora|horas"
-                    r")"
+                    r"(?P<unidade>minuto|minutos|hora|horas|h)"
                     r"\s+antes"
                     r"\s*[.!?]*$",
                     segmento.texto,
@@ -187,7 +185,7 @@ class AraAgent:
                     .lower()
                 )
 
-                if unidade.startswith("hora"):
+                if unidade.startswith("hora") or unidade == "h":
                     offset_minutos = -(
                             quantidade * 60
                     )
@@ -884,6 +882,29 @@ class AraAgent:
 
         texto = mensagem.lower()
 
+
+        # =====================================================
+        # PRIORIDADE NUMÉRICA EXPLÍCITA
+        # =====================================================
+        #
+        # Exemplos:
+        # "altere a prioridade da tarefa X para 4"
+        # "mude a prioridade da tarefa X para 5"
+        # "coloque a prioridade da tarefa X em 2"
+        # "defina a prioridade da tarefa X como 1"
+        # =====================================================
+
+        prioridade_numerica = re.search(
+            r"\bprioridade\b.*?\b(?:para|em|como)\s*([1-5])\b",
+            texto,
+            flags=re.IGNORECASE
+        )
+
+        if prioridade_numerica:
+            return int(
+                prioridade_numerica.group(1)
+            )
+
         # =====================================================
         # PRIORIDADE 5
         # =====================================================
@@ -1076,8 +1097,18 @@ class AraAgent:
 
         texto = mensagem.lower().strip()
 
+        mensagem_normalizada = re.sub(
+            r"\blemnbra\b",
+            "lembra",
+            mensagem,
+            flags=re.IGNORECASE
+        )
+
+        texto = mensagem_normalizada.lower().strip()
+
         gatilhos = [
             "me lembra",
+
             "me lembre",
             "lembra de",
             "lembre de",
@@ -1107,18 +1138,20 @@ class AraAgent:
             re.search(
                 r"\b(?:"
                 r"ela|ele|"
+                r"dela|dele|"
                 r"essa\s+tarefa|"
                 r"esta\s+tarefa|"
-                r"esse\s+tarefa|"
-                r"este\s+tarefa"
+                r"dessa\s+tarefa|"
+                r"desta\s+tarefa"
                 r")\b",
-                texto
+                texto,
+                flags=re.IGNORECASE
             )
         )
 
         deslocamento_antes = re.search(
             r"\b(\d+)\s*"
-            r"(minuto|minutos|hora|horas)\s+antes\b",
+            r"(minuto|minutos|hora|horas|h)\s+antes\b",
             texto
         )
 
@@ -1188,7 +1221,10 @@ class AraAgent:
                 .group(2)
             )
 
-            if unidade.startswith("hora"):
+            if (
+                    unidade.startswith("hora")
+                    or unidade == "h"
+            ):
                 deslocamento = timedelta(
                     hours=quantidade
                 )
@@ -1320,10 +1356,14 @@ class AraAgent:
         # TÍTULO
         # =====================================================
 
-        titulo = mensagem
+        titulo = mensagem_normalizada
 
+        # Remove A.R.A. somente quando for vocativo no início.
+        #
+        # "ARA, me lembra de estudar" -> remove ARA
+        # "me lembra do teste ARA"    -> preserva ARA
         titulo = re.sub(
-            r"(?i)\b(?:a\.?r\.?a\.?|ara)\b[,\s]*",
+            r"(?i)^\s*(?:a\.?r\.?a\.?|ara)\s*[,:\-]?\s*",
             "",
             titulo
         )
@@ -1332,6 +1372,7 @@ class AraAgent:
             r"(?i)\b("
             r"me lembra|"
             r"me lembre|"
+            r"me lemnbra"
             r"lembra de|"
             r"lembre de|"
             r"cria um lembrete|"
@@ -1378,6 +1419,138 @@ class AraAgent:
     ) -> AgentDecision | None:
 
         texto = mensagem.lower().strip()
+
+
+        # =====================================================
+        # CONSULTA DE LEMBRETE AUSENTE / EXISTENTE
+        # =====================================================
+
+        padroes_consulta = [
+            r"^(?:está|esta)\s+faltando\s+(?:o\s+)?lembrete\s+(.+)$",
+            r"^faltando\s+(?:o\s+)?lembrete\s+(.+)$",
+            r"^(?:não|nao)\s+apareceu\s+(?:o\s+)?lembrete\s+(.+)$",
+            r"^(?:cadê|cade)\s+(?:o\s+)?lembrete\s+(.+)$",
+        ]
+
+        for padrao in padroes_consulta:
+
+            match = re.match(
+                padrao,
+                texto,
+                flags=re.IGNORECASE
+            )
+
+            if match:
+
+                titulo = (
+                    match.group(1)
+                    .strip(" .?!")
+                )
+
+                if not titulo:
+                    return AgentDecision(
+                        acao=TipoAcao.CONVERSAR
+                    )
+
+                return AgentDecision(
+                    acao=TipoAcao.EXECUTAR,
+                    ferramenta="consultar_lembrete",
+                    argumentos={
+                        "titulo": titulo
+                    }
+                )
+
+            # =====================================================
+            # LISTAR LEMBRETES DE HOJE
+            # =====================================================
+
+            eh_consulta_hoje = bool(
+                re.search(
+                    r"\blembretes?\b.*\bhoje\b"
+                    r"|"
+                    r"\bhoje\b.*\blembretes?\b",
+                    texto,
+                    flags=re.IGNORECASE
+                )
+            )
+
+            if eh_consulta_hoje:
+                return AgentDecision(
+                    acao=TipoAcao.EXECUTAR,
+                    ferramenta="listar_lembretes",
+                    argumentos={
+                        "filtro": "HOJE"
+                    }
+                )
+
+            # =====================================================
+            # LISTAR LEMBRETES DESTA SEMANA
+            # =====================================================
+
+            eh_consulta_semana = bool(
+                re.search(
+                    r"\blembretes?\b.*\b(?:desta|nesta|esta|essa)\s+semana\b"
+                    r"|"
+                    r"\b(?:desta|nesta|esta|essa)\s+semana\b.*\blembretes?\b",
+                    texto,
+                    flags=re.IGNORECASE
+                )
+            )
+
+            if eh_consulta_semana:
+                return AgentDecision(
+                    acao=TipoAcao.EXECUTAR,
+                    ferramenta="listar_lembretes",
+                    argumentos={
+                        "filtro": "SEMANA"
+                    }
+                )
+
+            # =====================================================
+            # LISTAR LEMBRETES DE AMANHÃ
+            # =====================================================
+
+            eh_consulta_amanha = bool(
+                re.search(
+                    r"\blembretes?\b.*\bamanh[ãa]\b"
+                    r"|"
+                    r"\bamanh[ãa]\b.*\blembretes?\b",
+                    texto,
+                    flags=re.IGNORECASE
+                )
+            )
+
+            if eh_consulta_amanha:
+                return AgentDecision(
+                    acao=TipoAcao.EXECUTAR,
+                    ferramenta="listar_lembretes",
+                    argumentos={
+                        "filtro": "AMANHA"
+                    }
+                )
+
+            # =====================================================
+            # LISTAR LEMBRETES VENCIDOS / ATRASADOS
+            # =====================================================
+
+            eh_consulta_vencidos = bool(
+                re.search(
+                    r"\blembretes?\b.*\b(?:vencid[oa]s?|atrasad[oa]s?)\b"
+                    r"|"
+                    r"\b(?:vencid[oa]s?|atrasad[oa]s?)\b.*\blembretes?\b",
+                    texto,
+                    flags=re.IGNORECASE
+                )
+            )
+
+            if eh_consulta_vencidos:
+                return AgentDecision(
+                    acao=TipoAcao.EXECUTAR,
+                    ferramenta="listar_lembretes",
+                    argumentos={
+                        "filtro": "VENCIDOS"
+                    }
+                )
 
         # =====================================================
         # LISTAR
@@ -1687,6 +1860,69 @@ class AraAgent:
                     acao=TipoAcao.EXECUTAR,
                     ferramenta="listar_lembretes",
                     argumentos={}
+                )
+
+
+
+        # =====================================================
+        # CONSULTA / ITEM AUSENTE
+        # =====================================================
+        #
+        # Frases como:
+        #
+        # "está faltando o teste ARA"
+        # "faltando relatório mensal"
+        # "não apareceu revisão da prova"
+        # "cadê atividade faculdade"
+        #
+        # são consultas/observações.
+        #
+        # Nunca podem ser interpretadas como edição de
+        # prioridade, prazo ou status.
+        # =====================================================
+
+        padroes_item_ausente = [
+            r"^(?:está|esta)\s+faltando\s+(?:o|a)?\s*(.+)$",
+            r"^faltando\s+(?:o|a)?\s*(.+)$",
+            r"^(?:não|nao)\s+apareceu\s+(?:o|a)?\s*(.+)$",
+            r"^(?:cadê|cade)\s+(?:o|a)?\s*(.+)$",
+        ]
+
+        for padrao in padroes_item_ausente:
+
+            match = re.match(
+                padrao,
+                texto,
+                flags=re.IGNORECASE
+            )
+
+            if match:
+
+                titulo = (
+                    match.group(1)
+                    .strip(" .?!")
+                )
+
+                if not titulo:
+                    return AgentDecision(
+                        acao=TipoAcao.CONVERSAR
+                    )
+
+                # A frase não informa com segurança se o item
+                # é tarefa ou lembrete.
+                #
+                # Portanto:
+                # - não cria;
+                # - não edita;
+                # - não infere prioridade;
+                # - deixa o fluxo conversacional esclarecer
+                #   o tipo do item.
+                return AgentDecision(
+                    acao=TipoAcao.CONVERSAR,
+                    argumentos={
+                        "contexto_item_ausente": True,
+                        "titulo": titulo
+                    }
                 )
 
         # =====================================================
@@ -3132,7 +3368,10 @@ class AraAgent:
             "esse lembrete",
             "essa lembrete",
             "este lembrete",
-            "esta lembrete"
+            "esta lembrete",
+            "dele",
+            "desse lembrete",
+            "deste lembrete"
         ]
 
         if not any(
@@ -3154,6 +3393,35 @@ class AraAgent:
             return None
 
         titulo = lembrete.titulo
+
+
+        # =====================================================
+        # CONSULTAR DATA / HORÁRIO DO LEMBRETE
+        # =====================================================
+
+        eh_consulta_horario = bool(
+            re.search(
+                r"(?:"
+                r"qual\s+(?:é|e\s+)?o\s+hor[aá]rio"
+                r"|qual\s+hor[aá]rio"
+                r"|que\s+horas"
+                r"|quando\s+(?:ele|o\s+lembrete)"
+                r"|hor[aá]rio\s+dele"
+                r"|data\s+dele"
+                r")",
+                texto,
+                flags=re.IGNORECASE
+            )
+        )
+
+        if eh_consulta_horario:
+            return AgentDecision(
+                acao=TipoAcao.EXECUTAR,
+                ferramenta="consultar_lembrete",
+                argumentos={
+                    "titulo": titulo
+                }
+            )
 
         # =====================================================
         # EDITAR DATA / HORÁRIO

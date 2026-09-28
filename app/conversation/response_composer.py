@@ -1,5 +1,8 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
+
+from app.models import lembrete
+from app.services.time_service import TimeService
 
 
 class ResponseComposer:
@@ -195,7 +198,65 @@ class ResponseComposer:
                 f'Lembrete "{titulo}" criado.'
             )
 
+
+        # CONSULTAR LEMBRETE - SOMENTE LEITURA
+
+        if ferramenta == "consultar_lembrete":
+
+            titulo = resultado.get(
+                "titulo",
+                "lembrete"
+            )
+
+            data_hora = resultado.get(
+                "data_hora"
+            )
+
+            if not data_hora:
+                return (
+                    f'O lembrete "{titulo}" não possui '
+                    f'data ou horário definido.'
+                )
+
+            data = datetime.fromisoformat(
+                data_hora
+            )
+
+            agora = TimeService.agora()
+
+            hoje = agora.date()
+
+            amanha = (
+                    agora
+                    + timedelta(days=1)
+            ).date()
+
+            if data.date() == hoje:
+                return (
+                    f'O lembrete "{titulo}" está agendado '
+                    f'para hoje, {data.strftime("%d/%m/%Y")}, '
+                    f'às {data.strftime("%H:%M")}.'
+                )
+
+            if data.date() == amanha:
+                return (
+                    f'O lembrete "{titulo}" está agendado '
+                    f'para amanhã, {data.strftime("%d/%m/%Y")}, '
+                    f'às {data.strftime("%H:%M")}.'
+                )
+
+            return (
+                f'O lembrete "{titulo}" está agendado para '
+                f'{data.strftime("%d/%m/%Y")} '
+                f'às {data.strftime("%H:%M")}.'
+            )
+
         if ferramenta == "listar_lembretes":
+
+            filtro = resultado.get(
+                "filtro",
+                "PENDENTES"
+            )
 
             lembretes = resultado.get(
                 "lembretes",
@@ -203,14 +264,57 @@ class ResponseComposer:
             )
 
             if not lembretes:
+
+                if filtro == "VENCIDOS":
+                    return (
+                        "Você não tem nenhum lembrete "
+                        "vencido no momento."
+                    )
+
+                if filtro == "AMANHA":
+                    return (
+                        "Você não tem nenhum lembrete "
+                        "para amanhã."
+                    )
+
+                if filtro == "HOJE":
+                    return (
+                        "Você não tem nenhum lembrete "
+                        "para hoje."
+                    )
+
+                if filtro == "SEMANA":
+                    return (
+                        "Você não tem nenhum lembrete "
+                        "para esta semana."
+                    )
+
                 return (
-                    "Você não tem lembretes "
-                    "pendentes no momento."
+                    "Você não tem nenhum lembrete "
+                    "pendente no momento."
                 )
 
-            linhas = [
-                "Seus lembretes pendentes:"
-            ]
+            if filtro == "VENCIDOS":
+                linhas = [
+                    "Seus lembretes vencidos:"
+                ]
+            elif filtro == "AMANHA":
+                linhas = [
+                    "Seus lembretes de amanhã:"
+                ]
+
+            elif filtro == "HOJE":
+                linhas = [
+                    "Seus lembretes de hoje:"
+                ]
+            elif filtro == "SEMANA":
+                linhas = [
+                    "Seus lembretes desta semana:"
+                ]
+            else:
+                linhas = [
+                    "Seus lembretes pendentes:"
+                ]
 
             for lembrete in lembretes:
 
