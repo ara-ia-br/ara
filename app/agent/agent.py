@@ -1395,8 +1395,84 @@ class AraAgent:
             )
         )
 
-        if not titulo:
-            titulo = "Lembrete"
+        # =====================================================
+        # LIMPA CONECTORES RESIDUAIS
+        # =====================================================
+        #
+        # Exemplos:
+        #
+        # "crie um lembrete para estudar amanhã às 18h"
+        #     -> "estudar"
+        #
+        # "crie um lembrete para amanhã às 18h"
+        #     -> ""
+        # =====================================================
+
+        titulo = re.sub(
+            r"(?i)^\s*(?:"
+            r"para|pra|"
+            r"de|do|da"
+            r")\s+",
+            "",
+            titulo
+        ).strip()
+
+        titulo = re.sub(
+            r"(?i)\s+(?:"
+            r"para|pra|"
+            r"em|no|na|"
+            r"às|as"
+            r")\s*$",
+            "",
+            titulo
+        ).strip()
+
+        titulo = (
+            AraAgent._limpar_titulo(
+                titulo
+            )
+        )
+
+        # =====================================================
+        # PROTEÇÃO CONTRA TÍTULO RESIDUAL
+        # =====================================================
+
+        titulo_normalizado = (
+            re.sub(
+                r"\s+",
+                " ",
+                titulo.lower()
+            )
+            .strip(" ,.;:-")
+        )
+
+        apenas_conectores = bool(
+            re.fullmatch(
+                r"(?:"
+                r"para|pra|"
+                r"em|no|na|"
+                r"a|o|as|às|"
+                r"ao|aos|"
+                r"de|do|da|dos|das"
+                r")"
+                r"(?:\s+(?:"
+                r"para|pra|"
+                r"em|no|na|"
+                r"a|o|as|às|"
+                r"ao|aos|"
+                r"de|do|da|dos|das"
+                r"))*",
+                titulo_normalizado
+            )
+        )
+
+        if (
+                not titulo_normalizado
+                or apenas_conectores
+        ):
+            return AgentDecision(
+                acao=TipoAcao.CONVERSAR
+            )
 
         return AgentDecision(
             acao=TipoAcao.EXECUTAR,
@@ -1419,6 +1495,44 @@ class AraAgent:
     ) -> AgentDecision | None:
 
         texto = mensagem.lower().strip()
+
+        # =====================================================
+        # NÃO INTERCEPTAR CRIAÇÃO DE LEMBRETE
+        # =====================================================
+        #
+        # A criação direta é tratada por _detectar_lembrete().
+        # Aqui evitamos que frases como:
+        #
+        # "crie um lembrete para amanhã às 18h"
+        #
+        # sejam confundidas com:
+        #
+        # "quais lembretes tenho amanhã?"
+        # =====================================================
+
+        eh_criacao_lembrete = bool(
+            re.search(
+                r"\b(?:"
+                r"cria|crie"
+                r")\s+(?:um\s+)?lembrete\b",
+                texto,
+                flags=re.IGNORECASE
+            )
+        )
+
+        eh_pedido_para_lembrar = bool(
+            re.search(
+                r"\bme\s+(?:lembra|lembre)\b",
+                texto,
+                flags=re.IGNORECASE
+            )
+        )
+
+        if (
+                eh_criacao_lembrete
+                or eh_pedido_para_lembrar
+        ):
+            return None
 
 
         # =====================================================

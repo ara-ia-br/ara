@@ -14,6 +14,12 @@ from app.security.settings import setting
 
 from app.conversation.response_policy import ResponsePolicy
 
+from app.ai.capability_response_guard import (
+    CapabilityResponseGuard
+)
+
+
+
 
 from app.ai.operational_response_guard import (
     OperationalResponseGuard
@@ -1584,6 +1590,17 @@ class ChatService:
                 "[OPERATIONAL RESPONSE GUARD] "
                 "Falsa confirmação bloqueada."
             )
+
+        resposta_antes_capability = resposta
+
+        resposta = CapabilityResponseGuard.validar(
+            mensagem_usuario=conteudo,
+            resposta_modelo=resposta
+        )
+
+        if resposta != resposta_antes_capability:
+            print("[CAPABILITY RESPONSE GUARD] "
+                  "Capacidade inexistente bloqueada.")
 
 
 

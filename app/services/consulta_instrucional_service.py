@@ -73,6 +73,10 @@ class ConsultaInstrucionalService:
             r"(?:a\s+)?(?:forma|maneira)\b",
             r"^qual\s+(?:e|seria)\s+"
             r"(?:o\s+)?jeito\b",
+            r"^(?:voce|vc)\s+(?:consegue|pode|sabe)\b",
+            r"^a\s+ara\s+(?:consegue|pode|sabe)\b",
+            r"^da\s+pra\b",
+            r"^tem\s+como\b"
         )
 
         eh_instrucional = any(
@@ -104,6 +108,52 @@ class ConsultaInstrucionalService:
 
         else:
             return None
+
+        # =====================================================
+        # CONSULTA DE CAPACIDADE
+        # =====================================================
+
+        eh_consulta_capacidade = bool(
+            re.search(
+                r"^(?:"
+                r"(?:voce|vc)\s+(?:consegue|pode|sabe)|"
+                r"a\s+ara\s+(?:consegue|pode|sabe)|"
+                r"da\s+pra|"
+                r"tem\s+como"
+                r")\b",
+                texto
+            )
+        )
+
+        if eh_consulta_capacidade:
+
+            if re.search(
+                    r"\b(?:criar|adicionar)\b",
+                    texto
+            ):
+
+                if dominio == "TAREFA":
+                    resposta = (
+                        "Sim. Consigo criar tarefas. "
+                        "Você pode me dizer o nome da tarefa "
+                        "e, se quiser, também informar prazo "
+                        "e prioridade."
+                    )
+
+                else:
+                    resposta = (
+                        "Sim. Consigo criar lembretes. "
+                        "Você pode me dizer o que deseja lembrar "
+                        "e a data ou horário do lembrete."
+                    )
+
+                return {
+                    "instrucional": True,
+                    "consulta_capacidade": True,
+                    "dominio": dominio,
+                    "operacao": "CRIAR",
+                    "resposta": resposta
+                }
 
         # =====================================================
         # OPERAÇÃO
