@@ -8,7 +8,7 @@ import re
 
 from sqlalchemy.orm import Session
 
-from app.security.settings import setting
+
 
 
 
@@ -72,6 +72,10 @@ from app.repositories.conversa_repository import (
     ConversaRepository
 )
 
+from app.services.chat_interaction_service import (
+    ChatInteractionService
+)
+
 from app.repositories.mensagem_repository import (
     MensagemRepository
 )
@@ -82,50 +86,6 @@ from app.services.conversa_service import (
 
 
 class ChatService:
-
-    # =========================================================
-    # SALVAR INTERAÇÃO DO AGENT
-    # =========================================================
-
-    @staticmethod
-    def _salvar_interacao_agent(
-        db: Session,
-        id_conversa: int,
-        conteudo_usuario: str,
-        resposta_ara: str
-    ) -> None:
-
-        mensagem_usuario = Mensagem(
-            id_conversa=id_conversa,
-            remetente=RemetenteMensagem.USUARIO,
-            conteudo=conteudo_usuario,
-            tipo="TEXTO"
-        )
-
-        MensagemRepository.criar(
-            db,
-            mensagem_usuario
-        )
-
-        mensagem_ara = Mensagem(
-            id_conversa=id_conversa,
-            remetente=RemetenteMensagem.ARA,
-            conteudo=resposta_ara,
-            tipo="TEXTO",
-            modelo_ia="AGENT",
-            tempo_processamento=0
-        )
-
-        MensagemRepository.criar(
-            db,
-            mensagem_ara
-        )
-
-        ConversaService.atualizar_atividade(
-            db,
-            id_conversa
-        )
-
 
     # =========================================================
     # EXTRAÇÃO DE MEMÓRIA
@@ -373,7 +333,7 @@ class ChatService:
                 )
             )
 
-            ChatService._salvar_interacao_agent(
+            ChatInteractionService.salvar_agent(
                 db=db,
                 id_conversa=id_conversa,
                 conteudo_usuario=conteudo,
@@ -460,7 +420,7 @@ class ChatService:
                     "Nenhum sucesso foi confirmado."
                 )
 
-                ChatService._salvar_interacao_agent(
+                ChatInteractionService.salvar_agent(
                     db=db,
                     id_conversa=id_conversa,
                     conteudo_usuario=conteudo,
@@ -476,7 +436,7 @@ class ChatService:
                     "tempo_processamento": 0
                 }
 
-            ChatService._salvar_interacao_agent(
+            ChatInteractionService.salvar_agent(
                 db=db,
                 id_conversa=id_conversa,
                 conteudo_usuario=conteudo,
@@ -510,7 +470,7 @@ class ChatService:
                 ]
             )
 
-            ChatService._salvar_interacao_agent(
+            ChatInteractionService.salvar_agent(
                 db=db,
                 id_conversa=id_conversa,
                 conteudo_usuario=conteudo,
@@ -565,7 +525,7 @@ class ChatService:
                         "desse pedido com segurança."
                     )
 
-                    ChatService._salvar_interacao_agent(
+                    ChatInteractionService.salvar_agent(
                         db=db,
                         id_conversa=id_conversa,
                         conteudo_usuario=conteudo,
@@ -587,7 +547,7 @@ class ChatService:
                         "não está disponível no momento."
                     )
 
-                    ChatService._salvar_interacao_agent(
+                    ChatInteractionService.salvar_agent(
                         db=db,
                         id_conversa=id_conversa,
                         conteudo_usuario=conteudo,
@@ -623,7 +583,7 @@ class ChatService:
                         "ação foi executada."
                     )
 
-                    ChatService._salvar_interacao_agent(
+                    ChatInteractionService.salvar_agent(
                         db=db,
                         id_conversa=id_conversa,
                         conteudo_usuario=conteudo,
@@ -803,7 +763,7 @@ class ChatService:
             except ValueError as erro:
                 resposta = str(erro)
 
-                ChatService._salvar_interacao_agent(
+                ChatInteractionService.salvar_agent(
                     db=db,
                     id_conversa=id_conversa,
                     conteudo_usuario=conteudo,
@@ -829,7 +789,7 @@ class ChatService:
                     "todas as ações desse pedido."
                 )
 
-                ChatService._salvar_interacao_agent(
+                ChatInteractionService.salvar_agent(
                     db=db,
                     id_conversa=id_conversa,
                     conteudo_usuario=conteudo,
@@ -886,7 +846,7 @@ class ChatService:
             # SALVA INTERAÇÃO UMA ÚNICA VEZ
             # =================================================
 
-            ChatService._salvar_interacao_agent(
+            ChatInteractionService.salvar_agent(
                 db=db,
                 id_conversa=id_conversa,
                 conteudo_usuario=conteudo,
@@ -1002,7 +962,7 @@ class ChatService:
                     ]
                 )
 
-                ChatService._salvar_interacao_agent(
+                ChatInteractionService.salvar_agent(
                     db=db,
                     id_conversa=id_conversa,
                     conteudo_usuario=conteudo,
@@ -1170,7 +1130,7 @@ class ChatService:
                     erro
                 )
 
-                ChatService._salvar_interacao_agent(
+                ChatInteractionService.salvar_agent(
                     db=db,
                     id_conversa=id_conversa,
                     conteudo_usuario=conteudo,
@@ -1234,7 +1194,7 @@ class ChatService:
                     )
 
 
-                ChatService._salvar_interacao_agent(
+                ChatInteractionService.salvar_agent(
                     db=db,
                     id_conversa=id_conversa,
                     conteudo_usuario=conteudo,
@@ -1267,7 +1227,7 @@ class ChatService:
             # 7. SALVA A INTERAÇÃO
             # =====================================================
 
-            ChatService._salvar_interacao_agent(
+            ChatInteractionService.salvar_agent(
                 db=db,
                 id_conversa=id_conversa,
                 conteudo_usuario=conteudo,
@@ -1448,7 +1408,7 @@ class ChatService:
                 f"operacao={resultado_guard.operacao}"
             )
 
-            ChatService._salvar_interacao_agent(
+            ChatInteractionService.salvar_agent(
                 db=db,
                 id_conversa=id_conversa,
                 conteudo_usuario=conteudo,
