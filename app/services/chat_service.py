@@ -1561,9 +1561,16 @@ class ChatService:
 
         inicio = perf_counter()
 
-
-        resposta = ai_engine.gerar_resposta(
+        resultado_ia = ai_engine.gerar_resultado(
             mensagens_ia
+        )
+
+        resposta = resultado_ia.resposta
+
+        print(
+            "[AI RESULT] "
+            f"provider={resultado_ia.provider} | "
+            f"modelo={resultado_ia.modelo}"
         )
 
         if resposta is None or not str(resposta).strip():
@@ -1624,7 +1631,7 @@ class ChatService:
             remetente=RemetenteMensagem.ARA,
             conteudo=resposta,
             tipo="TEXTO",
-            modelo_ia=setting.GROQ_MODEL,
+            modelo_ia=resultado_ia.modelo,
             tempo_processamento=tempo
         )
 
@@ -1664,8 +1671,9 @@ class ChatService:
             "id_conversa": id_conversa,
             "mensagem_usuario": conteudo,
             "resposta_ara": resposta,
-            "modelo": setting.GROQ_MODEL,
+            "provider": resultado_ia.provider,
+            "modelo": resultado_ia.modelo,
             "ferramenta": None,
-            "tempo_processamento": tempo
-        }
+            "tempo_processamento": tempo,
 
+        }

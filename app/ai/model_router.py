@@ -2,6 +2,7 @@ from app.ai.base import AIProvider
 from app.ai.deepseek_provider import DeepSeekProvider
 from app.ai.groq_provider import GroqProvider
 from app.ai.openai_provider import OpenAIProvider
+from app.ai.result import AIResult
 from app.security.settings import setting
 
 
@@ -62,15 +63,15 @@ class ModelRouter:
         return provider
 
     # =====================================================
-    # GERAR RESPOSTA
+    # GERAR RESULTADO COMPLETO
     # =====================================================
 
-    def gerar_resposta(
+    def gerar_resultado(
         self,
         mensagens: list[dict],
         temperatura: float = 0.5,
         max_tokens: int | None = None
-    ) -> str:
+    ) -> AIResult:
 
         providers = [
             self.provider_principal
@@ -101,12 +102,25 @@ class ModelRouter:
                     max_tokens=max_tokens
                 )
 
-                print(
-                    "[MODEL ROUTER] "
-                    f"provider={nome_provider}"
+                modelo = str(
+                    getattr(
+                        provider,
+                        "modelo",
+                        "DESCONHECIDO"
+                    )
                 )
 
-                return resposta
+                print(
+                    "[MODEL ROUTER] "
+                    f"provider={nome_provider} | "
+                    f"modelo={modelo}"
+                )
+
+                return AIResult(
+                    resposta=resposta,
+                    provider=nome_provider,
+                    modelo=modelo
+                )
 
             except Exception as erro:
 
@@ -126,3 +140,22 @@ class ModelRouter:
             "processar a solicitação. "
             f"Tentativas: {', '.join(erros)}"
         )
+
+    # =====================================================
+    # COMPATIBILIDADE — RETORNA SOMENTE TEXTO
+    # =====================================================
+
+    def gerar_resposta(
+        self,
+        mensagens: list[dict],
+        temperatura: float = 0.5,
+        max_tokens: int | None = None
+    ) -> str:
+
+        resultado = self.gerar_resultado(
+            mensagens=mensagens,
+            temperatura=temperatura,
+            max_tokens=max_tokens
+        )
+
+        return resultado.resposta

@@ -1,5 +1,3 @@
-from logging import disable
-
 from openai import OpenAI
 
 from app.ai.base import AIProvider
@@ -10,15 +8,20 @@ class DeepSeekProvider(AIProvider):
 
     def __init__(self):
 
-        api_key = (setting.DEEPSEEK_API_KEY
-                   or ""
-                   ).strip()
+        api_key = (
+            setting.DEEPSEEK_API_KEY
+            or ""
+        ).strip()
 
-        if (not api_key
-        or api_key == "PREENCHER AQUI"):
-            raise ValueError("DEEPSEEK_API_KEY não configurada.")
+        if (
+            not api_key
+            or api_key == "PREENCHER AQUI"
+        ):
+            raise ValueError(
+                "DEEPSEEK_API_KEY não configurada."
+            )
 
-        self.modelo = setting.DEEPSEEK_API_KEY
+        self.modelo = setting.DEEPSEEK_MODEL
 
         self.client = OpenAI(
             api_key=api_key,
@@ -28,25 +31,33 @@ class DeepSeekProvider(AIProvider):
         )
 
     def gerar_resposta(
-            self,
-            mensagens: list[dict],
-            temperatura: float = 0.5,
-            max_tokens: int | None = None
+        self,
+        mensagens: list[dict],
+        temperatura: float = 0.5,
+        max_tokens: int | None = None
     ) -> str:
+
         if not mensagens:
-            raise ValueError("Nenhuma mensagem foi enviada para a IA.")
+            raise ValueError(
+                "Nenhuma mensagem foi enviada para a IA."
+            )
 
         mensagens_validas: list[dict] = []
 
         for mensagem in mensagens:
-            role = mensagem.get("role", "user")
 
-            conteudo = mensagem.get("content", "")
+            role = mensagem.get(
+                "role",
+                "user"
+            )
+
+            conteudo = mensagem.get(
+                "content",
+                ""
+            )
 
             if not conteudo:
                 continue
-
-
 
             if role == "developer":
                 role = "system"
@@ -64,42 +75,45 @@ class DeepSeekProvider(AIProvider):
                 "content": str(conteudo)
             })
 
-            if not mensagens_validas:
-                raise ValueError("Nenhuma mensagem válida foi enviada.")
-
-            limite_tokens = (
-                max_tokens
-                if max_tokens is not None
-                else 700
+        if not mensagens_validas:
+            raise ValueError(
+                "Nenhuma mensagem válida foi enviada."
             )
 
-            resposta = (
-                self.client
-                .chat
-                .completions
-                .create(
-                    model=self.modelo,
-                    messages=mensagens_validas,
-                    temperatura=temperatura,
-                    max_tokens=limite_tokens,
+        limite_tokens = (
+            max_tokens
+            if max_tokens is not None
+            else 700
+        )
 
-                    extra_body={
-                        "thinking": {
-                            "role": "disabled"
-                        }
+        resposta = (
+            self.client
+            .chat
+            .completions
+            .create(
+                model=self.modelo,
+                messages=mensagens_validas,
+                temperature=temperatura,
+                max_tokens=limite_tokens,
+                extra_body={
+                    "thinking": {
+                        "role": "disabled"
                     }
-                )
+                }
+            )
+        )
+
+        conteudo = (
+            resposta
+            .choices[0]
+            .message
+            .content
+            or ""
+        ).strip()
+
+        if not conteudo:
+            raise RuntimeError(
+                "DeepSeek não retornou conteúdo."
             )
 
-            conteudo = (
-                resposta
-                .choices[0]
-                .message
-                .content
-                or ""
-            ).strip()
-
-            if not conteudo:
-                raise RuntimeError("DeepSeek não retornou conteúdo.")
-
-            return conteudo
+        return conteudo
