@@ -97,7 +97,7 @@ class DeepSeekProvider(AIProvider):
                 max_tokens=limite_tokens,
                 extra_body={
                     "thinking": {
-                        "role": "disabled"
+                        "type": "disabled"
                     }
                 }
             )
