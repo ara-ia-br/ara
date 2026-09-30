@@ -1,6 +1,4 @@
 from app.services.consulta_instrucional_service import ConsultaInstrucionalService
-from app.services.confirmation_policy_service import ConfirmationPolicyService
-
 from time import perf_counter
 
 import re
@@ -9,6 +7,13 @@ import re
 from sqlalchemy.orm import Session
 
 
+from app.services.instructional_query_handler_service import (
+    InstructionalQueryHandlerService
+)
+
+from app.services.multi_intent_handler_service import (
+    MultiIntentHandlerService
+)
 
 
 
@@ -18,14 +23,16 @@ from app.ai.capability_response_guard import (
     CapabilityResponseGuard
 )
 
-
+from app.services.memory_extraction_service import (
+    MemoryExtractionService
+)
 
 
 from app.ai.operational_response_guard import (
     OperationalResponseGuard
 )
 
-from app.ai.response_composer import ResponseComposer
+
 
 from app.ai.prompt_builder import (
     PromptBuilder as AIPromptBuilder
@@ -40,27 +47,16 @@ from app.services.time_service import (
     TimeService
 )
 
-from app.services.entidade_contextual_service import (
-    EntidadeContextualService
-)
 
 from app.services.contexto_agente_service import (
     ContextoAgenteService
 )
 
-from app.services.acao_pendente_service import (
-    AcaoPendenteService
-)
 
 from app.ai.engine import ai_engine
 
-from app.agent.agent import AraAgent
-from app.agent.intent import TipoAcao
-from app.agent.tool_registry import ToolRegistry
-from app.agent.plan_executor import AgentPlanExecutor
 from app.services.action_guard_service import ActionGuardService
 
-from app.memory.memory_extractor import MemoryExtractor
 from app.memory.memory_manager import MemoryManager
 
 from app.models.mensagem import (
@@ -70,6 +66,14 @@ from app.models.mensagem import (
 
 from app.repositories.conversa_repository import (
     ConversaRepository
+)
+
+from app.services.agent_action_handler_service import (
+    AgentActionHandlerService
+)
+
+from app.services.pending_action_handler_service import (
+    PendingActionHandlerService
 )
 
 from app.services.chat_interaction_service import (
@@ -86,132 +90,6 @@ from app.services.conversa_service import (
 
 
 class ChatService:
-
-    # =========================================================
-    # EXTRAÇÃO DE MEMÓRIA
-    # =========================================================
-
-    @staticmethod
-    def _extrair_memoria(
-            db: Session,
-            id_usuario: int,
-            conteudo: str
-    ) -> None:
-
-        try:
-
-            inicio_extracao = perf_counter()
-
-            MemoryExtractor.processar(
-                db=db,
-                id_usuario=id_usuario,
-                mensagem=conteudo
-            )
-
-            print(
-                f"[PERFORMANCE] Extração memória: "
-                f"{perf_counter() - inicio_extracao:.2f}s"
-            )
-
-        except Exception as erro:
-
-            print(
-                f"Erro ao extrair memória: {erro}"
-            )
-
-    # =========================================================
-    # LIMPAR TÍTULOS DO AGENT
-    # =========================================================
-
-    @staticmethod
-    def _limpar_titulo(
-        texto: str
-    ) -> str:
-
-        texto = re.sub(
-            r"\bprioridade\s+(máxima|maxima|alta|baixa|muito baixa|[1-5])\b",
-            "",
-            texto,
-            flags=re.IGNORECASE
-        )
-
-        texto = re.sub(
-            r"\b(urgente|urgentemente|muito urgente)\b",
-            "",
-            texto,
-            flags=re.IGNORECASE
-        )
-
-        texto = re.sub(
-            r"\s+",
-            " ",
-            texto
-        )
-
-        texto = texto.strip(
-            " ,.-"
-        )
-
-        texto = re.sub(
-            r"^para\s+",
-            "",
-            texto,
-            flags=re.IGNORECASE
-        )
-
-        if not texto:
-            return texto
-
-        texto = texto.strip()
-
-        texto = re.sub(
-            r"""
-            [,\s]*
-            (
-                por\s+favor
-                |
-                por\s+gentileza
-                |
-                pfv
-                |
-                pra\s+mim
-                |
-                para\s+mim
-                |
-                obrigado
-                |
-                obrigada
-                |
-                obg
-                |
-                beleza
-                |
-                blz
-            )
-            [.!?]*$
-            """,
-            "",
-            texto,
-            flags=(
-                re.IGNORECASE
-                | re.VERBOSE
-            )
-        )
-
-        texto = texto.strip(
-            " ,.!?;:-"
-        )
-
-        return texto
-
-
-    # =========================================================
-    # FORMATAR RESPOSTA DAS TOOLS
-    # =========================================================
-
-
-
-
     # =========================================================
     # MÉTODO PRINCIPAL
     # =========================================================
@@ -260,1015 +138,61 @@ class ChatService:
         # CONFIRMAÇÃO DE AÇÃO PENDENTE
         # =====================================================
 
-        texto_normalizado = (
-            conteudo
-            .strip()
-            .lower()
+        resultado_acao_pendente = (
+            PendingActionHandlerService.processar(
+                db=db,
+                id_usuario=id_usuario,
+                id_conversa=id_conversa,
+                conteudo=conteudo
+            )
         )
 
-        texto_normalizado = re.sub(
-            r"[.!?,;:]+$",
-            "",
-            texto_normalizado
-        ).strip()
-
-        confirmacoes = {
-            "sim",
-            "s",
-            "confirmo",
-            "confirmar",
-            "pode",
-            "pode sim",
-            "sim pode",
-            "sim, pode",
-            "pode fazer",
-            "pode excluir",
-            "confirmo sim",
-            "confirmo pode excluir",
-            "tenho certeza"
-        }
-
-        recusas = {
-            "não",
-            "nao",
-            "n",
-            "cancelar",
-            "cancela",
-            "cancele",
-            "não quero",
-            "nao quero",
-            "deixa",
-            "deixa pra lá",
-            "deixa pra la",
-            "não faça",
-            "nao faca"
-        }
-
-        acao_pendente = AcaoPendenteService.obter(
-            id_usuario=id_usuario,
-            id_conversa=id_conversa
-        )
-
-        # -----------------------------------------------------
-        # USUÁRIO RECUSOU
-        # -----------------------------------------------------
-
-        if (
-            acao_pendente is not None
-            and texto_normalizado in recusas
-        ):
-
-            AcaoPendenteService.cancelar(
-                id_usuario=id_usuario,
-                id_conversa=id_conversa
-            )
-
-            resposta = (
-                acao_pendente.get(
-                    "mensagem_cancelamento"
-                )
-                or (
-                    "Certo, ação cancelada. "
-                    "Nada foi alterado."
-                )
-            )
-
-            ChatInteractionService.salvar_agent(
-                db=db,
-                id_conversa=id_conversa,
-                conteudo_usuario=conteudo,
-                resposta_ara=resposta
-            )
-
-            return {
-                "id_conversa": id_conversa,
-                "mensagem_usuario": conteudo,
-                "resposta_ara": resposta,
-                "modelo": "AGENT",
-                "ferramenta": None,
-                "tempo_processamento": 0
-            }
-
-        # -----------------------------------------------------
-        # USUÁRIO CONFIRMOU
-        # -----------------------------------------------------
-
-        if (
-            acao_pendente is not None
-            and texto_normalizado in confirmacoes
-        ):
-
-            acao = AcaoPendenteService.consumir(
-                id_usuario=id_usuario,
-                id_conversa=id_conversa
-            )
-
-            ferramenta = acao["ferramenta"]
-
-            argumentos = dict(
-                acao.get(
-                    "argumentos",
-                    {}
-                )
-            )
-
-            argumentos["db"] = db
-            argumentos["id_usuario"] = id_usuario
-
-            try:
-
-                resultado = ToolRegistry.executar(
-                    ferramenta,
-                    **argumentos
-                )
-
-                if not isinstance(
-                    resultado,
-                    dict
-                ):
-                    raise ValueError(
-                        "A ferramenta não retornou "
-                        "um resultado válido."
-                    )
-
-                if resultado.get(
-                    "sucesso"
-                ) is not True:
-                    raise ValueError(
-                        resultado.get(
-                            "erro",
-                            "A operação não foi concluída."
-                        )
-                    )
-
-                resposta = (
-                    ResponseComposer.formatar_tool(
-                        ferramenta,
-                        resultado
-                    )
-                )
-
-            except Exception as erro:
-
-                print(
-                    "[AÇÃO PENDENTE] "
-                    f"Falha em {ferramenta}: {erro}"
-                )
-
-                resposta = (
-                    "Não consegui executar essa ação. "
-                    "Nenhum sucesso foi confirmado."
-                )
-
-                ChatInteractionService.salvar_agent(
-                    db=db,
-                    id_conversa=id_conversa,
-                    conteudo_usuario=conteudo,
-                    resposta_ara=resposta
-                )
-
-                return {
-                    "id_conversa": id_conversa,
-                    "mensagem_usuario": conteudo,
-                    "resposta_ara": resposta,
-                    "modelo": "AGENT",
-                    "ferramenta": ferramenta,
-                    "tempo_processamento": 0
-                }
-
-            ChatInteractionService.salvar_agent(
-                db=db,
-                id_conversa=id_conversa,
-                conteudo_usuario=conteudo,
-                resposta_ara=resposta
-            )
-
-            return {
-                "id_conversa": id_conversa,
-                "mensagem_usuario": conteudo,
-                "resposta_ara": resposta,
-                "modelo": "AGENT",
-                "ferramenta": ferramenta,
-                "tempo_processamento": 0
-            }
+        if resultado_acao_pendente is not None:
+            return resultado_acao_pendente
 
         # =====================================================
         # CONSULTA INSTRUCIONAL OPERACIONAL
         # =====================================================
 
-        consulta_instrucional = (
-            ConsultaInstrucionalService.analisar(
-                conteudo
-            )
-        )
-
-        if consulta_instrucional is not None:
-
-            resposta = (
-                consulta_instrucional[
-                    "resposta"
-                ]
-            )
-
-            ChatInteractionService.salvar_agent(
+        resultado_instrucional = (
+            InstructionalQueryHandlerService.processar(
                 db=db,
                 id_conversa=id_conversa,
-                conteudo_usuario=conteudo,
-                resposta_ara=resposta
-            )
-
-            return {
-                "id_conversa": id_conversa,
-                "mensagem_usuario": conteudo,
-                "resposta_ara": resposta,
-                "modelo": "AGENT",
-                "ferramenta": None,
-                "tempo_processamento": 0
-            }
-
-        inicio_agent = perf_counter()
-
-
-        # =====================================================
-        # SPRINT 9 - PLANEJAMENTO MULTI-INTENT
-        # =====================================================
-
-        plano = AraAgent.planejar(
-            mensagem=conteudo,
-            db=db,
-            id_usuario=id_usuario,
-            id_conversa=id_conversa
-        )
-
-        if plano is not None:
-
-            # =================================================
-            # PRÉ-VALIDAÇÃO DO PLANO
-            # =================================================
-            #
-            # Nenhuma etapa é executada antes de validarmos
-            # todas as ações conhecidas do plano. Isso evita
-            # execução parcial quando uma etapa posterior exige
-            # confirmação.
-            # =================================================
-
-            for passo in plano.passos:
-                decisao_passo = passo.decisao
-                ferramenta_passo = decisao_passo.ferramenta
-
-                if (
-                    decisao_passo.acao != TipoAcao.EXECUTAR
-                    or ferramenta_passo is None
-                ):
-                    resposta = (
-                        "Não consegui montar todas as ações "
-                        "desse pedido com segurança."
-                    )
-
-                    ChatInteractionService.salvar_agent(
-                        db=db,
-                        id_conversa=id_conversa,
-                        conteudo_usuario=conteudo,
-                        resposta_ara=resposta
-                    )
-
-                    return {
-                        "id_conversa": id_conversa,
-                        "mensagem_usuario": conteudo,
-                        "resposta_ara": resposta,
-                        "modelo": "AGENT",
-                        "ferramenta": None,
-                        "tempo_processamento": 0
-                    }
-
-                if not ToolRegistry.existe(ferramenta_passo):
-                    resposta = (
-                        f"A ferramenta '{ferramenta_passo}' "
-                        "não está disponível no momento."
-                    )
-
-                    ChatInteractionService.salvar_agent(
-                        db=db,
-                        id_conversa=id_conversa,
-                        conteudo_usuario=conteudo,
-                        resposta_ara=resposta
-                    )
-
-                    return {
-                        "id_conversa": id_conversa,
-                        "mensagem_usuario": conteudo,
-                        "resposta_ara": resposta,
-                        "modelo": "AGENT",
-                        "ferramenta": None,
-                        "tempo_processamento": 0
-                    }
-
-                argumentos_pre_validacao = (
-                    decisao_passo.argumentos.copy()
-                    if decisao_passo.argumentos
-                    else {}
-                )
-
-                dados_confirmacao = (
-                    ConfirmationPolicyService.preparar(
-                        ferramenta=ferramenta_passo,
-                        argumentos=argumentos_pre_validacao
-                    )
-                )
-
-                if dados_confirmacao is not None:
-                    resposta = (
-                        "Esse pedido contém várias ações e uma delas "
-                        "precisa de confirmação. Por segurança, nenhuma "
-                        "ação foi executada."
-                    )
-
-                    ChatInteractionService.salvar_agent(
-                        db=db,
-                        id_conversa=id_conversa,
-                        conteudo_usuario=conteudo,
-                        resposta_ara=resposta
-                    )
-
-                    return {
-                        "id_conversa": id_conversa,
-                        "mensagem_usuario": conteudo,
-                        "resposta_ara": resposta,
-                        "modelo": "AGENT",
-                        "ferramenta": None,
-                        "tempo_processamento": 0
-                    }
-
-            # =================================================
-            # EXECUTOR SEGURO DAS ETAPAS DO PLANO
-            # =================================================
-
-            def executar_passo_plano(
-                decisao_passo,
-                argumentos_passo
-            ):
-                ferramenta = decisao_passo.ferramenta
-
-                if not ferramenta:
-                    raise ValueError(
-                        "Etapa do plano sem ferramenta definida."
-                    )
-
-                if not ToolRegistry.existe(ferramenta):
-                    raise ValueError(
-                        f"Ferramenta '{ferramenta}' não encontrada."
-                    )
-
-                argumentos = (
-                    argumentos_passo.copy()
-                    if argumentos_passo
-                    else {}
-                )
-
-                # ---------------------------------------------
-                # CONFIRMATION POLICY APÓS RESOLVER ARGUMENTOS
-                # ---------------------------------------------
-
-                dados_confirmacao = (
-                    ConfirmationPolicyService.preparar(
-                        ferramenta=ferramenta,
-                        argumentos=argumentos
-                    )
-                )
-
-                if dados_confirmacao is not None:
-                    raise ValueError(
-                        "Uma etapa do plano exige confirmação "
-                        "antes de ser executada."
-                    )
-
-                # ---------------------------------------------
-                # DADOS INTERNOS
-                # ---------------------------------------------
-
-                argumentos["db"] = db
-                argumentos["id_usuario"] = id_usuario
-
-                # ---------------------------------------------
-                # LIMPEZA DE TÍTULO
-                # ---------------------------------------------
-
-                if (
-                    "titulo" in argumentos
-                    and isinstance(argumentos["titulo"], str)
-                ):
-                    argumentos["titulo"] = (
-                        ChatService._limpar_titulo(
-                            argumentos["titulo"]
-                        )
-                    )
-
-                # ---------------------------------------------
-                # EXECUTA TOOL
-                # ---------------------------------------------
-
-                resultado = ToolRegistry.executar(
-                    ferramenta,
-                    **argumentos
-                )
-
-                if not isinstance(resultado, dict):
-                    raise ValueError(
-                        "A ferramenta não retornou "
-                        "um resultado válido."
-                    )
-
-                if resultado.get("sucesso") is False:
-                    raise ValueError(
-                        resultado.get(
-                            "erro",
-                            "A operação não foi concluída."
-                        )
-                    )
-
-                # ---------------------------------------------
-                # CONTEXTO DE TAREFA
-                # ---------------------------------------------
-
-                id_tarefa_resultado = resultado.get(
-                    "id_tarefa"
-                )
-
-                if (
-                    id_tarefa_resultado is not None
-                    and "tarefa" in ferramenta
-                ):
-                    titulo_tarefa_resultado = resultado.get(
-                        "titulo"
-                    )
-
-                    ContextoAgenteService.registrar_tarefa(
-                        db=db,
-                        id_usuario=id_usuario,
-                        id_conversa=id_conversa,
-                        id_tarefa=id_tarefa_resultado,
-                        ferramenta=ferramenta
-                    )
-
-                    EntidadeContextualService.registrar(
-                        db=db,
-                        id_usuario=id_usuario,
-                        id_conversa=id_conversa,
-                        tipo_entidade="TAREFA",
-                        id_entidade=id_tarefa_resultado,
-                        titulo=titulo_tarefa_resultado
-                    )
-
-                # ---------------------------------------------
-                # CONTEXTO DE LEMBRETE
-                # ---------------------------------------------
-
-                id_lembrete_resultado = resultado.get(
-                    "id_lembrete"
-                )
-
-                if (
-                    id_lembrete_resultado is not None
-                    and "lembrete" in ferramenta
-                ):
-                    ContextoAgenteService.registrar_lembrete(
-                        db=db,
-                        id_usuario=id_usuario,
-                        id_conversa=id_conversa,
-                        id_lembrete=id_lembrete_resultado,
-                        ferramenta=ferramenta
-                    )
-
-                    EntidadeContextualService.registrar(
-                        db=db,
-                        id_usuario=id_usuario,
-                        id_conversa=id_conversa,
-                        tipo_entidade="LEMBRETE",
-                        id_entidade=id_lembrete_resultado,
-                        titulo=resultado.get("titulo")
-                    )
-
-                return resultado
-
-            # =================================================
-            # EXECUTAR PLANO MULTI-INTENT
-            # =================================================
-
-            try:
-                resultados_planos = AgentPlanExecutor.executar(
-                    plano=plano,
-                    executar_passo=executar_passo_plano
-                )
-
-            except ValueError as erro:
-                resposta = str(erro)
-
-                ChatInteractionService.salvar_agent(
-                    db=db,
-                    id_conversa=id_conversa,
-                    conteudo_usuario=conteudo,
-                    resposta_ara=resposta
-                )
-
-                return {
-                    "id_conversa": id_conversa,
-                    "mensagem_usuario": conteudo,
-                    "resposta_ara": resposta,
-                    "modelo": "AGENT",
-                    "ferramenta": None,
-                    "tempo_processamento": 0
-                }
-
-            except TypeError as erro:
-                print(
-                    f"Erro de argumentos no plano: {erro}"
-                )
-
-                resposta = (
-                    "Eita! Faltou uma informação para eu executar "
-                    "todas as ações desse pedido."
-                )
-
-                ChatInteractionService.salvar_agent(
-                    db=db,
-                    id_conversa=id_conversa,
-                    conteudo_usuario=conteudo,
-                    resposta_ara=resposta
-                )
-
-                return {
-                    "id_conversa": id_conversa,
-                    "mensagem_usuario": conteudo,
-                    "resposta_ara": resposta,
-                    "modelo": "AGENT",
-                    "ferramenta": None,
-                    "tempo_processamento": 0
-                }
-
-            # =================================================
-            # MONTA UMA ÚNICA RESPOSTA MULTI-INTENT
-            # =================================================
-
-            resposta_plano = []
-
-            for passo, resultado in zip(
-                plano.passos,
-                resultados_planos
-            ):
-                ferramenta = passo.decisao.ferramenta
-
-                if ferramenta is None:
-                    continue
-
-                resposta_etapa = (
-                    ResponseComposer.formatar_tool(
-                        ferramenta,
-                        resultado
-                    )
-                )
-
-                if resposta_etapa:
-                    resposta_plano.append(
-                        resposta_etapa
-                    )
-
-            if not resposta_plano:
-                resposta = (
-                    "As ações foram processadas, "
-                    "mas não houve resposta para exibir."
-                )
-            else:
-                resposta = "\n\n".join(
-                    resposta_plano
-                )
-
-            # =================================================
-            # SALVA INTERAÇÃO UMA ÚNICA VEZ
-            # =================================================
-
-            ChatInteractionService.salvar_agent(
-                db=db,
-                id_conversa=id_conversa,
-                conteudo_usuario=conteudo,
-                resposta_ara=resposta
-            )
-
-            # =================================================
-            # MEMÓRIA
-            # =================================================
-
-            ChatService._extrair_memoria(
-                db=db,
-                id_usuario=id_usuario,
                 conteudo=conteudo
             )
-
-            print(
-                f"[PERFORMANCE] Agent Plan: "
-                f"{perf_counter() - inicio_agent:.2f}s"
-            )
-
-            return {
-                "id_conversa": id_conversa,
-                "mensagem_usuario": conteudo,
-                "resposta_ara": resposta,
-                "modelo": "AGENT",
-                "ferramenta": "MULTI_INTENT",
-                "tempo_processamento": 0
-            }
-
-        # =====================================================
-        # FLUXO TRADICIONAL DO AGENT
-        # =====================================================
-
-        decisao = AraAgent.decidir(
-            mensagem=conteudo,
-            db=db,
-            id_usuario=id_usuario,
-            id_conversa=id_conversa
         )
 
-        print(
-            f"[PERFORMANCE] Agent: "
-            f"{perf_counter() - inicio_agent:.2f}s"
-        )
+        if resultado_instrucional is not None:
+              return resultado_instrucional
 
 
 
+        # SPRINT 9
 
-        # =====================================================
-        # 4. AGENT
-        # =====================================================
-
-        # =====================================================
-        # 5. EXECUTAR TOOL
-        # =====================================================
-
-        if decisao.acao == TipoAcao.EXECUTAR:
-
-            argumentos = (
-                decisao.argumentos.copy()
-                if decisao.argumentos
-                else {}
-            )
-
-            # =================================================
-            # CONFIRMATION POLICY — BARREIRA CENTRAL
-            # =================================================
-            #
-            # Antes de qualquer Tool ser executada, verificamos
-            # se a política central exige confirmação.
-            #
-            # Dados internos como db e id_usuario NÃO entram na
-            # ação pendente. Eles serão injetados somente depois
-            # que o usuário confirmar.
-            # =================================================
-
-            dados_confirmacao = (
-                ConfirmationPolicyService.preparar(
-                    ferramenta=decisao.ferramenta,
-                    argumentos=argumentos
-                )
-            )
-
-            if dados_confirmacao is not None:
-
-                AcaoPendenteService.registrar(
-                    id_usuario=id_usuario,
-                    id_conversa=id_conversa,
-                    ferramenta=
-                        dados_confirmacao["ferramenta"],
-                    argumentos=
-                        dados_confirmacao["argumentos"],
-                    dominio=
-                        dados_confirmacao["dominio"],
-                    operacao=
-                        dados_confirmacao["operacao"],
-                    descricao=
-                        dados_confirmacao["descricao"],
-                    mensagem_confirmacao=
-                        dados_confirmacao[
-                            "mensagem_confirmacao"
-                        ],
-                    mensagem_cancelamento=
-                        dados_confirmacao[
-                            "mensagem_cancelamento"
-                        ]
-                )
-
-                resposta = (
-                    dados_confirmacao[
-                        "mensagem_confirmacao"
-                    ]
-                )
-
-                ChatInteractionService.salvar_agent(
-                    db=db,
-                    id_conversa=id_conversa,
-                    conteudo_usuario=conteudo,
-                    resposta_ara=resposta
-                )
-
-                return {
-                    "id_conversa": id_conversa,
-                    "mensagem_usuario": conteudo,
-                    "resposta_ara": resposta,
-                    "modelo": "AGENT",
-                    "ferramenta": None,
-                    "tempo_processamento": 0
-                }
-
-
-            # O backend injeta esses dados.
-            # Nunca devem depender da IA.
-            argumentos["db"] = db
-            argumentos["id_usuario"] = id_usuario
-
-
-            try:
-
-                # =================================================
-                # LIMPA TÍTULO
-                # =================================================
-
-                if "titulo" in argumentos:
-
-                    argumentos["titulo"] = (
-                        ChatService._limpar_titulo(
-                            argumentos["titulo"]
-                        )
-                    )
-
-
-                # =================================================
-                # EXECUTA TOOL
-                # =================================================
-
-                resultado = ToolRegistry.executar(
-                    decisao.ferramenta,
-                    **argumentos
-                )
-
-                # =====================================================
-                # ATUALIZA CONTEXTO OPERACIONAL DE TAREFA
-                # =====================================================
-
-                if (
-                        isinstance(resultado, dict)
-                        and resultado.get("id_tarefa") is not None
-                        and "tarefa" in str(decisao.ferramenta)
-                ):
-                    id_tarefa_resultado = resultado.get(
-                        "id_tarefa"
-                    )
-
-                    titulo_tarefa_resultado = resultado.get(
-                        "titulo"
-                    )
-
-                    print(
-                        "\n===== CONTEXTO DEBUG ====="
-                    )
-
-                    print(
-                        "Ferramenta:",
-                        decisao.ferramenta
-                    )
-
-                    print(
-                        "Usuário:",
-                        id_usuario
-                    )
-
-                    print(
-                        "Conversa:",
-                        id_conversa
-                    )
-
-                    print(
-                        "ID tarefa:",
-                        id_tarefa_resultado
-                    )
-
-                    print(
-                        "Título:",
-                        titulo_tarefa_resultado
-                    )
-
-                    print(
-                        "==========================\n"
-                    )
-
-                    ContextoAgenteService.registrar_tarefa(
-                        db=db,
-                        id_usuario=id_usuario,
-                        id_conversa=id_conversa,
-                        id_tarefa=id_tarefa_resultado,
-                        ferramenta=decisao.ferramenta
-                    )
-
-                    EntidadeContextualService.registrar(
-                        db=db,
-                        id_usuario=id_usuario,
-                        id_conversa=id_conversa,
-                        tipo_entidade="TAREFA",
-                        id_entidade=id_tarefa_resultado,
-                        titulo=titulo_tarefa_resultado
-                    )
-
-
-
-                # =====================================================
-                # REGISTRA LEMBRETE NO CONTEXTO
-                # =====================================================
-
-                if (
-                        isinstance(resultado, dict)
-                        and resultado.get("id_lembrete") is not None
-                        and "lembrete" in str(decisao.ferramenta)
-                ):
-                    EntidadeContextualService.registrar(
-                        db=db,
-                        id_usuario=id_usuario,
-                        id_conversa=id_conversa,
-                        tipo_entidade="LEMBRETE",
-                        id_entidade=resultado["id_lembrete"],
-                        titulo=resultado.get("titulo")
-                    )
-
-                # =====================================================
-                # ATUALIZA CONTEXTO OPERACIONAL DE LEMBRETE
-                # =====================================================
-
-                if (
-                    isinstance(resultado, dict)
-                    and resultado.get("id_lembrete") is not None
-                    and "lembrete" in str(decisao.ferramenta)
-                ):
-                    ContextoAgenteService.registrar_lembrete(
-                        db=db,
-                        id_usuario=id_usuario,
-                        id_conversa=id_conversa,
-                        id_lembrete=resultado["id_lembrete"],
-                        ferramenta=decisao.ferramenta
-                    )
-
-                # =====================================================
-                # ATUALIZA CONTEXTO OPERACIONAL
-                # =====================================================
-
-
-
-
-            # =====================================================
-            # ERRO FUNCIONAL
-            # =====================================================
-
-            except ValueError as erro:
-
-                resposta = str(
-                    erro
-                )
-
-                ChatInteractionService.salvar_agent(
-                    db=db,
-                    id_conversa=id_conversa,
-                    conteudo_usuario=conteudo,
-                    resposta_ara=resposta
-                )
-                ChatService._extrair_memoria(
-                    db=db,
-                    id_usuario=id_usuario,
-                    conteudo=conteudo
-                )
-
-
-                return {
-                    "id_conversa": id_conversa,
-                    "mensagem_usuario": conteudo,
-                    "resposta_ara": resposta,
-                    "modelo": "AGENT",
-                    "ferramenta": decisao.ferramenta,
-                    "tempo_processamento": 0
-                }
-
-
-            # =====================================================
-            # ARGUMENTO OBRIGATÓRIO AUSENTE
-            # =====================================================
-
-            except TypeError as erro:
-
-                print(
-                    f"Erro de argumentos da ferramenta "
-                    f"'{decisao.ferramenta}': {erro}"
-                )
-
-
-                if (
-                    "tarefa"
-                    in str(decisao.ferramenta)
-                ):
-
-                    resposta = (
-                        "Preciso saber qual tarefa você "
-                        "quer alterar. Me diga o nome dela."
-                    )
-
-                elif (
-                    "lembrete"
-                    in str(decisao.ferramenta)
-                ):
-
-                    resposta = (
-                        "Preciso saber qual lembrete você "
-                        "quer alterar. Me diga qual é."
-                    )
-
-                else:
-
-                    resposta = (
-                        "Faltou uma informação para eu "
-                        "executar essa ação. "
-                        "Pode especificar melhor?"
-                    )
-
-
-                ChatInteractionService.salvar_agent(
-                    db=db,
-                    id_conversa=id_conversa,
-                    conteudo_usuario=conteudo,
-                    resposta_ara=resposta
-                )
-
-                return {
-                    "id_conversa": id_conversa,
-                    "mensagem_usuario": conteudo,
-                    "resposta_ara": resposta,
-                    "modelo": "AGENT",
-                    "ferramenta": decisao.ferramenta,
-                    "tempo_processamento": 0
-                }
-
-
-            # =====================================================
-            # 6. FORMATA RESPOSTA DA TOOL
-            # =====================================================
-
-            resposta = (
-                ResponseComposer.formatar_tool(
-                    decisao.ferramenta,
-                    resultado
-                )
-            )
-
-
-            # =====================================================
-            # 7. SALVA A INTERAÇÃO
-            # =====================================================
-
-            ChatInteractionService.salvar_agent(
-                db=db,
-                id_conversa=id_conversa,
-                conteudo_usuario=conteudo,
-                resposta_ara=resposta
-            )
-
-
-            # =====================================================
-            # 8. MEMÓRIA
-            # =====================================================
-            ChatService._extrair_memoria(
+        resultado_multi_intent = (
+            MultiIntentHandlerService.processar(
                 db=db,
                 id_usuario=id_usuario,
+                id_conversa=id_conversa,
                 conteudo=conteudo
             )
+        )
+
+        if resultado_multi_intent is not None:
+            return resultado_multi_intent
 
 
+        resultado_agent = (
+            AgentActionHandlerService.processar(
+                db=db,
+                id_usuario=id_usuario,
+                id_conversa=id_conversa,
+                conteudo=conteudo
+            )
+       )
 
-            # =====================================================
-            # 9. RETORNO DO AGENT
-            # =====================================================
-
-            return {
-                "id_conversa": id_conversa,
-                "mensagem_usuario": conteudo,
-                "resposta_ara": resposta,
-                "modelo": "AGENT",
-                "ferramenta": decisao.ferramenta,
-                "tempo_processamento": 0
-            }
-
-        # =========================================================
-        # ACTION GUARD
-        # =========================================================
-        #
-        # Se o Agent chegou até aqui, nenhuma ferramenta foi
-        # executada.
-        #
-        # Antes do fallback conversacional, bloqueamos pedidos
-        # operacionais conhecidos que não foram confirmados
-        # por uma Tool.
+        if resultado_agent is not None:
+            return resultado_agent
 
         # =========================================================
         # ACTION GUARD — BARREIRA EXPLÍCITA
@@ -1615,7 +539,7 @@ class ChatService:
         # =========================================================
         # 19. EXTRAÇÃO DE MEMÓRIA
         # =========================================================
-        ChatService._extrair_memoria(
+        MemoryExtractionService.processar(
             db=db,
             id_usuario=id_usuario,
             conteudo=conteudo

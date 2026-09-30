@@ -17,6 +17,7 @@ class MultiIntentParser:
 
     _INICIOS_INTENT = (
         r"(?:"
+        r"quais\s+(?:tarefas?|lembretes?)|"
         r"me\s+lembre|me\s+lembra|"
         r"lembre|lembra|"
         r"liste|lista|listar|"
