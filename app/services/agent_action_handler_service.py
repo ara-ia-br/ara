@@ -56,6 +56,8 @@ class AgentActionHandlerService:
             id_conversa=id_conversa
         )
 
+
+
         print(
             f"[PERFORMANCE] Agent: "
             f"{perf_counter() - inicio_agent:.2f}s"

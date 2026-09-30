@@ -878,24 +878,18 @@ class AraAgent:
     @staticmethod
     def _detectar_prioridade(
             mensagem: str
-    ) -> int:
+    ) -> int | None:
 
-        texto = mensagem.lower()
-
+        texto = mensagem.lower().strip()
 
         # =====================================================
         # PRIORIDADE NUMÉRICA EXPLÍCITA
         # =====================================================
-        #
-        # Exemplos:
-        # "altere a prioridade da tarefa X para 4"
-        # "mude a prioridade da tarefa X para 5"
-        # "coloque a prioridade da tarefa X em 2"
-        # "defina a prioridade da tarefa X como 1"
-        # =====================================================
 
         prioridade_numerica = re.search(
-            r"\bprioridade\b.*?\b(?:para|em|como)\s*([1-5])\b",
+            r"\bprioridade\b.*?"
+            r"(?:\b(?:para|em|como)\b\s*)?"
+            r"([1-5])\b",
             texto,
             flags=re.IGNORECASE
         )
@@ -909,78 +903,94 @@ class AraAgent:
         # PRIORIDADE 5
         # =====================================================
 
-        palavras_urgentes = [
-            "muito urgente",
-            "urgentemente",
-            "urgente",
-            "prioridade máxima",
-            "prioridade maxima",
-            "prioridade 5"
-        ]
-
-        for termo in palavras_urgentes:
-
-            if termo in texto:
-                return 5
+        if re.search(
+                r"\b(?:"
+                r"muito\s+urgente|"
+                r"urgentemente|"
+                r"urgente|"
+                r"prioridade\s+máxima|"
+                r"prioridade\s+maxima|"
+                r"máxima\s+prioridade|"
+                r"maxima\s+prioridade|"
+                r"máxima|"
+                r"maxima"
+                r")\b",
+                texto,
+                flags=re.IGNORECASE
+        ):
+            return 5
 
         # =====================================================
         # PRIORIDADE 4
         # =====================================================
 
-        palavras_altas = [
-            "prioridade alta",
-            "alta prioridade",
-            "prioridade 4",
-            "importante"
-        ]
-
-        for termo in palavras_altas:
-
-            if termo in texto:
-                return 4
+        if re.search(
+                r"\b(?:"
+                r"prioridade\s+alta|"
+                r"alta\s+prioridade|"
+                r"alta|"
+                r"importante"
+                r")\b",
+                texto,
+                flags=re.IGNORECASE
+        ):
+            return 4
 
         # =====================================================
         # PRIORIDADE 1
         # =====================================================
 
-        palavras_muito_baixas = [
-            "prioridade muito baixa",
-            "muito baixa prioridade",
-            "prioridade 1"
-        ]
-
-        for termo in palavras_muito_baixas:
-
-            if termo in texto:
-                return 1
+        if re.search(
+                r"\b(?:"
+                r"prioridade\s+muito\s+baixa|"
+                r"muito\s+baixa\s+prioridade|"
+                r"muito\s+baixa"
+                r")\b",
+                texto,
+                flags=re.IGNORECASE
+        ):
+            return 1
 
         # =====================================================
         # PRIORIDADE 2
         # =====================================================
 
-        palavras_baixas = [
-            "prioridade baixa",
-            "baixa prioridade",
-            "prioridade 2",
-            "não é importante",
-            "nao é importante",
-            "nao e importante"
-        ]
-
-        for termo in palavras_baixas:
-
-            if termo in texto:
-                return 2
+        if re.search(
+                r"\b(?:"
+                r"prioridade\s+baixa|"
+                r"baixa\s+prioridade|"
+                r"baixa|"
+                r"não\s+é\s+importante|"
+                r"nao\s+é\s+importante|"
+                r"nao\s+e\s+importante"
+                r")\b",
+                texto,
+                flags=re.IGNORECASE
+        ):
+            return 2
 
         # =====================================================
-        # PRIORIDADE 3
+        # PRIORIDADE 3 EXPLÍCITA
         # =====================================================
 
-        return 3
+        if re.search(
+                r"\b(?:"
+                r"prioridade\s+normal|"
+                r"normal\s+prioridade|"
+                r"normal"
+                r")\b",
+                texto,
+                flags=re.IGNORECASE
+        ):
+            return 3
 
-    # =========================================================
+        # =====================================================
+        # PRIORIDADE NÃO INFORMADA
+        # =====================================================
+
+        return None
+
     # EXCLUIR TODOS OS LEMBRETES
-    # =========================================================
 
     @staticmethod
     def _detectar_exclusao_todos_lembretes(
@@ -988,9 +998,7 @@ class AraAgent:
     ) -> AgentDecision | None:
 
         texto = (
-            mensagem
-            .lower()
-            .strip()
+            mensagem.lower().strip()
         )
 
         # -----------------------------------------------------
@@ -1022,25 +1030,26 @@ class AraAgent:
             r"(?:o\s+)?jeito\b",
         )
 
-        if any(
-                re.search(
-                    padrao,
-                    texto
-                )
-                for padrao in padroes_instrucionais
+        if any (
+            re.search(
+                padrao,
+                texto
+            )
+
+            for padrao in padroes_instrucionais
         ):
             return None
 
-        # -----------------------------------------------------
-        # A intenção precisa conter:
-        #
-        # 1. verbo explícito de exclusão;
-        # 2. quantificador de totalidade;
-        # 3. domínio lembrete.
-        #
-        # Isso evita interpretar exclusões individuais como
-        # exclusões em massa.
-        # -----------------------------------------------------
+            # -----------------------------------------------------
+            # A intenção precisa conter:
+            #
+            # 1. verbo explícito de exclusão;
+            # 2. quantificador de totalidade;
+            # 3. domínio lembrete.
+            #
+            # Isso evita interpretar exclusões individuais como
+            # exclusões em massa.
+            # -----------------------------------------------------
 
         verbo_exclusao = bool(
             re.search(
@@ -2512,6 +2521,9 @@ class AraAgent:
                 )
             )
 
+            if prioridade is None:
+                return None
+
             return AgentDecision(
                 acao=TipoAcao.EXECUTAR,
                 ferramenta="editar_tarefa",
@@ -3106,6 +3118,9 @@ class AraAgent:
                         mensagem
                     )
                 )
+
+                if prioridade is None:
+                    prioridade = 3
 
                 # =================================================
                 # DEBUG
