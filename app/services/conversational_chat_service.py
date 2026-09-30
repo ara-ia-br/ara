@@ -10,6 +10,15 @@ from app.ai.operational_response_guard import (
     OperationalResponseGuard
 )
 
+from app.conversation.perfil_persornalizacao_prompt_builder import (
+    PersonalizationPromptBuilder
+)
+from app.models import perfil_personalizacao
+
+from app.services.perfil_personalizacao_service import (
+    PerfilPersonalizacaoService
+)
+
 from app.ai.prompt_builder import (
     PromptBuilder as AIPromptBuilder
 )
@@ -121,6 +130,34 @@ class ConversationalChatService:
             TimeService.contexto_temporal()
         )
 
+        # ===================================================
+        # PERSONALIZAÇÃO DO USUÁRIO
+        # ===================================================
+
+        perfil_personalizacao = (
+            PerfilPersonalizacaoService.obter(
+                db=db,
+                id_usuario=id_usuario
+            )
+        )
+
+        contexto_personalizacao = (
+            PersonalizationPromptBuilder.construir(
+                perfil_personalizacao
+            )
+        )
+
+        print(
+            "[PERSONALIZATION] "
+            f"tom={perfil_personalizacao.tom} | "
+            f"formalidade={perfil_personalizacao.formalidade} | "
+            f"detalhe={perfil_personalizacao.nivel_detalhe} | "
+            f"emojis={perfil_personalizacao.usar_emojis} | "
+            f"estilo={perfil_personalizacao.estilo_resposta}"
+        )
+
+
+
         # =====================================================
         # RESPONSE POLICY
         # =====================================================
@@ -155,7 +192,9 @@ class ConversationalChatService:
             AIPromptBuilder.montar_mensagens(
                 contexto_temporal=contexto_temporal,
                 contexto_memoria=contexto_memoria,
-                historico=historico
+                historico=historico,
+                contexto_personalizacao=contexto_personalizacao,
+                politica_resposta=politica_resposta
             )
         )
 
@@ -167,7 +206,9 @@ class ConversationalChatService:
 
         resultado_ia = (
             ai_engine.gerar_resultado(
-                mensagens_ia
+                mensagens_ia,
+                temperatura=perfil_resposta.temperatura,
+                max_tokens=perfil_resposta.max_tokens
             )
         )
 

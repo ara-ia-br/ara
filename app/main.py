@@ -11,6 +11,9 @@ from app.api.memoria_router import router as memoria_router
 from app.agent.tools.register import registrar_tools
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.tarefa_router import router as tarefa_router
+from app.api.perfil_personalizacao_router import (
+    router as perfil_personalizacao_router
+)
 
 
 
@@ -40,6 +43,7 @@ app.include_router(mensagem_router)
 app.include_router(chat_router)
 app.include_router(memoria_router)
 app.include_router(tarefa_router)
+app.include_router(perfil_personalizacao_router)
 
 
 @app.get("/health")

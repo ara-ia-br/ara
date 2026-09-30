@@ -614,7 +614,9 @@ utilizado.
     def montar_mensagens(
         contexto_temporal: str,
         contexto_memoria: str | None,
-        historico: list
+        historico: list,
+        contexto_personalizacao: str | None = None,
+        politica_resposta: str | None = None
     ) -> list[dict[str, str]]:
 
         system_prompt = (
@@ -631,6 +633,23 @@ utilizado.
                 "content": system_prompt
             }
         ]
+
+        # PERSONALIZAÇÃO
+        if contexto_personalizacao:
+
+            mensagens_ia.append({
+                "role": "system",
+                "content": contexto_personalizacao
+            })
+
+        # POLÍTICA DE RESPOSTA
+
+        if politica_resposta:
+
+            mensagens_ia.append({
+                "role": "system",
+                "content": politica_resposta
+            })
 
         # =====================================================
         # MEMÓRIA
