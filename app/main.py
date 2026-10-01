@@ -15,6 +15,9 @@ from app.api.perfil_personalizacao_router import (
     router as perfil_personalizacao_router
 )
 
+from app.api.weather_router import (
+    router as weather_router
+)
 
 
 app = FastAPI(
@@ -44,7 +47,7 @@ app.include_router(chat_router)
 app.include_router(memoria_router)
 app.include_router(tarefa_router)
 app.include_router(perfil_personalizacao_router)
-
+app.include_router(weather_router)
 
 @app.get("/health")
 def health_check():
