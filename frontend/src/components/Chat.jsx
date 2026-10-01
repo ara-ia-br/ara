@@ -13,6 +13,8 @@ import {
 import api from "../services/api";
 import Message from "./Message";
 
+import "../chat-modern.css";
+
 
 function Chat({
     conversaSelecionada,
@@ -434,38 +436,31 @@ function Chat({
     );
 
 
-    // =========================================================
+       // =========================================================
     // SEM CONVERSA
     // =========================================================
 
     if (!conversaSelecionada) {
-
         return (
+            <main className="chat ara-chat-shell">
 
-            <main className="chat">
+                <div className="ara-empty-state">
 
-                <div
-                    className="welcome"
-                    style={{
-                        margin: "auto"
-                    }}
-                >
-
-                    <div
-                        className="ara-symbol ara-symbol"
-                    >
-                        J
+                    <div className="ara-brand-badge">
+                        A
                     </div>
 
+                    <span className="ara-eyebrow">
+                        ASSISTENTE DE RACIOCÍNIO ADAPTATIVO
+                    </span>
 
-                    <h2>
-                        Bem-vindo à A.R.A.
-                    </h2>
+                    <h1 className="ara-empty-title">
+                        Sua próxima ideia
+                        <span> começa aqui.</span>
+                    </h1>
 
-
-                    <p>
-                        Crie uma conversa
-                        para começar.
+                    <p className="ara-empty-description">
+                        Crie uma nova conversa para começar.
                     </p>
 
                 </div>
@@ -481,33 +476,38 @@ function Chat({
 
     return (
 
-        <main className="chat">
+        <main className="chat ara-chat-shell">
 
             {/* =================================================
                 HEADER
             ================================================= */}
 
-            <header className="chat-header">
+            <header className="ara-chat-header">
 
-                <div>
+                <div className="ara-chat-header-content">
 
-                    <h2>
-                        {
-                            conversaSelecionada
-                                .titulo
-                        }
-                    </h2>
+                    <div>
+
+                        <span className="ara-chat-label">
+                            CONVERSA
+                        </span>
+
+                        <h2>
+                            {conversaSelecionada.titulo}
+                        </h2>
+
+                    </div>
 
 
-                    <span className="online">
+                    <div className="ara-online-status">
 
-                        <span
-                            className="online-dot"
-                        />
+                        <span className="ara-online-dot" />
 
-                        A.R.A. Online
+                        <span>
+                            A.R.A. Online
+                        </span>
 
-                    </span>
+                    </div>
 
                 </div>
 
@@ -518,32 +518,121 @@ function Chat({
                 MENSAGENS
             ================================================= */}
 
-            <section className="messages">
+            <section
+                className={
+                    mensagens.length === 0
+                        ? "messages ara-messages ara-messages-empty"
+                        : "messages ara-messages"
+                }
+            >
 
                 {
                     mensagens.length === 0
                     && (
 
-                        <div className="welcome">
+                        <div className="ara-welcome">
 
-                            <div
-                                className="ara-symbol ara-symbol"
-                            >
+                            <div className="ara-welcome-symbol">
                                 A
                             </div>
 
 
-                            <h2>
+                            <span className="ara-eyebrow">
+                                O PRÓXIMO PASSO É O FUTURO
+                            </span>
+
+
+                            <h1 className="ara-welcome-title">
+
                                 E aí! O que vamos
-                                fazer hoje?
-                            </h2>
+
+                                <span>
+                                    fazer hoje?
+                                </span>
+
+                            </h1>
 
 
-                            <p>
-                                Converse, pergunte ou
-                                peça para eu fazer
-                                alguma coisa.
+                            <p className="ara-welcome-description">
+                                Converse, pergunte ou peça para a A.R.A.
+                                fazer alguma coisa.
                             </p>
+
+
+                            <div className="ara-suggestions">
+
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setMensagem(
+                                            "Me ajude a organizar meu dia"
+                                        )
+                                    }
+                                >
+                                    <span>
+                                        Organizar meu dia
+                                    </span>
+
+                                    <small>
+                                        Tarefas e prioridades
+                                    </small>
+                                </button>
+
+
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setMensagem(
+                                            "Quero entender um assunto"
+                                        )
+                                    }
+                                >
+                                    <span>
+                                        Aprender algo
+                                    </span>
+
+                                    <small>
+                                        Explicações do seu jeito
+                                    </small>
+                                </button>
+
+
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setMensagem(
+                                            "Crie uma tarefa para mim"
+                                        )
+                                    }
+                                >
+                                    <span>
+                                        Criar uma tarefa
+                                    </span>
+
+                                    <small>
+                                        Organize algo rapidamente
+                                    </small>
+                                </button>
+
+
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        setMensagem(
+                                            "Me ajude a planejar algo"
+                                        )
+                                    }
+                                >
+                                    <span>
+                                        Planejar algo
+                                    </span>
+
+                                    <small>
+                                        Ideias, planos e próximos passos
+                                    </small>
+                                </button>
+
+                            </div>
 
                         </div>
                     )
@@ -555,18 +644,10 @@ function Chat({
                         (item) => (
 
                             <Message
-                                key={
-                                    item.id
-                                }
-                                autor={
-                                    item.autor
-                                }
+                                key={item.id}
+                                autor={item.autor}
                             >
-
-                                {
-                                    item.conteudo
-                                }
-
+                                {item.conteudo}
                             </Message>
 
                         )
@@ -582,18 +663,9 @@ function Chat({
                     carregando
                     && (
 
-                        <div
-                            className="
-                                message
-                                ara-message
-                            "
-                        >
+                        <div className="message ara-message">
 
-                            <div
-                                className="
-                                    message-author
-                                "
-                            >
+                            <div className="message-author">
                                 A.R.A.
                             </div>
 
@@ -611,11 +683,7 @@ function Chat({
                 }
 
 
-                <div
-                    ref={
-                        fimMensagensRef
-                    }
-                />
+                <div ref={fimMensagensRef} />
 
             </section>
 
@@ -624,114 +692,74 @@ function Chat({
                 COMPOSER
             ================================================= */}
 
-            <div className="composer-container">
+            <div className="ara-composer-area">
 
-                <div className="composer">
-
-                    {/* ANEXO */}
+                <div className="ara-composer">
 
                     <button
                         type="button"
-                        className="
-                            composer-button
-                        "
-                        disabled={
-                            carregando
-                        }
+                        className="ara-composer-action"
+                        disabled={carregando}
+                        title="Anexar arquivo"
                     >
-
-                        <Paperclip
-                            size={20}
-                        />
-
+                        <Paperclip size={20} />
                     </button>
 
 
-                    {/* TEXTO */}
-
                     <textarea
-                        value={
-                            mensagem
-                        }
+                        value={mensagem}
+
                         onChange={
                             (event) =>
                                 setMensagem(
-                                    event
-                                        .target
-                                        .value
+                                    event.target.value
                                 )
                         }
-                        onKeyDown={
-                            verificarEnter
-                        }
+
+                        onKeyDown={verificarEnter}
+
                         placeholder={
                             carregando
-                                ? (
-                                    "A.R.A. está "
-                                    + "pensando..."
-                                )
-                                : (
-                                    "Pergunte "
-                                    + "alguma coisa..."
-                                )
+                                ? "A.R.A. está pensando..."
+                                : "Pergunte alguma coisa..."
                         }
-                        disabled={
-                            carregando
-                        }
+
+                        disabled={carregando}
+
                         rows={1}
                     />
 
 
-                    {/* MICROFONE */}
-
                     <button
                         type="button"
-                        className="
-                            composer-button
-                        "
-                        disabled={
-                            carregando
-                        }
+                        className="ara-composer-action"
+                        disabled={carregando}
+                        title="Usar voz"
                     >
-
-                        <Mic
-                            size={20}
-                        />
-
+                        <Mic size={20} />
                     </button>
 
 
-                    {/* ENVIAR */}
-
                     <button
                         type="button"
-                        className="
-                            send-button
-                        "
-                        onClick={
-                            enviarMensagem
-                        }
+                        className="ara-send-button"
+                        onClick={enviarMensagem}
+
                         disabled={
                             carregando
                             || !mensagem.trim()
                         }
+
+                        title="Enviar"
                     >
-
-                        <ArrowUp
-                            size={21}
-                        />
-
+                        <ArrowUp size={21} />
                     </button>
 
                 </div>
 
 
-                <span className="disclaimer">
-
-                    A.R.A. pode cometer erros.
-                    Verifique informações
-                    importantes.
-
+                <span className="ara-disclaimer">
+                    A.R.A. pode cometer erros. Verifique informações importantes.
                 </span>
 
             </div>
@@ -739,6 +767,5 @@ function Chat({
         </main>
     );
 }
-
 
 export default Chat;

@@ -1,5 +1,5 @@
-import logoPrincipal from "../assets/brand/logo-principal.png";
-import logoSecundary from "../assets/brand/logo-secondary.png";
+import logoPrincipal from "../assets/brand/logo-1x1-1-48-48.png";
+import logoSecundary from "../assets/brand/logo-1x1-1-1080-1080.png";
 
 function BrandMark({ compact = false }) {
     return (

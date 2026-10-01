@@ -1,0 +1,1021 @@
+/* =========================================================
+   A.R.A. CHAT — BRAND UI
+   Paleta:
+   #07F9A2 — Turquesa Vivo
+   #0C5149 — Turquesa Escuro
+   #0D192B — Azul Escuro
+   #FFFFFF — Branco
+========================================================= */
+
+
+/* =========================================================
+   CHAT SHELL
+========================================================= */
+
+.ara-chat-shell {
+    --ara-green: #07f9a2;
+    --ara-green-dark: #0c5149;
+    --ara-navy: #0d192b;
+    --ara-navy-deep: #081421;
+    --ara-white: #ffffff;
+
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
+
+    width: 100%;
+    height: 100vh;
+
+    overflow: hidden;
+
+    background:
+        radial-gradient(
+            circle at 84% 0%,
+            rgba(7, 249, 162, 0.06),
+            transparent 30%
+        ),
+        radial-gradient(
+            circle at 50% 100%,
+            rgba(12, 81, 73, 0.07),
+            transparent 42%
+        ),
+        linear-gradient(
+            180deg,
+            #091624 0%,
+            #081421 100%
+        );
+
+    color: var(--ara-white);
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.ara-chat-header {
+    height: 68px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+
+    padding: 0 34px;
+
+    border-bottom:
+        1px solid rgba(255, 255, 255, 0.05);
+
+    background:
+        rgba(8, 20, 33, 0.68);
+
+    backdrop-filter:
+        blur(14px);
+
+    -webkit-backdrop-filter:
+        blur(14px);
+}
+
+
+.ara-chat-header-content {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 22px;
+}
+
+
+.ara-chat-label {
+    display: block;
+
+    margin-bottom: 3px;
+
+    color: var(--ara-green);
+
+    font-size: 9px;
+    font-weight: 700;
+
+    letter-spacing: 0.16em;
+}
+
+
+.ara-chat-header h2 {
+    margin: 0;
+
+    color: #ffffff;
+
+    font-size: 15px;
+    font-weight: 650;
+
+    letter-spacing: -0.015em;
+}
+
+
+.ara-online-status {
+    display: flex;
+    align-items: center;
+
+    gap: 7px;
+
+    color: #8295a9;
+
+    font-size: 10px;
+}
+
+
+.ara-online-dot {
+    width: 7px;
+    height: 7px;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    background: var(--ara-green);
+
+    box-shadow:
+        0 0 10px rgba(7, 249, 162, 0.62);
+}
+
+
+/* =========================================================
+   MENSAGENS
+========================================================= */
+
+.ara-messages {
+    flex: 1;
+
+    width: 100%;
+
+    overflow-y: auto;
+
+    padding:
+        34px
+        max(8%, calc((100% - 900px) / 2))
+        125px;
+
+    scrollbar-width: thin;
+
+    scrollbar-color:
+        rgba(255, 255, 255, 0.1)
+        transparent;
+}
+
+
+.ara-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+
+.ara-messages::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+
+.ara-messages::-webkit-scrollbar-thumb {
+    border-radius: 999px;
+
+    background:
+        rgba(255, 255, 255, 0.08);
+}
+
+
+.ara-messages-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+/* =========================================================
+   WELCOME
+========================================================= */
+
+.ara-welcome {
+    width: min(
+        820px,
+        100%
+    );
+
+    margin: auto;
+
+    text-align: center;
+
+    transform:
+        translateY(-20px);
+}
+
+
+.ara-welcome-symbol,
+.ara-brand-badge {
+    width: 50px;
+    height: 50px;
+
+    margin:
+        0 auto 18px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border:
+        1px solid rgba(7, 249, 162, 0.23);
+
+    border-radius: 13px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(12, 81, 73, 0.40),
+            rgba(13, 25, 43, 0.45)
+        );
+
+    box-shadow:
+        inset 0 1px 0
+        rgba(255, 255, 255, 0.05);
+
+    color: var(--ara-green);
+
+    font-size: 25px;
+    font-weight: 800;
+
+    font-style: italic;
+}
+
+
+.ara-eyebrow {
+    display: block;
+
+    margin-bottom: 12px;
+
+    color: var(--ara-green);
+
+    font-size: 9px;
+    font-weight: 750;
+
+    letter-spacing: 0.15em;
+}
+
+
+.ara-welcome-title {
+    margin: 0;
+
+    color: #ffffff;
+
+    font-size:
+        clamp(
+            36px,
+            4vw,
+            52px
+        );
+
+    font-weight: 760;
+
+    line-height: 1.04;
+
+    letter-spacing: -0.045em;
+}
+
+
+.ara-welcome-title span {
+    display: block;
+
+    color: var(--ara-green);
+}
+
+
+.ara-welcome-description {
+    max-width: 540px;
+
+    margin:
+        15px auto 0;
+
+    color: #8b9eb2;
+
+    font-size: 13px;
+
+    line-height: 1.55;
+}
+
+
+/* =========================================================
+   SUGESTÕES
+========================================================= */
+
+.ara-suggestions {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 8px;
+
+    width:
+        min(
+            640px,
+            100%
+        );
+
+    margin:
+        26px auto 0;
+}
+
+
+.ara-suggestions button {
+    min-height: 64px;
+
+    padding:
+        10px 12px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+
+    border:
+        1px solid rgba(255, 255, 255, 0.06);
+
+    border-radius: 10px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255, 255, 255, 0.015),
+            rgba(12, 81, 73, 0.035)
+        );
+
+    color: #ffffff;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.18s ease,
+        border-color 0.18s ease,
+        background 0.18s ease;
+}
+
+
+.ara-suggestions button:hover {
+    transform:
+        translateY(-1px);
+
+    border-color:
+        rgba(7, 249, 162, 0.26);
+
+    background:
+        rgba(7, 249, 162, 0.035);
+}
+
+
+.ara-suggestions span {
+    color: #ffffff;
+
+    font-size: 11px;
+    font-weight: 650;
+}
+
+
+.ara-suggestions small {
+    margin-top: 3px;
+
+    color: #708399;
+
+    font-size: 9px;
+
+    line-height: 1.3;
+}
+
+
+/* =========================================================
+   COMPOSER AREA
+========================================================= */
+
+.ara-composer-area {
+    position: absolute;
+
+    left: 50%;
+    bottom: 22px;
+
+    transform:
+        translateX(-50%);
+
+    z-index: 30;
+
+    width:
+        min(
+            calc(100% - 40px),
+            540px
+        );
+}
+
+
+/* =========================================================
+   COMPOSER — VIDRO / GLASS
+========================================================= */
+
+.ara-composer {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+
+    gap: 4px;
+
+    min-height: 48px;
+
+    padding:
+        4px 6px 4px 8px;
+
+    overflow: hidden;
+
+    border:
+        1px solid rgba(7, 249, 162, 0.20);
+
+    border-radius: 18px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(20, 44, 63, 0.74) 0%,
+            rgba(9, 29, 44, 0.66) 48%,
+            rgba(12, 81, 73, 0.30) 100%
+        );
+
+    backdrop-filter:
+        blur(24px)
+        saturate(145%);
+
+    -webkit-backdrop-filter:
+        blur(24px)
+        saturate(145%);
+
+    box-shadow:
+        0 14px 40px
+        rgba(0, 0, 0, 0.34),
+
+        inset 0 1px 0
+        rgba(255, 255, 255, 0.065),
+
+        inset 0 -1px 0
+        rgba(7, 249, 162, 0.035);
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+/* brilho superior */
+
+.ara-composer::before {
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+    left: 8%;
+    right: 8%;
+
+    height: 1px;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.18),
+            transparent
+        );
+
+    pointer-events: none;
+}
+
+
+/* brilho suave verde */
+
+.ara-composer::after {
+    content: "";
+
+    position: absolute;
+
+    width: 140px;
+    height: 100px;
+
+    right: -30px;
+    bottom: -80px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(7, 249, 162, 0.05);
+
+    filter:
+        blur(20px);
+
+    pointer-events: none;
+}
+
+
+.ara-composer:focus-within {
+    border-color:
+        rgba(7, 249, 162, 0.48);
+
+    box-shadow:
+        0 16px 46px
+        rgba(0, 0, 0, 0.40),
+
+        0 0 0 2px
+        rgba(7, 249, 162, 0.03),
+
+        inset 0 1px 0
+        rgba(255, 255, 255, 0.075);
+}
+
+
+/* =========================================================
+   TEXTAREA
+========================================================= */
+
+.ara-composer textarea {
+    position: relative;
+
+    z-index: 2;
+
+    flex: 1;
+
+    min-width: 0;
+
+    min-height: 36px;
+    max-height: 105px;
+
+    padding:
+        8px 5px;
+
+    resize: none;
+
+    border: none !important;
+
+    outline: none !important;
+
+    box-shadow: none !important;
+
+    background:
+        transparent !important;
+
+    color: #ffffff;
+
+    font-family: inherit;
+
+    font-size: 12px;
+
+    line-height: 1.35;
+}
+
+
+.ara-composer textarea:focus {
+    border: none !important;
+
+    outline: none !important;
+
+    box-shadow: none !important;
+
+    background:
+        transparent !important;
+}
+
+
+.ara-composer textarea::placeholder {
+    color:
+        rgba(160, 181, 200, 0.58);
+}
+
+
+/* =========================================================
+   BOTÕES DO COMPOSER
+========================================================= */
+
+.ara-composer-action {
+    position: relative;
+
+    z-index: 2;
+
+    width: 34px;
+    height: 34px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: none;
+
+    border-radius: 9px;
+
+    background:
+        transparent;
+
+    color: #7b8fa4;
+
+    cursor: pointer;
+
+    transition:
+        color 0.18s ease,
+        background 0.18s ease,
+        transform 0.18s ease;
+}
+
+
+.ara-composer-action:hover:not(:disabled) {
+    color: var(--ara-green);
+
+    background:
+        rgba(7, 249, 162, 0.06);
+
+    transform:
+        translateY(-1px);
+}
+
+
+.ara-composer-action:disabled {
+    opacity: 0.4;
+
+    cursor: default;
+}
+
+
+/* =========================================================
+   BOTÃO ENVIAR
+========================================================= */
+
+.ara-send-button {
+    position: relative;
+
+    z-index: 2;
+
+    width: 36px;
+    height: 36px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: none;
+
+    border-radius: 10px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #07f9a2 0%,
+            #08d693 100%
+        );
+
+    color: #041b17;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 4px 15px
+        rgba(7, 249, 162, 0.15);
+
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease,
+        opacity 0.18s ease;
+}
+
+
+.ara-send-button:hover:not(:disabled) {
+    transform:
+        translateY(-1px);
+
+    box-shadow:
+        0 6px 20px
+        rgba(7, 249, 162, 0.22);
+}
+
+
+.ara-send-button:active:not(:disabled) {
+    transform:
+        translateY(0);
+}
+
+
+.ara-send-button:disabled {
+    opacity: 0.3;
+
+    cursor: default;
+
+    box-shadow: none;
+}
+
+
+/* =========================================================
+   DISCLAIMER
+========================================================= */
+
+.ara-disclaimer {
+    display: block;
+
+    margin-top: 6px;
+
+    text-align: center;
+
+    color: #4d6175;
+
+    font-size: 7px;
+
+    letter-spacing: 0.01em;
+}
+
+
+/* =========================================================
+   SEM CONVERSA
+========================================================= */
+
+.ara-empty-state {
+    margin: auto;
+
+    padding: 28px;
+
+    text-align: center;
+}
+
+
+.ara-empty-title {
+    margin: 0;
+
+    color: #ffffff;
+
+    font-size:
+        clamp(
+            34px,
+            4vw,
+            48px
+        );
+
+    font-weight: 760;
+
+    line-height: 1.05;
+
+    letter-spacing: -0.04em;
+}
+
+
+.ara-empty-title span {
+    display: block;
+
+    color: var(--ara-green);
+}
+
+
+.ara-empty-description {
+    margin-top: 15px;
+
+    color: #8194a9;
+
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   TYPING
+========================================================= */
+
+.ara-message .typing {
+    display: flex;
+    align-items: center;
+
+    gap: 4px;
+
+    min-height: 18px;
+}
+
+
+.ara-message .typing span {
+    width: 5px;
+    height: 5px;
+
+    border-radius: 50%;
+
+    background:
+        var(--ara-green);
+
+    opacity: 0.35;
+
+    animation:
+        araTyping 1.2s infinite ease-in-out;
+}
+
+
+.ara-message .typing span:nth-child(2) {
+    animation-delay:
+        0.15s;
+}
+
+
+.ara-message .typing span:nth-child(3) {
+    animation-delay:
+        0.3s;
+}
+
+
+@keyframes araTyping {
+
+    0%,
+    60%,
+    100% {
+        transform:
+            translateY(0);
+
+        opacity: 0.28;
+    }
+
+    30% {
+        transform:
+            translateY(-3px);
+
+        opacity: 1;
+    }
+}
+
+
+/* =========================================================
+   RESPONSIVIDADE
+========================================================= */
+
+@media (max-width: 1050px) {
+
+    .ara-suggestions {
+        grid-template-columns:
+            repeat(2, 1fr);
+
+        width:
+            min(
+                520px,
+                100%
+            );
+    }
+
+
+    .ara-composer-area {
+        width:
+            min(
+                calc(100% - 36px),
+                520px
+            );
+    }
+}
+
+
+@media (max-width: 700px) {
+
+    .ara-chat-header {
+        height: 64px;
+
+        padding:
+            0 17px;
+    }
+
+
+    .ara-chat-label {
+        font-size: 8px;
+    }
+
+
+    .ara-chat-header h2 {
+        font-size: 13px;
+    }
+
+
+    .ara-online-status {
+        font-size: 9px;
+    }
+
+
+    .ara-messages {
+        padding:
+            26px
+            17px
+            115px;
+    }
+
+
+    .ara-welcome {
+        transform: none;
+    }
+
+
+    .ara-welcome-symbol,
+    .ara-brand-badge {
+        width: 46px;
+        height: 46px;
+
+        font-size: 22px;
+    }
+
+
+    .ara-welcome-title {
+        font-size: 34px;
+    }
+
+
+    .ara-welcome-description {
+        font-size: 12px;
+    }
+
+
+    .ara-suggestions {
+        grid-template-columns:
+            repeat(2, 1fr);
+
+        width:
+            100%;
+
+        margin-top:
+            24px;
+    }
+
+
+    .ara-composer-area {
+        width:
+            min(
+                calc(100% - 20px),
+                500px
+            );
+
+        bottom: 10px;
+    }
+
+
+    .ara-composer {
+        min-height: 46px;
+
+        border-radius: 14px;
+
+        padding:
+            4px 5px 4px 7px;
+    }
+
+
+    .ara-composer textarea {
+        min-height: 34px;
+
+        font-size: 12px;
+    }
+
+
+    .ara-composer-action {
+        width: 32px;
+        height: 32px;
+    }
+
+
+    .ara-send-button {
+        width: 34px;
+        height: 34px;
+    }
+
+
+    .ara-disclaimer {
+        display: none;
+    }
+}
+
+
+@media (max-width: 440px) {
+
+    .ara-chat-header {
+        padding:
+            0 13px;
+    }
+
+
+    .ara-online-status span:last-child {
+        display: none;
+    }
+
+
+    .ara-welcome-title {
+        font-size: 29px;
+    }
+
+
+    .ara-suggestions {
+        display: none;
+    }
+
+
+    .ara-composer-area {
+        width:
+            calc(100% - 14px);
+    }
+}

@@ -4,7 +4,7 @@ import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import BrandMark from "../components/BrandMark";
 
-import logoPrincipal from "../assets/brand/logo-principal.png"
+import logoPrincipal from "../assets/brand/logo-1x1-1-1080-1080.png"
 
 function LoginPage() {
     const { login } = useAuth();
