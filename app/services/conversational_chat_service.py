@@ -164,7 +164,8 @@ class ConversationalChatService:
 
         perfil_resposta = (
             ResponsePolicy.definir(
-                conteudo
+                mensagem=conteudo,
+                perfil_usuario=perfil_personalizacao
             )
         )
 

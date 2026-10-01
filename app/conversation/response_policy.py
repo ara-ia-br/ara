@@ -46,12 +46,12 @@ class ResponsePolicy:
     # =====================================================
 
     _PADROES_DETALHADOS = (
-        r"\bexplique\s+detalhadamente\b",
-        r"\bexplique\s+em\s+detalhes\b",
+        r"\b(?:me\s+)?(?:explique|explica)\s+detalhadamente\b",
+        r"\b(?:me\s+)?(?:explique|explica)\s+em\s+detalhes\b",
         r"\bpasso\s+a\s+passo\b",
         r"\bquero\s+detalhes\b",
         r"\bde\s+forma\s+detalhada\b",
-        r"\bexplicação\s+completa\b",
+        r"\bexplica(?:ção|cao)\s+completa\b",
         r"\banálise\s+completa\b",
         r"\banalise\s+completamente\b",
         r"\baprofund",
@@ -114,6 +114,62 @@ class ResponsePolicy:
         )
 
     @staticmethod
+    def _aplicar_personalizacao(
+            perfil_resposta: ResponseProfile,
+            perfil_usuario
+    ) -> ResponseProfile:
+
+        if perfil_usuario is None:
+            return perfil_resposta
+
+        tamanho = perfil_resposta.tamanho
+        markdown = perfil_resposta.markdown
+        max_tokens = perfil_resposta.max_tokens
+        temperatura = perfil_resposta.temperatura
+
+        nivel_detalhe = getattr(
+            perfil_usuario.nivel_detalhe,
+            "value",
+            perfil_usuario.nivel_detalhe
+        )
+
+        estilo_resposta = getattr(
+            perfil_usuario.estilo_resposta,
+            "value",
+            perfil_usuario.estilo_resposta
+        )
+
+        nivel_detalhe = str(nivel_detalhe).upper()
+        estilo_resposta = str(estilo_resposta).upper()
+
+        # Preferência persistente de detalhamento
+        if nivel_detalhe == "BAIXO":
+            tamanho = TamanhoResposta.CURTA
+            markdown = PoliticaMarkdown.MINIMO
+            max_tokens = min(max_tokens, 350)
+
+        elif nivel_detalhe == "ALTO":
+            if tamanho == TamanhoResposta.CURTA:
+                tamanho = TamanhoResposta.NORMAL
+                max_tokens = max(max_tokens, 700)
+
+            elif tamanho == TamanhoResposta.NORMAL:
+                tamanho = TamanhoResposta.DETALHADA
+                max_tokens = max(max_tokens, 1400)
+
+        # Preferência por respostas diretas
+        if estilo_resposta == "DIRETO":
+            markdown = PoliticaMarkdown.MINIMO
+            temperatura = min(temperatura, 0.4)
+
+        return ResponseProfile(
+            tamanho=tamanho,
+            markdown=markdown,
+            max_tokens=max_tokens,
+            temperatura=temperatura
+        )
+
+    @staticmethod
     def _parece_tecnico(
             texto: str
     ) -> bool:
@@ -163,24 +219,25 @@ class ResponsePolicy:
     # DEFINIR PERFIL
     # =====================================================
 
+
     @staticmethod
     def definir(
-        mensagem: str
+            mensagem: str,
+            perfil_usuario=None
     ) -> ResponseProfile:
-
         texto = ResponsePolicy._normalizar(
             mensagem
         )
 
-        # -------------------------------------------------
-        # PEDIDO EXPLÍCITO DE DETALHAMENTO
-        # -------------------------------------------------
+        # =================================================
+        # PEDIDO EXPLÍCITO POR RESPOSTA DETALHADA
+        # O pedido atual do usuário tem prioridade
+        # =================================================
 
         if ResponsePolicy._corresponde(
-            texto,
-            ResponsePolicy._PADROES_DETALHADOS
+                texto,
+                ResponsePolicy._PADROES_DETALHADOS
         ):
-
             return ResponseProfile(
                 tamanho=TamanhoResposta.DETALHADA,
                 markdown=PoliticaMarkdown.ESTRUTURADO,
@@ -188,15 +245,15 @@ class ResponsePolicy:
                 temperatura=0.45
             )
 
-        # -------------------------------------------------
-        # PEDIDO EXPLÍCITO DE CONCISÃO
-        # -------------------------------------------------
+        # =================================================
+        # PEDIDO EXPLÍCITO POR RESPOSTA CURTA
+        # O pedido atual do usuário tem prioridade
+        # =================================================
 
         if ResponsePolicy._corresponde(
-            texto,
-            ResponsePolicy._PADROES_CURTOS
+                texto,
+                ResponsePolicy._PADROES_CURTOS
         ):
-
             return ResponseProfile(
                 tamanho=TamanhoResposta.CURTA,
                 markdown=PoliticaMarkdown.MINIMO,
@@ -204,32 +261,37 @@ class ResponsePolicy:
                 temperatura=0.4
             )
 
-        # -------------------------------------------------
+        # =================================================
         # CONTEÚDO TÉCNICO
-        # -------------------------------------------------
+        # =================================================
 
         if ResponsePolicy._parece_tecnico(
-            mensagem
+                texto
         ):
-
-            return ResponseProfile(
+            perfil_resposta = ResponseProfile(
                 tamanho=TamanhoResposta.NORMAL,
                 markdown=PoliticaMarkdown.ESTRUTURADO,
                 max_tokens=1000,
                 temperatura=0.35
             )
 
-        # -------------------------------------------------
-        # PADRÃO DA NOVA A.R.A.
-        # -------------------------------------------------
-        #
-        # Respostas conversacionais devem ser curtas,
-        # naturais e sem Markdown desnecessário.
-        # -------------------------------------------------
+        # =================================================
+        # CONVERSA NORMAL
+        # =================================================
 
-        return ResponseProfile(
-            tamanho=TamanhoResposta.CURTA,
-            markdown=PoliticaMarkdown.MINIMO,
-            max_tokens=350,
-            temperatura=0.5
+        else:
+            perfil_resposta = ResponseProfile(
+                tamanho=TamanhoResposta.CURTA,
+                markdown=PoliticaMarkdown.MINIMO,
+                max_tokens=350,
+                temperatura=0.5
+            )
+
+        # =================================================
+        # PERSONALIZAÇÃO PERSISTENTE DO USUÁRIO
+        # =================================================
+
+        return ResponsePolicy._aplicar_personalizacao(
+            perfil_resposta=perfil_resposta,
+            perfil_usuario=perfil_usuario
         )
