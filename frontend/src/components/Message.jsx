@@ -1,6 +1,12 @@
 import NativeResultRenderer
     from "./cards/NativeResultRenderer";
 
+import NativeResultRenderer
+    from "./cards/NativeResultRenderer";
+
+import araChatLogo
+    from "../assets/brand/logo-chat.png";
+
 
 function Message({
     autor,
@@ -29,9 +35,18 @@ function Message({
                     assistente
                         ? (
                             <>
-                                <span className="message-signal" />
-                                A.R.A.
-                            </>
+    <span className="message-avatar ara-avatar">
+        <img
+            src={araChatLogo}
+            alt=""
+            aria-hidden="true"
+        />
+    </span>
+
+    <span>
+        A.R.A.
+    </span>
+</>
                         )
                         : "Você"
                 }

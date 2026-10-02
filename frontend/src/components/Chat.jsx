@@ -15,6 +15,9 @@ import Message from "./Message";
 
 import "../chat-modern.css";
 
+import araChatLogo
+    from "../assets/brand/logo-chat.png";
+
 
 function Chat({
     conversaSelecionada,
@@ -672,9 +675,20 @@ function Chat({
                     && (
 
                         <div className="message ara-message">
-
                             <div className="message-author">
-                                A.R.A.
+
+                                <span className="message-avatar ara-avatar">
+                                    <img
+                                        src={araChatLogo}
+                                        alt=""
+                                        aria-hidden="true"
+                                    />
+                                </span>
+
+                                <span>
+                                    A.R.A.
+                                </span>
+
                             </div>
 
 
