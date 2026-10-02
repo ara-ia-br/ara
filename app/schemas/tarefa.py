@@ -41,6 +41,8 @@ class TarefaUpdate(BaseModel):
 
     data_limite: datetime | None = None
 
+    remover_data_limite: bool = False
+
 
 class TarefaResponse(BaseModel):
     id_tarefa: int

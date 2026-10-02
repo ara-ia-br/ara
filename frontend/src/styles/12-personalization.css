@@ -1,0 +1,30 @@
+
+/* Personalização de cor e avatar do chat */
+:root[data-accent="mint"] { --ara-primary:#00dba6; --ara-primary-bright:#28edbd; --ara-primary-rgb:0,219,166; --ara-primary-soft:rgba(0,219,166,.12); }
+:root[data-accent="forest"] { --ara-primary:#087565; --ara-primary-bright:#28a58f; --ara-primary-rgb:8,117,101; --ara-primary-soft:rgba(8,117,101,.16); }
+:root[data-accent="red"] { --ara-primary:#a51f2b; --ara-primary-bright:#e34b57; --ara-primary-rgb:165,31,43; --ara-primary-soft:rgba(165,31,43,.15); }
+:root[data-accent="gray"] { --ara-primary:#77756e; --ara-primary-bright:#b2afa5; --ara-primary-rgb:119,117,110; --ara-primary-soft:rgba(119,117,110,.16); }
+:root[data-accent="cyan"] { --ara-primary:#00b9e8; --ara-primary-bright:#42d5fa; --ara-primary-rgb:0,185,232; --ara-primary-soft:rgba(0,185,232,.14); }
+:root[data-accent="lime"] { --ara-primary:#24e78b; --ara-primary-bright:#62f5ac; --ara-primary-rgb:36,231,139; --ara-primary-soft:rgba(36,231,139,.13); }
+
+.settings-wide { grid-column: 1 / -1; }
+.accent-options, .chat-logo-options {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 18px;
+}
+.accent-option { position:relative; min-width:82px; display:flex; flex-direction:column; align-items:center; gap:8px; padding:10px 9px; border:1px solid var(--ara-border); border-radius:12px; background:var(--ara-surface); color:var(--ara-text-soft); cursor:pointer; }
+.accent-option > span { width:36px; height:36px; border-radius:10px; border:2px solid rgba(255,255,255,.12); }
+.accent-option small, .chat-logo-option small { font-size:10px; }
+.accent-option.active, .chat-logo-option.active { border-color:var(--ara-primary); background:var(--ara-primary-soft); color:var(--ara-text); box-shadow:0 0 0 1px var(--ara-primary); }
+.accent-option > svg { position:absolute; top:7px; right:7px; color:var(--ara-primary-bright); }
+.chat-logo-option { display:flex; flex-direction:column; align-items:center; gap:8px; min-width:100px; padding:12px; border:1px solid var(--ara-border); border-radius:12px; background:var(--ara-surface); color:var(--ara-text-soft); cursor:pointer; }
+.logo-placeholder { display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; width:34px; height:34px; border-radius:9px; background:var(--ara-primary-soft); color:var(--ara-primary-bright); border:1px dashed var(--ara-primary); font-size:8px; font-weight:800; letter-spacing:0; text-transform:none; }
+.logo-placeholder-2 { border-radius:7px; }
+.logo-placeholder-3 { border-radius:7px; }
+.chat-logo-option .logo-placeholder { width:58px; height:58px; font-size:10px; }
+.message-avatar.logo-placeholder { width:25px; height:25px; font-size:7px; }
+@media (max-width:650px) { .settings-wide { grid-column:auto; } .accent-options { gap:7px; } .accent-option { min-width:70px; } }

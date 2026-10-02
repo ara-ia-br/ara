@@ -90,6 +90,18 @@ class ConversaRepository:
 
 
     @staticmethod
+    def listar_todas_por_usuario(
+        db: Session,
+        id_usuario: int
+    ) -> list[Conversa]:
+        resultado = db.execute(
+            select(Conversa)
+            .where(Conversa.id_usuario == id_usuario)
+            .order_by(Conversa.data_atualizacao.desc())
+        )
+        return list(resultado.scalars().all())
+
+    @staticmethod
     def listar_arquivadas_por_usuario(
             db: Session,
             id_usuario: int

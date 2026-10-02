@@ -8,6 +8,7 @@ import {
     ChevronRight,
     FileText,
     FolderKanban,
+    FolderPlus,
     Home,
     Link2,
     ListTodo,
@@ -17,12 +18,12 @@ import {
     MoreVertical,
     Pencil,
     Plug,
-    RotateCcw,
     RotateCw,
     Search,
     Settings,
     Trash2,
-    Workflow
+    Workflow,
+    Share2
 } from "lucide-react";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
@@ -53,13 +54,13 @@ function Sidebar({
     const navigate = useNavigate();
     const location = useLocation();
     const [conversas, setConversas] = useState([]);
-    const [arquivadas, setArquivadas] = useState([]);
-    const [mostrarArquivadas, setMostrarArquivadas] = useState(false);
+    const [projetos, setProjetos] = useState([]);
     const [criando, setCriando] = useState(false);
     const [menuAberto, setMenuAberto] = useState(null);
     const [menuPos, setMenuPos] = useState(null);
     const [renomeando, setRenomeando] = useState(null);
     const [novoTitulo, setNovoTitulo] = useState("");
+    const [projetoAberto, setProjetoAberto] = useState(null);
 
     async function carregarConversas() {
         if (!usuario?.id_usuario) return;
@@ -77,33 +78,31 @@ function Sidebar({
         }
     }
 
-    async function carregarArquivadas() {
+    async function carregarProjetos() {
         if (!usuario?.id_usuario) return;
         try {
-            const resposta = await api.get(`/conversas/usuario/${usuario.id_usuario}/arquivadas`);
-            setArquivadas(Array.isArray(resposta.data) ? resposta.data : []);
+            const resposta = await api.get(`/projetos/usuario/${usuario.id_usuario}`);
+            setProjetos(Array.isArray(resposta.data) ? resposta.data : []);
         } catch (erro) {
-            console.error("Erro ao carregar conversas arquivadas:", erro);
+            // O backend pode ainda não ter sido reiniciado com o módulo de projetos.
+            console.error("Erro ao carregar projetos:", erro);
         }
     }
 
     useEffect(() => { carregarConversas(); }, [usuario?.id_usuario, atualizarConversas]);
-    useEffect(() => { if (mostrarArquivadas) carregarArquivadas(); }, [mostrarArquivadas]);
+    useEffect(() => { carregarProjetos(); }, [usuario?.id_usuario, atualizarConversas]);
 
     function recarregarListaAtual() {
-        if (mostrarArquivadas) {
-            carregarArquivadas();
-        } else {
-            carregarConversas();
-        }
+        carregarConversas();
+        carregarProjetos();
     }
 
-    // Fecha o menu se a página/lista rolar (a posição calculada ficaria desatualizada)
     useEffect(() => {
         if (!menuAberto) return;
         function fecharAoRolar() {
             setMenuAberto(null);
             setMenuPos(null);
+            setProjetoAberto(null);
         }
         window.addEventListener("scroll", fecharAoRolar, true);
         window.addEventListener("resize", fecharAoRolar);
@@ -113,18 +112,13 @@ function Sidebar({
         };
     }, [menuAberto]);
 
-    // Fecha o menu se clicar em qualquer lugar fora dele
     useEffect(() => {
         if (!menuAberto) return;
         function fecharAoClicarFora(event) {
-            if (
-                event.target.closest(".conversation-popover")
-                || event.target.closest(".conversation-more")
-            ) {
-                return;
-            }
+            if (event.target.closest(".conversation-popover") || event.target.closest(".conversation-more")) return;
             setMenuAberto(null);
             setMenuPos(null);
+            setProjetoAberto(null);
         }
         document.addEventListener("mousedown", fecharAoClicarFora);
         return () => document.removeEventListener("mousedown", fecharAoClicarFora);
@@ -135,20 +129,22 @@ function Sidebar({
         if (jaAberto) {
             setMenuAberto(null);
             setMenuPos(null);
+            setProjetoAberto(null);
             return;
         }
         const rect = event.currentTarget.getBoundingClientRect();
         setMenuPos({
-            top: rect.bottom + 6,
-            right: window.innerWidth - rect.right
+            top: Math.min(rect.bottom + 7, window.innerHeight - 310),
+            right: Math.max(12, window.innerWidth - rect.right)
         });
         setMenuAberto(conversa.id_conversa);
+        setProjetoAberto(null);
     }
 
-    function alternarVisaoArquivadas() {
+    function fecharMenu() {
         setMenuAberto(null);
         setMenuPos(null);
-        setMostrarArquivadas((atual) => !atual);
+        setProjetoAberto(null);
     }
 
     async function criarNovaConversa() {
@@ -172,15 +168,7 @@ function Sidebar({
     function iniciarRenomeacao(conversa) {
         setRenomeando(conversa.id_conversa);
         setNovoTitulo(conversa.titulo || "");
-        setMenuAberto(null);
-        setMenuPos(null);
-    }
-
-    // Ainda não faz nada — backend não tem rota de compartilhamento por enquanto.
-    function compartilharConversa(conversa) {
-        console.log("Compartilhar (ainda não implementado):", conversa.id_conversa);
-        setMenuAberto(null);
-        setMenuPos(null);
+        fecharMenu();
     }
 
     async function salvarNovoTitulo(event, conversa) {
@@ -204,24 +192,9 @@ function Sidebar({
             setConversas((anteriores) => anteriores.filter((item) => item.id_conversa !== conversa.id_conversa));
             if (conversaSelecionada?.id_conversa === conversa.id_conversa) setConversaSelecionada(null);
             conversaCriada();
-            setMenuAberto(null);
-            setMenuPos(null);
+            fecharMenu();
         } catch (erro) {
             console.error("Erro ao arquivar conversa:", erro);
-        }
-    }
-
-    async function restaurarConversa(conversa) {
-        try {
-            const resposta = await api.patch(`/conversas/${conversa.id_conversa}/restaurar`);
-            setArquivadas((anteriores) => anteriores.filter((item) => item.id_conversa !== conversa.id_conversa));
-            conversaCriada();
-            setConversaSelecionada(resposta.data);
-            setMenuAberto(null);
-            setMenuPos(null);
-            navigate("/chat");
-        } catch (erro) {
-            console.error("Erro ao restaurar conversa:", erro);
         }
     }
 
@@ -230,13 +203,33 @@ function Sidebar({
         try {
             await api.delete(`/conversas/${conversa.id_conversa}`);
             setConversas((anteriores) => anteriores.filter((item) => item.id_conversa !== conversa.id_conversa));
-            setArquivadas((anteriores) => anteriores.filter((item) => item.id_conversa !== conversa.id_conversa));
             if (conversaSelecionada?.id_conversa === conversa.id_conversa) setConversaSelecionada(null);
             conversaCriada();
-            setMenuAberto(null);
-            setMenuPos(null);
+            fecharMenu();
         } catch (erro) {
             console.error("Erro ao excluir conversa:", erro);
+        }
+    }
+
+    function compartilharConversa(conversa) {
+        const texto = `Conversa: ${conversa.titulo}`;
+        if (navigator.share) {
+            navigator.share({ title: conversa.titulo, text: texto }).catch(() => {});
+        } else if (navigator.clipboard) {
+            navigator.clipboard.writeText(texto);
+        }
+        fecharMenu();
+    }
+
+    async function colocarEmProjeto(conversa, projeto) {
+        try {
+            const resposta = await api.patch(`/projetos/${projeto.id_projeto}/conversas/${conversa.id_conversa}`);
+            setConversas((anteriores) => anteriores.map((item) => item.id_conversa === conversa.id_conversa ? resposta.data : item));
+            if (conversaSelecionada?.id_conversa === conversa.id_conversa) setConversaSelecionada(resposta.data);
+            conversaCriada();
+            fecharMenu();
+        } catch (erro) {
+            console.error("Erro ao colocar conversa no projeto:", erro);
         }
     }
 
@@ -245,7 +238,7 @@ function Sidebar({
         return nome.split(/\s+/).slice(0, 2).map((parte) => parte[0]?.toUpperCase()).join("");
     }, [usuario]);
 
-    const listaExibida = mostrarArquivadas ? arquivadas : conversas.slice(0, 12);
+    const listaExibida = conversas.slice(0, 12);
 
     return (
         <aside className={recolhida ? "sidebar ara-sidebar collapsed" : "sidebar ara-sidebar"}>
@@ -264,31 +257,30 @@ function Sidebar({
                 <Search size={17} /><span>Command Center</span><kbd>Ctrl K</kbd>
             </button>
 
-            <nav className="ara-nav" aria-label="Principal">
-                {navItems.map(({ label, path, icon: Icon }) => (
-                    <button
-                        key={path}
-                        className={location.pathname === path ? "ara-nav-item active" : "ara-nav-item"}
-                        onClick={() => navigate(path)}
-                        title={label}
-                    >
-                        <Icon size={18} /><span>{label}</span>
-                    </button>
-                ))}
+            <nav className="ara-nav">
+                {navItems.map((item) => {
+                    const Icon = item.icon;
+                    const ativo = location.pathname === item.path || (item.path === "/projetos" && location.pathname.startsWith("/projetos"));
+                    return (
+                        <button key={item.path} className={ativo ? "ara-nav-item active" : "ara-nav-item"} onClick={() => navigate(item.path)}>
+                            <Icon size={18} /><span>{item.label}</span>
+                        </button>
+                    );
+                })}
 
                 <button
-                    className={mostrarArquivadas ? "ara-nav-item active" : "ara-nav-item"}
-                    onClick={alternarVisaoArquivadas}
-                    title="Conversas arquivadas"
+                    className={(location.pathname.startsWith("/conversas") || location.pathname.startsWith("/arquivadas")) ? "ara-nav-item active" : "ara-nav-item"}
+                    onClick={() => navigate("/conversas")}
+                    title="Abrir todas as conversas"
                 >
-                    <Archive size={18} /><span>Arquivadas</span>
+                    <MessageSquare size={18} /><span>Conversas</span>
                 </button>
             </nav>
 
             {!recolhida && (
                 <section className="conversation-section">
                     <div className="sidebar-section-heading">
-                        <span>{mostrarArquivadas ? "CONVERSAS ARQUIVADAS" : "CONVERSAS RECENTES"}</span>
+                        <span>CONVERSAS RECENTES</span>
                         <button onClick={recarregarListaAtual} title="Recarregar">
                             <RotateCw size={14} />
                         </button>
@@ -297,9 +289,9 @@ function Sidebar({
                     <div className="conversation-list">
                         {listaExibida.map((conversa) => (
                             <div className="conversation-row" key={conversa.id_conversa}>
-                                {!mostrarArquivadas && renomeando === conversa.id_conversa ? (
+                                {renomeando === conversa.id_conversa ? (
                                     <form className="conversation-rename" onSubmit={(event) => salvarNovoTitulo(event, conversa)}>
-                                        <input value={novoTitulo} onChange={(event) => setNovoTitulo(event.target.value)} autoFocus maxLength={200} />
+                                        <input value={novoTitulo} onChange={(event) => setNovoTitulo(event.target.value)} autoFocus maxLength={200} onBlur={() => setRenomeando(null)} />
                                     </form>
                                 ) : (
                                     <button
@@ -310,37 +302,46 @@ function Sidebar({
                                     </button>
                                 )}
 
-                                <button className="conversation-more" onClick={(event) => alternarMenu(event, conversa)}>
-                                    <MoreVertical size={16} />
+                                <button className="conversation-more" onClick={(event) => alternarMenu(event, conversa)} aria-label={`Mais opções para ${conversa.titulo}`}>
+                                    <MoreVertical size={17} />
                                 </button>
 
                                 {menuAberto === conversa.id_conversa && menuPos && (
-                                    <div
-                                        className="conversation-popover"
-                                        style={{ top: menuPos.top, right: menuPos.right }}
-                                    >
-                                        {mostrarArquivadas ? (
-                                            <>
-                                                <button onClick={() => restaurarConversa(conversa)}><RotateCcw size={14} /> Restaurar</button>
-                                                <button className="danger" onClick={() => excluirConversa(conversa)}><Trash2 size={14} /> Excluir</button>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <button onClick={() => iniciarRenomeacao(conversa)}><Pencil size={14} /> Renomear</button>
-                                                <button onClick={() => compartilharConversa(conversa)}><Link2 size={14} /> Compartilhar</button>
-                                                <button onClick={() => arquivarConversa(conversa)}><Archive size={14} /> Arquivar</button>
-                                                <button className="danger" onClick={() => excluirConversa(conversa)}><Trash2 size={14} /> Excluir</button>
-                                            </>
+                                    <div className="conversation-popover" style={{ top: menuPos.top, right: menuPos.right }}>
+                                        <div className="popover-heading">AÇÕES DA CONVERSA</div>
+                                        <button onClick={() => iniciarRenomeacao(conversa)}><Pencil size={15} /> Renomear</button>
+                                        <button className="project-action" onClick={() => setProjetoAberto((valor) => valor ? null : conversa.id_conversa)}>
+                                            <FolderPlus size={15} /> <span>Adicionar a projeto</span><ChevronRight size={14} className={projetoAberto ? "popover-chevron open" : "popover-chevron"} />
+                                        </button>
+
+                                        {projetoAberto === conversa.id_conversa && (
+                                            <div className="project-picker">
+                                                <div className="project-picker-title">SELECIONE UM PROJETO</div>
+                                                {projetos.length > 0 ? projetos.map((projeto) => (
+                                                    <button key={projeto.id_projeto} onClick={() => colocarEmProjeto(conversa, projeto)}>
+                                                        <FolderKanban size={14} />
+                                                        <span>{projeto.nome}</span>
+                                                    </button>
+                                                )) : (
+                                                    <div className="project-picker-empty">Nenhum projeto criado.</div>
+                                                )}
+                                                <button className="new-project-option" onClick={() => { fecharMenu(); navigate("/projetos?novo=1"); }}>
+                                                    <FolderPlus size={14} /> Criar novo projeto
+                                                </button>
+                                            </div>
                                         )}
+
+                                        <div className="popover-divider" />
+                                        <button onClick={() => compartilharConversa(conversa)}><Share2 size={15} /> Compartilhar</button>
+                                        <button onClick={() => arquivarConversa(conversa)}><Archive size={15} /> Arquivar</button>
+                                        <button className="danger" onClick={() => excluirConversa(conversa)}><Trash2 size={15} /> Excluir</button>
                                     </div>
                                 )}
                             </div>
                         ))}
 
                         {listaExibida.length === 0 && (
-                            <p className="sidebar-empty">
-                                {mostrarArquivadas ? "Nenhuma conversa arquivada." : "Nenhuma conversa ainda."}
-                            </p>
+                            <p className="sidebar-empty">Nenhuma conversa ainda.</p>
                         )}
                     </div>
                 </section>

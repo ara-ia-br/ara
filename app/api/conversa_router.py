@@ -129,6 +129,20 @@ def excluir_conversa(
 
 
 @router.get(
+    "/usuario/{id_usuario}/todas",
+    response_model=list[ConversaResponse]
+)
+def listar_todas_conversas_usuario(
+    id_usuario: int,
+    db: Session = Depends(get_db)
+):
+    return ConversaService.listar_todas_por_usuario(
+        db,
+        id_usuario
+    )
+
+
+@router.get(
     "/usuario/{id_usuario}/arquivadas",
     response_model=list[ConversaResponse]
 )

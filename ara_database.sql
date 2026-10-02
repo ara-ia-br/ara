@@ -22,6 +22,7 @@ DROP TABLE IF EXISTS lembrete;
 DROP TABLE IF EXISTS mensagem;
 DROP TABLE IF EXISTS memoria;
 DROP TABLE IF EXISTS tarefa;
+DROP TABLE IF EXISTS projeto;
 DROP TABLE IF EXISTS conversa;
 DROP TABLE IF EXISTS usuario;
 
@@ -39,9 +40,23 @@ CREATE TABLE usuario (
     UNIQUE KEY uk_usuario_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE projeto (
+    id_projeto INT NOT NULL AUTO_INCREMENT,
+    id_usuario INT NOT NULL,
+    nome VARCHAR(120) NOT NULL,
+    descricao TEXT NULL,
+    data_criacao DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    data_atualizacao DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_projeto),
+    KEY idx_projeto_usuario (id_usuario),
+    CONSTRAINT fk_projeto_usuario FOREIGN KEY (id_usuario)
+        REFERENCES usuario (id_usuario) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE conversa (
     id_conversa INT NOT NULL AUTO_INCREMENT,
     id_usuario INT NOT NULL,
+    id_projeto INT NULL,
     titulo VARCHAR(200) NULL,
     data_criacao DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
     data_atualizacao DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
@@ -49,8 +64,11 @@ CREATE TABLE conversa (
     PRIMARY KEY (id_conversa),
     KEY idx_conversa_usuario (id_usuario),
     KEY idx_conversa_status (status),
+    KEY idx_conversa_projeto (id_projeto),
     CONSTRAINT fk_conversa_usuario FOREIGN KEY (id_usuario)
-        REFERENCES usuario (id_usuario) ON DELETE CASCADE
+        REFERENCES usuario (id_usuario) ON DELETE CASCADE,
+    CONSTRAINT fk_conversa_projeto FOREIGN KEY (id_projeto)
+        REFERENCES projeto (id_projeto) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE mensagem (

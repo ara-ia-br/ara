@@ -27,6 +27,11 @@ class Conversa(Base):
         nullable=False
     )
 
+    id_projeto: Mapped[int | None] = mapped_column(
+        ForeignKey("projeto.id_projeto", ondelete="SET NULL"),
+        nullable=True
+    )
+
     titulo: Mapped[str] = mapped_column(
         String(200),
         nullable=False

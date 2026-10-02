@@ -1,11 +1,12 @@
 import Message from "../Message";
 
 function ChatMessages({ mensagens, carregando, fimMensagensRef }) {
+    const logo = typeof window !== "undefined" ? (localStorage.getItem("ara.chatLogo") || "1") : "1";
     return (
         <section className="messages">
             {mensagens.length === 0 && (
                 <div className="welcome">
-                    <div className="jarvis-symbol ara-symbol">A</div>
+                    <div className={`jarvis-symbol ara-symbol logo-placeholder logo-placeholder-${logo}`}>Logo {logo}</div>
                     <h2>E aí! O que vamos fazer hoje?</h2>
                     <p>Converse, pergunte ou peça para eu fazer alguma coisa.</p>
                 </div>

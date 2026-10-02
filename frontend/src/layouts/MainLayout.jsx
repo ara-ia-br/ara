@@ -8,7 +8,9 @@ function MainLayout() {
     const [atualizarConversas, setAtualizarConversas] = useState(0);
     const [recolhida, setRecolhida] = useState(() => localStorage.getItem("ara.sidebar") === "collapsed");
     const [commandAberto, setCommandAberto] = useState(false);
-    const [tema, setTemaState] = useState(() => localStorage.getItem("ara.theme") || "dark");
+    const [tema, setTemaState] = useState("dark");
+    const [cor, setCorState] = useState(() => localStorage.getItem("ara.accent") || "mint");
+    const [logoChat, setLogoChatState] = useState(() => localStorage.getItem("ara.chatLogo") || "1");
 
     function conversaCriada() {
         setAtualizarConversas((valor) => valor + 1);
@@ -20,8 +22,12 @@ function MainLayout() {
     }, []);
 
     useEffect(() => {
-        document.documentElement.dataset.theme = tema;
-    }, [tema]);
+        document.documentElement.dataset.theme = "dark";
+        document.documentElement.dataset.accent = cor;
+        document.documentElement.dataset.chatLogo = logoChat;
+        localStorage.setItem("ara.accent", cor);
+        localStorage.setItem("ara.chatLogo", logoChat);
+    }, [cor, logoChat]);
 
     useEffect(() => {
         localStorage.setItem("ara.sidebar", recolhida ? "collapsed" : "open");
@@ -57,6 +63,10 @@ function MainLayout() {
                     conversaCriada,
                     tema,
                     setTema,
+                    cor,
+                    setCor: setCorState,
+                    logoChat,
+                    setLogoChat: setLogoChatState,
                     openCommand: () => setCommandAberto(true)
                 }} />
             </div>

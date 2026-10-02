@@ -7,6 +7,7 @@ from app.models.conversa import Conversa, StatusConversa
 
 class ConversaCreate(BaseModel):
     id_usuario: int
+    id_projeto: int | None = None
     titulo: str = Field(
         min_length=1,
         max_length=200
@@ -17,6 +18,7 @@ class ConversaCreate(BaseModel):
 class ConversaResponse(BaseModel):
     id_conversa: int
     id_usuario: int
+    id_projeto: int | None = None
     titulo: str
     data_criacao: datetime | None
     data_atualizacao: datetime | None

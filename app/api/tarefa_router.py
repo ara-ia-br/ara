@@ -132,7 +132,8 @@ def editar_tarefa(
             titulo=dados.titulo,
             descricao=dados.descricao,
             prioridade=dados.prioridade,
-            data_limite=dados.data_limite
+            data_limite=dados.data_limite,
+            remover_data_limite=dados.remover_data_limite
         )
 
     except ValueError as erro:
@@ -203,6 +204,30 @@ def cancelar_tarefa(
     try:
 
         return TarefaService.cancelar(
+            db,
+            id_tarefa
+        )
+
+    except ValueError as erro:
+
+        raise HTTPException(
+            status_code=400,
+            detail=str(erro)
+        )
+
+
+@router.patch(
+    "/{id_tarefa}/reabrir",
+    response_model=TarefaResponse
+)
+def reabrir_tarefa(
+    id_tarefa: int,
+    db: Session = Depends(get_db)
+):
+
+    try:
+
+        return TarefaService.reabrir(
             db,
             id_tarefa
         )

@@ -6,23 +6,21 @@ import {
 
 import {
     ArrowUp,
-    Check,
-    Link2,
     Mic,
-    MoreHorizontal,
-    Paperclip,
-    Pencil,
-    Trash2
+    Paperclip
 } from "lucide-react";
 
 import api from "../services/api";
 import Message from "./Message";
+import araChatLogo from "../assets/brand/logo-chat.png";
 
 
 function Chat({
     conversaSelecionada,
     conversaCriada
 }) {
+
+    const logoChat = localStorage.getItem("ara.chatLogo") || "1";
 
     const [mensagem, setMensagem] = useState("");
 
@@ -444,303 +442,154 @@ function Chat({
     // =========================================================
 
     if (!conversaSelecionada) {
-
         return (
-
             <main className="chat">
-
-                <div
-                    className="welcome"
-                    style={{
-                        margin: "auto"
-                    }}
-                >
-
-                    <div
-                        className="jarvis-symbol ara-symbol"
-                    >
-                        J
+                <div className="welcome welcome-empty">
+                    <div className="welcome-logo" aria-hidden="true">
+                        <img src={araChatLogo} alt="" />
                     </div>
 
+                    <span className="welcome-eyebrow">A.R.A. • ASSISTENTE</span>
 
-                    <h2>
-                        Bem-vindo à A.R.A.
-                    </h2>
-
+                    <h2>Bem-vindo à A.R.A.</h2>
 
                     <p>
-                        Crie uma conversa
-                        para começar.
+                        Crie uma conversa para começar.
                     </p>
-
                 </div>
-
             </main>
         );
     }
-
 
     // =========================================================
     // CHAT
     // =========================================================
 
     return (
-
         <main className="chat">
-
-            {/* =================================================
-                HEADER
-            ================================================= */}
-
             <header className="chat-header">
+    <div className="chat-header-identity">
 
-                <div>
+        <div
+            className={`chat-header-logo logo-placeholder logo-placeholder-${logoChat}`}
+            aria-hidden="true"
+        >
+            Logo {logoChat}
+        </div>
 
-                    <h2>
-                        {
-                            conversaSelecionada
-                                .titulo
-                        }
-                    </h2>
+        <div className="chat-header-info">
+            <h2>A.R.A.</h2>
 
+            <span className="online">
+                Sua assistente pessoal
+            </span>
+        </div>
 
-                    <span className="online">
-
-                        <span
-                            className="online-dot"
-                        />
-
-                        A.R.A. Online
-
-                    </span>
-
-                </div>
-
-            </header>
-
-
-            {/* =================================================
-                MENSAGENS
-            ================================================= */}
+    </div>
+</header>
 
             <section className="messages">
-
-                {
-                    mensagens.length === 0
-                    && (
-
-                        <div className="welcome">
-
-                            <div
-                                className="jarvis-symbol ara-symbol"
-                            >
-                                A
-                            </div>
-
-
-                            <h2>
-                                E aí! O que vamos
-                                fazer hoje?
-                            </h2>
-
-
-                            <p>
-                                Converse, pergunte ou
-                                peça para eu fazer
-                                alguma coisa.
-                            </p>
-
+                {mensagens.length === 0 && (
+                    <div className="welcome">
+                        <div className="welcome-logo" aria-hidden="true">
+                            <img src={araChatLogo} alt="" />
                         </div>
-                    )
-                }
 
+                        <span className="welcome-eyebrow">A.R.A. • ASSISTENTE</span>
 
-                {
-                    mensagens.map(
-                        (item) => (
+                        <h2>E aí! O que vamos fazer hoje?</h2>
 
-                            <Message
-                                key={
-                                    item.id
-                                }
-                                autor={
-                                    item.autor
-                                }
-                            >
+                        <p>
+                            Converse, pergunte ou peça para eu fazer alguma coisa.
+                            Estou aqui para ajudar.
+                        </p>
 
-                                {
-                                    item.conteudo
-                                }
-
-                            </Message>
-
-                        )
-                    )
-                }
-
-
-                {/* =================================================
-                    INDICADOR DE DIGITAÇÃO
-                ================================================= */}
-
-                {
-                    carregando
-                    && (
-
-                        <div
-                            className="
-                                message
-                                jarvis-message
-                            "
-                        >
-
-                            <div
-                                className="
-                                    message-author
-                                "
-                            >
-                                A.R.A.
-                            </div>
-
-
-                            <div className="typing">
-
-                                <span />
-                                <span />
-                                <span />
-
-                            </div>
-
+                        <div className="welcome-hints">
+                            <span>Faça uma pergunta</span>
+                            <span>Organize uma tarefa</span>
+                            <span>Planeje alguma coisa</span>
                         </div>
-                    )
-                }
+                    </div>
+                )}
 
+                {mensagens.map((item) => (
+                    <Message key={item.id} autor={item.autor}>
+                        {item.conteudo}
+                    </Message>
+                ))}
 
-                <div
-                    ref={
-                        fimMensagensRef
-                    }
-                />
+                {carregando && (
+                    <div className="message jarvis-message ara-message typing-message">
+                        <div className="message-author">
+                            <span className="message-avatar ara-avatar">
+                                <img src={araChatLogo} alt="" aria-hidden="true" />
+                            </span>
+                            <span>A.R.A.</span>
+                        </div>
 
+                        <div className="typing typing-card">
+                            <span />
+                            <span />
+                            <span />
+                        </div>
+                    </div>
+                )}
+
+                <div ref={fimMensagensRef} />
             </section>
 
-
-            {/* =================================================
-                COMPOSER
-            ================================================= */}
-
             <div className="composer-container">
-
                 <div className="composer">
-
-                    {/* ANEXO */}
-
                     <button
                         type="button"
-                        className="
-                            composer-button
-                        "
-                        disabled={
-                            carregando
-                        }
+                        className="composer-button"
+                        disabled={carregando}
+                        aria-label="Anexar arquivo"
+                        title="Anexar arquivo"
                     >
-
-                        <Paperclip
-                            size={20}
-                        />
-
+                        <Paperclip size={19} />
                     </button>
-
-
-                    {/* TEXTO */}
 
                     <textarea
-                        value={
-                            mensagem
-                        }
-                        onChange={
-                            (event) =>
-                                setMensagem(
-                                    event
-                                        .target
-                                        .value
-                                )
-                        }
-                        onKeyDown={
-                            verificarEnter
-                        }
+                        value={mensagem}
+                        onChange={(event) => setMensagem(event.target.value)}
+                        onKeyDown={verificarEnter}
                         placeholder={
                             carregando
-                                ? (
-                                    "A.R.A. está "
-                                    + "pensando..."
-                                )
-                                : (
-                                    "Pergunte "
-                                    + "alguma coisa..."
-                                )
+                                ? "A.R.A. está pensando..."
+                                : "Mensagem para a A.R.A..."
                         }
-                        disabled={
-                            carregando
-                        }
+                        disabled={carregando}
                         rows={1}
+                        aria-label="Mensagem"
                     />
 
-
-                    {/* MICROFONE */}
+                    <button
+                        type="button"
+                        className="composer-button"
+                        disabled={carregando}
+                        aria-label="Usar microfone"
+                        title="Microfone"
+                    >
+                        <Mic size={19} />
+                    </button>
 
                     <button
                         type="button"
-                        className="
-                            composer-button
-                        "
-                        disabled={
-                            carregando
-                        }
+                        className="send-button"
+                        onClick={enviarMensagem}
+                        disabled={carregando || !mensagem.trim()}
+                        aria-label="Enviar mensagem"
+                        title="Enviar mensagem"
                     >
-
-                        <Mic
-                            size={20}
-                        />
-
+                        <ArrowUp size={20} />
                     </button>
-
-
-                    {/* ENVIAR */}
-
-                    <button
-                        type="button"
-                        className="
-                            send-button
-                        "
-                        onClick={
-                            enviarMensagem
-                        }
-                        disabled={
-                            carregando
-                            || !mensagem.trim()
-                        }
-                    >
-
-                        <ArrowUp
-                            size={21}
-                        />
-
-                    </button>
-
                 </div>
 
-
                 <span className="disclaimer">
-
-                    A.R.A. pode cometer erros.
-                    Verifique informações
-                    importantes.
-
+                    A.R.A. pode cometer erros. Verifique informações importantes.
                 </span>
-
             </div>
-
         </main>
     );
 }

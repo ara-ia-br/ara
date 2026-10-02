@@ -184,6 +184,13 @@ class ConversaService:
         )
 
     @staticmethod
+    def listar_todas_por_usuario(
+        db: Session,
+        id_usuario: int
+    ) -> list[Conversa]:
+        return ConversaRepository.listar_todas_por_usuario(db, id_usuario)
+
+    @staticmethod
     def listar_arquivadas_por_usuario(
             db: Session,
             id_usuario: int
