@@ -1,29 +1,41 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
-from email.utils import parsedate_to_datetime
+from datetime import (
+    datetime,
+    timedelta,
+    timezone
+)
+from email.utils import (
+    parsedate_to_datetime
+)
 
 import httpx
 
 from app.integrations.weather.base import (
     WeatherProvider,
     WeatherProviderError,
-    WeatherSnapshot,
+    WeatherSnapshot
 )
 
 
-@dataclass(slots=True)
+@dataclass(
+    slots=True
+)
 class _CacheEntry:
-    snapshot: WeatherSnapshot
+    payload: dict
     expires_at: datetime
     last_modified: str | None
 
 
-class MetNorwayWeatherProvider(WeatherProvider):
+class MetNorwayWeatherProvider(
+    WeatherProvider
+):
+
     BASE_URL = (
         "https://api.met.no/"
-        "weatherapi/locationforecast/2.0/compact"
+        "weatherapi/locationforecast/"
+        "2.0/compact"
     )
 
     USER_AGENT = (
@@ -31,40 +43,141 @@ class MetNorwayWeatherProvider(WeatherProvider):
         "https://github.com/ara-ia-br/ara"
     )
 
+    FALLBACK_CACHE_MINUTES = 10
+
+
     def __init__(
-            self,
-            timeout_seconds: float = 15.0,
+        self
     ):
-        self.timeout_seconds = timeout_seconds
 
         self._cache: dict[
             tuple[float, float],
-            _CacheEntry,
+            _CacheEntry
         ] = {}
 
+
     # =========================================================
-    # API PRINCIPAL
+    # COORDENADAS
     # =========================================================
 
-    async def obter_clima_atual(
-            self,
-            latitude: float,
-            longitude: float,
-    ) -> WeatherSnapshot:
+    @staticmethod
+    def _normalizar_coordenadas(
+        latitude: float,
+        longitude: float
+    ) -> tuple[float, float]:
 
-        latitude = round(
-            float(latitude),
-            4,
+        return (
+            round(
+                float(latitude),
+                4
+            ),
+            round(
+                float(longitude),
+                4
+            )
         )
 
-        longitude = round(
-            float(longitude),
-            4,
+
+    # =========================================================
+    # DATAS
+    # =========================================================
+
+    @staticmethod
+    def _parse_data_http(
+        valor: str | None
+    ) -> datetime | None:
+
+        if not valor:
+            return None
+
+        try:
+
+            data = (
+                parsedate_to_datetime(
+                    valor
+                )
+            )
+
+            if data.tzinfo is None:
+
+                data = data.replace(
+                    tzinfo=timezone.utc
+                )
+
+            return data.astimezone(
+                timezone.utc
+            )
+
+        except (
+            TypeError,
+            ValueError
+        ):
+
+            return None
+
+
+    @staticmethod
+    def _parse_iso_datetime(
+        valor: str
+    ) -> datetime:
+
+        return datetime.fromisoformat(
+            valor.replace(
+                "Z",
+                "+00:00"
+            )
+        )
+
+
+    # =========================================================
+    # CONVERSÃO NUMÉRICA
+    # =========================================================
+
+    @staticmethod
+    def _valor_float(
+        valor
+    ) -> float | None:
+
+        if valor is None:
+            return None
+
+        try:
+
+            return float(
+                valor
+            )
+
+        except (
+            TypeError,
+            ValueError
+        ):
+
+            return None
+
+
+    # =========================================================
+    # HTTP + CACHE
+    # =========================================================
+
+    async def _obter_payload(
+        self,
+        latitude: float,
+        longitude: float
+    ) -> dict:
+
+        (
+            latitude,
+            longitude
+        ) = (
+            self._normalizar_coordenadas(
+                latitude,
+                longitude
+            )
         )
 
         chave = (
             latitude,
-            longitude,
+            longitude
         )
 
         agora = datetime.now(
@@ -75,245 +188,608 @@ class MetNorwayWeatherProvider(WeatherProvider):
             chave
         )
 
+
+        # -----------------------------------------------------
+        # CACHE VÁLIDO
+        # -----------------------------------------------------
+
         if (
-                cache
-                and cache.expires_at > agora
+            cache is not None
+            and agora
+            < cache.expires_at
         ):
-            return cache.snapshot
+
+            return cache.payload
+
+
+        # -----------------------------------------------------
+        # HEADERS
+        # -----------------------------------------------------
 
         headers = {
-            "User-Agent": self.USER_AGENT,
-            "Accept": "application/json",
+            "User-Agent":
+                self.USER_AGENT
         }
 
+
         if (
-                cache
-                and cache.last_modified
+            cache is not None
+            and cache.last_modified
         ):
-            headers["If-Modified-Since"] = (
+
+            headers[
+                "If-Modified-Since"
+            ] = (
                 cache.last_modified
             )
 
+
         params = {
             "lat": latitude,
-            "lon": longitude,
+            "lon": longitude
         }
 
+
+        # -----------------------------------------------------
+        # REQUEST
+        # -----------------------------------------------------
+
         try:
 
-            async with httpx.AsyncClient(
-                    timeout=self.timeout_seconds
-            ) as client:
+            async with (
+                httpx.AsyncClient(
+                    timeout=15.0
+                )
+                as cliente
+            ):
 
-                response = await client.get(
-                    self.BASE_URL,
-                    params=params,
-                    headers=headers,
+                resposta = (
+                    await cliente.get(
+                        self.BASE_URL,
+                        params=params,
+                        headers=headers
+                    )
                 )
 
-        except httpx.RequestError as erro:
+        except httpx.HTTPError as erro:
 
             raise WeatherProviderError(
-                "Não foi possível conectar "
-                "ao serviço meteorológico."
+                "Não consegui acessar "
+                "o serviço meteorológico."
             ) from erro
 
-        # =====================================================
-        # CACHE AINDA VÁLIDO NO SERVIDOR
-        # =====================================================
+
+        # -----------------------------------------------------
+        # 304
+        # -----------------------------------------------------
 
         if (
-                response.status_code == 304
-                and cache
+            resposta.status_code
+            == 304
         ):
-            cache.expires_at = (
-                self._obter_expiracao(
-                    response
+
+            if cache is None:
+
+                raise WeatherProviderError(
+                    "O serviço meteorológico "
+                    "retornou cache inválido."
+                )
+
+
+            expiracao = (
+                self._parse_data_http(
+                    resposta.headers.get(
+                        "Expires"
+                    )
+                )
+                or (
+                    agora
+                    + timedelta(
+                        minutes=
+                            self
+                            .FALLBACK_CACHE_MINUTES
+                    )
                 )
             )
 
-            return cache.snapshot
+            cache.expires_at = (
+                expiracao
+            )
 
-        # =====================================================
+            return cache.payload
+
+
+        # -----------------------------------------------------
         # RATE LIMIT
-        # =====================================================
+        # -----------------------------------------------------
 
-        if response.status_code == 429:
+        if (
+            resposta.status_code
+            == 429
+        ):
+
             raise WeatherProviderError(
                 "O serviço meteorológico "
-                "limitou temporariamente as requisições."
+                "está temporariamente "
+                "limitando consultas."
             )
 
-        # =====================================================
-        # ERROS EXTERNOS
-        # =====================================================
 
-        if response.status_code >= 400:
+        # -----------------------------------------------------
+        # ERRO HTTP
+        # -----------------------------------------------------
+
+        if (
+            resposta.status_code
+            >= 400
+        ):
+
             raise WeatherProviderError(
-                "Erro no serviço meteorológico "
-                f"(HTTP {response.status_code})."
+                "O serviço meteorológico "
+                "retornou HTTP "
+                f"{resposta.status_code}."
             )
+
+
+        # -----------------------------------------------------
+        # JSON
+        # -----------------------------------------------------
 
         try:
 
-            dados = response.json()
-
-            timeseries = (
-                dados
-                .get("properties", {})
-                .get("timeseries", [])
+            payload = (
+                resposta.json()
             )
 
-            if not timeseries:
-                raise WeatherProviderError(
-                    "A previsão meteorológica "
-                    "não retornou dados."
-                )
+        except ValueError as erro:
 
-            atual = timeseries[0]
+            raise WeatherProviderError(
+                "O serviço meteorológico "
+                "retornou dados inválidos."
+            ) from erro
 
-            instante = (
-                atual
-                .get("data", {})
-                .get("instant", {})
-                .get("details", {})
-            )
 
-            proxima_hora = (
-                atual
-                .get("data", {})
-                .get("next_1_hours", {})
-            )
-
-            resumo_proxima_hora = (
-                proxima_hora
-                .get("summary", {})
-            )
-
-            detalhes_proxima_hora = (
-                proxima_hora
-                .get("details", {})
-            )
-
-            horario = datetime.fromisoformat(
-                atual["time"].replace(
-                    "Z",
-                    "+00:00",
-                )
-            )
-
-            snapshot = WeatherSnapshot(
-                latitude=latitude,
-                longitude=longitude,
-
-                temperature_c=instante.get(
-                    "air_temperature"
-                ),
-
-                humidity_percent=instante.get(
-                    "relative_humidity"
-                ),
-
-                wind_speed_mps=instante.get(
-                    "wind_speed"
-                ),
-
-                wind_direction_deg=instante.get(
-                    "wind_from_direction"
-                ),
-
-                air_pressure_hpa=instante.get(
-                    "air_pressure_at_sea_level"
-                ),
-
-                precipitation_next_hour_mm=(
-                    detalhes_proxima_hora.get(
-                        "precipitation_amount"
-                    )
-                ),
-
-                condition_code=(
-                    resumo_proxima_hora.get(
-                        "symbol_code"
-                    )
-                ),
-
-                forecast_time=horario,
-
-                provider="MET Norway",
-            )
-
-        except WeatherProviderError:
-            raise
-
-        except (
-                KeyError,
-                TypeError,
-                ValueError,
-        ) as erro:
+        if not isinstance(
+            payload,
+            dict
+        ):
 
             raise WeatherProviderError(
                 "Resposta meteorológica "
-                "em formato inesperado."
-            ) from erro
+                "inválida."
+            )
 
-        # =====================================================
-        # CACHE
-        # =====================================================
 
-        self._cache[chave] = _CacheEntry(
-            snapshot=snapshot,
+        # -----------------------------------------------------
+        # EXPIRAÇÃO
+        # -----------------------------------------------------
 
-            expires_at=(
-                self._obter_expiracao(
-                    response
+        expiracao = (
+            self._parse_data_http(
+                resposta.headers.get(
+                    "Expires"
                 )
-            ),
-
-            last_modified=(
-                response.headers.get(
-                    "Last-Modified"
+            )
+            or (
+                agora
+                + timedelta(
+                    minutes=
+                        self
+                        .FALLBACK_CACHE_MINUTES
                 )
-            ),
+            )
         )
 
-        return snapshot
+
+        if expiracao <= agora:
+
+            expiracao = (
+                agora
+                + timedelta(
+                    minutes=
+                        self
+                        .FALLBACK_CACHE_MINUTES
+                )
+            )
+
+
+        # -----------------------------------------------------
+        # SALVA CACHE
+        # -----------------------------------------------------
+
+        self._cache[
+            chave
+        ] = _CacheEntry(
+
+            payload=payload,
+
+            expires_at=
+                expiracao,
+
+            last_modified=
+                resposta.headers.get(
+                    "Last-Modified"
+                )
+        )
+
+
+        return payload
+
 
     # =========================================================
-    # EXPIRAÇÃO
+    # TIMESERIES
     # =========================================================
 
     @staticmethod
-    def _obter_expiracao(
-            response: httpx.Response,
-    ) -> datetime:
+    def _obter_timeseries(
+        payload: dict
+    ) -> list[dict]:
 
-        expires = response.headers.get(
-            "Expires"
+        try:
+
+            timeseries = (
+                payload[
+                    "properties"
+                ][
+                    "timeseries"
+                ]
+            )
+
+        except (
+            KeyError,
+            TypeError
+        ) as erro:
+
+            raise WeatherProviderError(
+                "Previsão meteorológica "
+                "sem série temporal."
+            ) from erro
+
+
+        if (
+            not isinstance(
+                timeseries,
+                list
+            )
+            or not timeseries
+        ):
+
+            raise WeatherProviderError(
+                "O serviço meteorológico "
+                "não retornou previsões."
+            )
+
+
+        return timeseries
+
+
+    # =========================================================
+    # ITEM → SNAPSHOT
+    # =========================================================
+
+    def _converter_item(
+        self,
+        item: dict,
+        latitude: float,
+        longitude: float
+    ) -> WeatherSnapshot:
+
+        try:
+
+            horario = (
+                self._parse_iso_datetime(
+                    item["time"]
+                )
+            )
+
+            dados = (
+                item["data"]
+            )
+
+            detalhes = (
+                dados
+                .get(
+                    "instant",
+                    {}
+                )
+                .get(
+                    "details",
+                    {}
+                )
+            )
+
+        except (
+            KeyError,
+            TypeError,
+            ValueError
+        ) as erro:
+
+            raise WeatherProviderError(
+                "Item de previsão "
+                "meteorológica inválido."
+            ) from erro
+
+
+        # -----------------------------------------------------
+        # PRÓXIMA HORA
+        # -----------------------------------------------------
+
+        proxima_hora = (
+            dados.get(
+                "next_1_hours"
+            )
+            or {}
         )
 
-        if expires:
+
+        resumo = (
+            proxima_hora.get(
+                "summary",
+                {}
+            )
+        )
+
+
+        detalhes_proxima_hora = (
+            proxima_hora.get(
+                "details",
+                {}
+            )
+        )
+
+
+        codigo_condicao = (
+            resumo.get(
+                "symbol_code"
+            )
+        )
+
+
+        # -----------------------------------------------------
+        # FALLBACK CONDIÇÃO
+        # -----------------------------------------------------
+
+        if not codigo_condicao:
+
+            for chave in (
+                "next_6_hours",
+                "next_12_hours"
+            ):
+
+                bloco = (
+                    dados.get(
+                        chave
+                    )
+                    or {}
+                )
+
+                codigo_condicao = (
+                    bloco
+                    .get(
+                        "summary",
+                        {}
+                    )
+                    .get(
+                        "symbol_code"
+                    )
+                )
+
+                if codigo_condicao:
+                    break
+
+
+        precipitacao = (
+            detalhes_proxima_hora
+            .get(
+                "precipitation_amount"
+            )
+        )
+
+
+        return WeatherSnapshot(
+
+            latitude=
+                float(latitude),
+
+            longitude=
+                float(longitude),
+
+            temperature_c=
+                self._valor_float(
+                    detalhes.get(
+                        "air_temperature"
+                    )
+                ),
+
+            humidity_percent=
+                self._valor_float(
+                    detalhes.get(
+                        "relative_humidity"
+                    )
+                ),
+
+            wind_speed_mps=
+                self._valor_float(
+                    detalhes.get(
+                        "wind_speed"
+                    )
+                ),
+
+            wind_direction_deg=
+                self._valor_float(
+                    detalhes.get(
+                        "wind_from_direction"
+                    )
+                ),
+
+            air_pressure_hpa=
+                self._valor_float(
+                    detalhes.get(
+                        "air_pressure_at_sea_level"
+                    )
+                ),
+
+            precipitation_next_hour_mm=
+                self._valor_float(
+                    precipitacao
+                ),
+
+            condition_code=
+                codigo_condicao,
+
+            forecast_time=
+                horario,
+
+            provider=
+                "MET Norway"
+        )
+
+
+    # =========================================================
+    # CLIMA ATUAL
+    # =========================================================
+
+    async def obter_clima_atual(
+        self,
+        latitude: float,
+        longitude: float
+    ) -> WeatherSnapshot:
+
+        payload = (
+            await self._obter_payload(
+                latitude,
+                longitude
+            )
+        )
+
+
+        timeseries = (
+            self._obter_timeseries(
+                payload
+            )
+        )
+
+
+        return self._converter_item(
+            timeseries[0],
+            latitude,
+            longitude
+        )
+
+
+    # =========================================================
+    # PREVISÃO HORÁRIA
+    # =========================================================
+
+    async def obter_previsao_horaria(
+        self,
+        latitude: float,
+        longitude: float,
+        horas: int = 12
+    ) -> list[WeatherSnapshot]:
+
+        if horas < 1:
+
+            raise ValueError(
+                "A quantidade de horas "
+                "deve ser maior que zero."
+            )
+
+
+        # Card da A.R.A. não precisa
+        # carregar mais que 24 pontos.
+        horas = min(
+            horas,
+            24
+        )
+
+
+        payload = (
+            await self._obter_payload(
+                latitude,
+                longitude
+            )
+        )
+
+
+        timeseries = (
+            self._obter_timeseries(
+                payload
+            )
+        )
+
+
+        agora = datetime.now(
+            timezone.utc
+        )
+
+
+        previsoes: list[
+            WeatherSnapshot
+        ] = []
+
+
+        for item in timeseries:
 
             try:
 
-                data = parsedate_to_datetime(
-                    expires
+                horario = (
+                    self
+                    ._parse_iso_datetime(
+                        item["time"]
+                    )
                 )
 
-                if data.tzinfo is None:
-                    data = data.replace(
-                        tzinfo=timezone.utc
-                    )
-
-                return data
-
             except (
-                    TypeError,
-                    ValueError,
+                KeyError,
+                TypeError,
+                ValueError
             ):
-                pass
 
-        return (
-                datetime.now(timezone.utc)
-                + timedelta(minutes=10)
-        )
+                continue
+
+
+            # Inclui a hora meteorológica
+            # atual com tolerância.
+            if (
+                horario
+                <
+                (
+                    agora
+                    - timedelta(
+                        minutes=59
+                    )
+                )
+            ):
+
+                continue
+
+
+            previsoes.append(
+
+                self._converter_item(
+                    item,
+                    latitude,
+                    longitude
+                )
+            )
+
+
+            if (
+                len(previsoes)
+                >= horas
+            ):
+
+                break
+
+
+        if not previsoes:
+
+            raise WeatherProviderError(
+                "Não encontrei previsão "
+                "horária para essa "
+                "localização."
+            )
+
+
+        return previsoes

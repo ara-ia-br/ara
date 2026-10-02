@@ -10,6 +10,10 @@ from app.agent.lembrete_tools import (
     excluir_todos_lembretes
 )
 
+from app.agent.tools.weather_tools import (
+    consultar_clima_local,
+)
+
 from app.agent.tools.tarefa_tools import (
     criar_tarefa,
     listar_tarefas,
@@ -131,4 +135,11 @@ def registrar_tools():
     ToolRegistry.registrar(
         "listar_tarefas_periodo",
         listar_tarefas_periodo
+    )
+
+
+    # CLIMA
+    ToolRegistry.registrar(
+        "consultar_clima_local",
+        consultar_clima_local
     )

@@ -229,3 +229,111 @@ class WeatherService:
             codigo_base,
             codigo_base,
         )
+
+
+    async def obter_previsao_horaria(
+        self,
+        latitude: float,
+        longitude: float,
+        horas: int = 12
+    ) -> list[dict]:
+
+        if not -90 <= latitude <= 90:
+            raise ValueError(
+                "Latitude inválida."
+            )
+
+        if not -180 <= longitude <= 180:
+            raise ValueError(
+                "Longitude inválida."
+            )
+
+        snapshots = (
+            await self.provider
+            .obter_previsao_horaria(
+                latitude=latitude,
+                longitude=longitude,
+                horas=horas
+            )
+        )
+
+        previsoes = []
+
+        for snapshot in snapshots:
+
+            previsoes.append({
+                "latitude":
+                    snapshot.latitude,
+
+                "longitude":
+                    snapshot.longitude,
+
+                "temperatura_c":
+                    snapshot.temperature_c,
+
+                "umidade_percentual":
+                    snapshot.humidity_percent,
+
+                "vento_m_s":
+                    snapshot.wind_speed_mps,
+
+                "direcao_vento_graus":
+                    snapshot.wind_direction_deg,
+
+                "pressao_hpa":
+                    snapshot.air_pressure_hpa,
+
+                "precipitacao_proxima_hora_mm":
+                    snapshot
+                    .precipitation_next_hour_mm,
+
+                "condicao_codigo":
+                    snapshot.condition_code,
+
+                "condicao":
+                    self._traduzir_condicao(
+                        snapshot.condition_code
+                    ),
+
+                "horario_previsao":
+                    snapshot
+                    .forecast_time
+                    .isoformat(),
+
+                "fonte":
+                    snapshot.provider,
+
+                "atribuicao":
+                    (
+                        "Dados meteorológicos "
+                        "fornecidos por MET Norway."
+                    )
+            })
+
+        return previsoes
+
+
+    async def obter_painel_clima(
+        self,
+        latitude: float,
+        longitude: float,
+        horas: int = 12
+    ) -> dict:
+
+        atual = await self.obter_clima_atual(
+            latitude=latitude,
+            longitude=longitude
+        )
+
+        previsao_horaria = (
+            await self.obter_previsao_horaria(
+                latitude=latitude,
+                longitude=longitude,
+                horas=horas
+            )
+        )
+
+        return {
+            "atual": atual,
+            "horas": previsao_horaria
+        }

@@ -375,10 +375,31 @@ class AgentActionHandlerService:
         )
 
         return {
-            "id_conversa": id_conversa,
-            "mensagem_usuario": conteudo,
-            "resposta_ara": resposta,
-            "modelo": "AGENT",
-            "ferramenta": decisao.ferramenta,
-            "tempo_processamento": 0
+            "id_conversa":
+                id_conversa,
+
+            "mensagem_usuario":
+                conteudo,
+
+            "resposta_ara":
+                resposta,
+
+            "modelo":
+                "AGENT",
+
+            "ferramenta":
+                decisao.ferramenta,
+
+            "visualizacao":
+                resultado.get(
+                    "visualizacao"
+                )
+                if isinstance(
+                    resultado,
+                    dict
+                )
+                else None,
+
+            "tempo_processamento":
+                0
         }

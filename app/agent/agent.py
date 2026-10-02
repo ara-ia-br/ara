@@ -272,6 +272,157 @@ class AraAgent:
         return AgentPlan(
             passos=passos
         )
+
+
+
+    # =========================================================
+    # DETECTAR CONSULTA DE CLIMA
+    # =========================================================
+
+    @staticmethod
+    def _detectar_consulta_clima(
+        mensagem: str
+    ) -> AgentDecision | None:
+
+        texto_original = mensagem.strip()
+        texto = texto_original.lower()
+
+        # -----------------------------------------------------
+        # GATILHOS METEOROLÓGICOS
+        # -----------------------------------------------------
+
+        gatilho_forte = bool(
+            re.search(
+                r"\b(?:"
+                r"clima|"
+                r"temperatura|"
+                r"previs[aã]o(?:\s+do\s+tempo)?|"
+                r"chuva|"
+                r"chovendo|"
+                r"chover|"
+                r"ensolarado|"
+                r"nublado"
+                r")\b",
+                texto,
+                flags=re.IGNORECASE
+            )
+        )
+
+        gatilho_tempo = bool(
+            re.search(
+                r"\b(?:"
+                r"como\s+(?:est[aá]|t[aá])\s+(?:o\s+)?tempo|"
+                r"como\s+vai\s+(?:estar|ficar)\s+(?:o\s+)?tempo|"
+                r"qual\s+(?:é|e)\s+(?:o\s+)?tempo|"
+                r"tempo\s+(?:em|no|na)"
+                r")\b",
+                texto,
+                flags=re.IGNORECASE
+            )
+        )
+
+        if not (
+            gatilho_forte
+            or gatilho_tempo
+        ):
+            return None
+
+        # Evita capturar frases como:
+        # "quanto tempo demora?"
+        if (
+            "quanto tempo" in texto
+            and not gatilho_forte
+        ):
+            return None
+
+        # -----------------------------------------------------
+        # PREVISÃO FUTURA
+        # -----------------------------------------------------
+        #
+        # Por enquanto a tool implementada consulta clima atual.
+        # Não vamos fingir que previsão futura já existe.
+        # -----------------------------------------------------
+
+        consulta_futura = bool(
+            re.search(
+                r"\b(?:"
+                r"amanh[aã]|"
+                r"depois\s+de\s+amanh[aã]|"
+                r"pr[oó]ximos?\s+dias?|"
+                r"pr[oó]ximas?\s+semanas?|"
+                r"semana\s+que\s+vem"
+                r")\b",
+                texto,
+                flags=re.IGNORECASE
+            )
+        )
+
+        if consulta_futura:
+            return None
+
+        # -----------------------------------------------------
+        # EXTRAIR LOCAL
+        # -----------------------------------------------------
+
+        padroes_local = [
+            r"\b(?:em|no|na)\s+(.+?)\s*[?.!]*$",
+            r"\b(?:de|do|da)\s+(.+?)\s*[?.!]*$",
+        ]
+
+        local = None
+
+        for padrao in padroes_local:
+
+            correspondencias = list(
+                re.finditer(
+                    padrao,
+                    texto_original,
+                    flags=re.IGNORECASE
+                )
+            )
+
+            if correspondencias:
+
+                local = (
+                    correspondencias[-1]
+                    .group(1)
+                    .strip(" .?!")
+                )
+
+                break
+
+        if not local:
+            return AgentDecision(
+                acao=TipoAcao.CONVERSAR
+            )
+
+        # -----------------------------------------------------
+        # LIMPEZA DE EXPRESSÕES TEMPORAIS
+        # -----------------------------------------------------
+
+        local = re.sub(
+            r"\s+(?:hoje|agora|neste\s+momento)$",
+            "",
+            local,
+            flags=re.IGNORECASE
+        )
+
+        local = local.strip(
+            " ,.!?"
+        )
+
+        if not local:
+            return AgentDecision(
+                acao=TipoAcao.CONVERSAR
+            )
+
+        return AgentDecision(
+            acao=TipoAcao.EXECUTAR,
+            ferramenta="consultar_clima_local",
+            argumentos={
+                "local": local
+            }
+        )
     # =========================================================
     # DETECTAR SEGMENTO INDEPENDENTE
     # =========================================================
@@ -291,6 +442,20 @@ class AraAgent:
         ToolRegistry e executa o pipeline público completo do Agent.
         O planner precisa apenas classificar cada segmento.
         """
+
+
+        # CLIMA
+
+        decisao_clima = (
+            AraAgent._detectar_consulta_clima(mensagem)
+        )
+
+        if (
+            decisao_clima is not None
+            and decisao_clima.acao == TipoAcao.EXECUTAR
+            and decisao_clima.ferramenta
+        ):
+            return decisao_clima
 
         # -----------------------------------------------------
         # TAREFAS
@@ -488,6 +653,27 @@ class AraAgent:
                 and decisao_contextual.acao == TipoAcao.CONVERSAR
         ):
             return decisao_contextual
+
+
+        # CONSULTA DE CLIMA
+
+        decisao_clima = (
+            AraAgent._detectar_consulta_clima(mensagem)
+        )
+
+        if (
+            decisao_clima is not None
+            and decisao_clima.acao == TipoAcao.EXECUTAR
+            and decisao_clima.ferramenta
+            and ToolRegistry.existe(decisao_clima.ferramenta)
+        ):
+            return decisao_clima
+
+        if (
+            decisao_clima is not None
+            and decisao_clima.acao == TipoAcao.CONVERSAR
+        ):
+            return decisao_clima
 
         # =====================================================
         # 2. AÇÕES DE TAREFA
@@ -729,7 +915,11 @@ class AraAgent:
 
             "concluir_lembrete": [
                 "titulo"
-            ]
+            ],
+
+            "consultar_clima_local": [
+                "local"
+            ],
         }
 
         obrigatorios = (

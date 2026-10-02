@@ -668,6 +668,144 @@ class ResponseComposer:
 
 
         # =====================================================
+        # CLIMA
+        # =====================================================
+
+        if ferramenta == "consultar_clima_local":
+
+            if resultado.get("sucesso") is False:
+                return (
+                    resultado.get(
+                        "erro",
+                        "Não consegui consultar o clima "
+                        "neste momento."
+                    )
+                )
+
+            local = (
+                resultado.get("local")
+                or {}
+            )
+
+            clima = (
+                resultado.get("clima")
+                or {}
+            )
+
+            nome_local = (
+                local.get("cidade")
+                or local.get("nome")
+                or local.get("nome_completo")
+                or "essa localização"
+            )
+
+            temperatura = clima.get(
+                "temperatura_c"
+            )
+
+            condicao = clima.get(
+                "condicao"
+            )
+
+            umidade = clima.get(
+                "umidade_percentual"
+            )
+
+            vento = clima.get(
+                "vento_m_s"
+            )
+
+            precipitacao = clima.get(
+                "precipitacao_proxima_hora_mm"
+            )
+
+            partes = []
+
+            # -------------------------------------------------
+            # TEMPERATURA + CONDIÇÃO
+            # -------------------------------------------------
+
+            if (
+                temperatura is not None
+                and condicao
+            ):
+                partes.append(
+                    f"Em {nome_local}, está fazendo "
+                    f"{temperatura:.1f} °C, "
+                    f"com {condicao}."
+                )
+
+            elif temperatura is not None:
+
+                partes.append(
+                    f"Em {nome_local}, a temperatura "
+                    f"está em {temperatura:.1f} °C."
+                )
+
+            elif condicao:
+
+                partes.append(
+                    f"Em {nome_local}, o tempo está "
+                    f"{condicao}."
+                )
+
+            # -------------------------------------------------
+            # UMIDADE
+            # -------------------------------------------------
+
+            if umidade is not None:
+
+                partes.append(
+                    f"A umidade está em "
+                    f"{umidade:.0f}%."
+                )
+
+            # -------------------------------------------------
+            # VENTO
+            # -------------------------------------------------
+
+            if vento is not None:
+
+                partes.append(
+                    f"O vento está em "
+                    f"{vento:.1f} m/s."
+                )
+
+            # -------------------------------------------------
+            # PRECIPITAÇÃO
+            # -------------------------------------------------
+
+            if precipitacao is not None:
+
+                if precipitacao <= 0:
+
+                    partes.append(
+                        "Não há precipitação prevista "
+                        "para a próxima hora."
+                    )
+
+                else:
+
+                    partes.append(
+                        f"A previsão indica cerca de "
+                        f"{precipitacao:.1f} mm de chuva "
+                        f"na próxima hora."
+                    )
+
+            if not partes:
+
+                return (
+                    f"Consultei o clima de {nome_local}, "
+                    f"mas não recebi dados meteorológicos "
+                    f"suficientes para montar a resposta."
+                )
+
+            return " ".join(
+                partes
+            )
+
+
+        # =====================================================
         # FALLBACK DE TOOL
         # =====================================================
 

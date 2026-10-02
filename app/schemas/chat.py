@@ -1,3 +1,5 @@
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -13,3 +15,10 @@ class ChatResponse(BaseModel):
     modelo: str
     ferramenta: str | None = None
     tempo_processamento: float
+
+    ferramenta: str | None = None
+
+    visualizacao: (
+        dict[str, Any]
+        | None
+    ) = None

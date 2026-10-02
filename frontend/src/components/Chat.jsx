@@ -186,17 +186,22 @@ function Chat({
             // MOSTRA RESPOSTA PRIMEIRO
             // =================================================
 
-            const mensagemAra = {
-
-                id:
+           const mensagemAra = {
+             id:
                     `ara-${Date.now()}`,
 
                 autor:
                     "ara",
 
                 conteudo:
-                    respostaAra
+                    respostaAra,
+
+                visualizacao:
+                    resposta.data
+                        ?.visualizacao
+                        || null
             };
+
 
 
             setMensagens(
@@ -646,6 +651,9 @@ function Chat({
                             <Message
                                 key={item.id}
                                 autor={item.autor}
+                                visualizacao={
+                                    item.visualizacao
+                                }
                             >
                                 {item.conteudo}
                             </Message>
