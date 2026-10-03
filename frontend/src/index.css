@@ -2194,7 +2194,7 @@ kbd { font-family: inherit; font-size: 10px; color: var(--ara-text-muted); borde
 .chat-header h2 { font-size: 14px; letter-spacing: -.01em; }
 .online { color: var(--ara-text-muted); font-size: 9px; letter-spacing: .05em; }
 .online-dot { background: var(--ara-primary); box-shadow: 0 0 10px rgba(var(--ara-primary-rgb), .52); }
-.messages { padding: 30px max(20px, calc((100% - 850px) / 2)) 100px; }
+.messages { padding: 30px max(20px, calc((100% - 850px) / 2)) 200px; }
 .message { max-width: 780px; }
 .ara-message { align-self: stretch; max-width: 850px; padding: 3px 0 17px; background: transparent; border: 0; }
 .user-message { align-self: flex-end; max-width: min(680px, 82%); border: 1px solid var(--ara-border); background: var(--ara-surface); border-radius: 17px 17px 4px 17px; }

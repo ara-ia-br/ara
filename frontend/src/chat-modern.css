@@ -400,7 +400,7 @@
     position: absolute;
 
     left: 50%;
-    bottom: 22px;
+    bottom: 5px;
 
     transform:
         translateX(-50%);

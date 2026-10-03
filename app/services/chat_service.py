@@ -8,6 +8,10 @@ from app.services.conversational_chat_service import (
     ConversationalChatService
 )
 
+from app.services.weather_context_service import (
+    WeatherContextService
+)
+
 from app.services.multi_intent_handler_service import (
     MultiIntentHandlerService
 )

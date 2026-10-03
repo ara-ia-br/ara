@@ -30,7 +30,13 @@ class MensagemService:
             id_conversa=dados.id_conversa,
             remetente=dados.remetente,
             conteudo=dados.conteudo,
-            tipo=dados.tipo
+            tipo=dados.tipo,
+
+            dados_visuais=getattr(
+                dados,
+                "dados_visuais",
+                None
+            )
         )
 
         return MensagemRepository.criar(

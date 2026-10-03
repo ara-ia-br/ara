@@ -14,7 +14,8 @@ class ChatInteractionService:
             db: Session,
             id_conversa: int,
             conteudo_usuario: str,
-            resposta_ara: str
+            resposta_ara: str,
+            visualizacao: dict | None = None
     ) -> None:
 
         mensagem_usuario = Mensagem(
@@ -34,7 +35,8 @@ class ChatInteractionService:
             conteudo=resposta_ara,
             tipo="TEXTO",
             modelo_ia="AGENT",
-            tempo_processamento=0
+            tempo_processamento=0,
+            dados_visuais=visualizacao
         )
 
         MensagemRepository.criar(

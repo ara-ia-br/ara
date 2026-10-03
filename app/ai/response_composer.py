@@ -692,6 +692,16 @@ class ResponseComposer:
                 or {}
             )
 
+            visualizacao = (
+                    resultado.get("visualizacao")
+                    or {}
+            )
+
+            modo = visualizacao.get(
+                "modo",
+                "completo"
+            )
+
             nome_local = (
                 local.get("cidade")
                 or local.get("nome")
@@ -699,12 +709,80 @@ class ResponseComposer:
                 or "essa localização"
             )
 
+            if modo == "grafico":
+                return (
+                    f"Aqui está a previsão em gráfico "
+                    f"para {nome_local}."
+                )
+
+            if modo == "tabela":
+                return (
+                    f"Aqui está a previsão em tabela "
+                    f"para {nome_local}."
+                )
+
             temperatura = clima.get(
                 "temperatura_c"
             )
 
             condicao = clima.get(
                 "condicao"
+            )
+
+            condicoes_naturais = {
+                "nublado":
+                    "céu nublado",
+
+                "parcialmente nublado":
+                    "céu parcialmente nublado",
+
+                "limpo":
+                    "céu limpo",
+
+                "céu limpo":
+                    "céu limpo",
+
+                "ensolarado":
+                    "céu ensolarado",
+
+                "chuva leve":
+                    "chuva leve",
+
+                "chuva moderada":
+                    "chuva moderada",
+
+                "chuva forte":
+                    "chuva forte",
+
+                "garoa":
+                    "garoa",
+
+                "neblina":
+                    "neblina",
+
+                "névoa":
+                    "névoa",
+
+                "neve":
+                    "neve",
+
+                "trovoada":
+                    "trovoada"
+            }
+
+            condicao_normalizada = (
+                str(condicao)
+                .strip()
+                .lower()
+                if condicao
+                else None
+            )
+
+            condicao_natural = (
+                condicoes_naturais.get(
+                    condicao_normalizada,
+                    condicao
+                )
             )
 
             umidade = clima.get(
@@ -732,7 +810,7 @@ class ResponseComposer:
                 partes.append(
                     f"Em {nome_local}, está fazendo "
                     f"{temperatura:.1f} °C, "
-                    f"com {condicao}."
+                    f"com {condicao_natural}."
                 )
 
             elif temperatura is not None:
@@ -746,7 +824,7 @@ class ResponseComposer:
 
                 partes.append(
                     f"Em {nome_local}, o tempo está "
-                    f"{condicao}."
+                    f"{condicao_natural}."
                 )
 
             # -------------------------------------------------

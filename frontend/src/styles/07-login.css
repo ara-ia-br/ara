@@ -1,0 +1,565 @@
+/* 07-login.css — Tela de login e cadastro */
+
+/* =========================================================
+   LOGIN — PÁGINA
+========================================================= */
+
+.ara-login-page {
+    min-height: 100vh;
+
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1.15fr)
+        minmax(420px, .85fr);
+
+    background: var(--ara-navy);
+
+    overflow: hidden;
+}
+
+
+/* =========================================================
+   LOGIN — SHOWCASE (LADO ESQUERDO)
+========================================================= */
+
+.login-showcase {
+    position: relative;
+
+    padding: clamp(28px, 5vw, 70px);
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 44px;
+
+    overflow: hidden;
+
+    background:
+        radial-gradient(
+            circle at 75% 22%,
+            rgba(var(--ara-primary-rgb), .18),
+            transparent 27%
+        ),
+        linear-gradient(
+            145deg,
+            #061823,
+            #08131f 58%,
+            #07131f
+        );
+}
+
+.login-showcase::after {
+    content: "";
+
+    position: absolute;
+    right: -18%;
+    bottom: -33%;
+
+    width: 65vw;
+    height: 65vw;
+
+    max-width: 760px;
+    max-height: 760px;
+
+    border: 1px solid rgba(var(--ara-primary-rgb), .14);
+    border-radius: 50%;
+
+    box-shadow:
+        0 0 0 55px rgba(var(--ara-primary-rgb), .025),
+        0 0 0 110px rgba(var(--ara-primary-rgb), .018);
+}
+
+.login-showcase-grid {
+    position: absolute;
+    inset: 0;
+
+    opacity: .11;
+
+    background-image:
+        linear-gradient(
+            rgba(var(--ara-primary-rgb), .15) 1px,
+            transparent 1px
+        ),
+        linear-gradient(
+            90deg,
+            rgba(var(--ara-primary-rgb), .15) 1px,
+            transparent 1px
+        );
+
+    background-size: 44px 44px;
+
+    mask-image:
+        linear-gradient(
+            to bottom right,
+            black,
+            transparent 72%
+        );
+}
+
+.login-showcase > *:not(.login-showcase-grid) {
+    position: relative;
+    z-index: 2;
+}
+
+
+/* =========================================================
+   LOGO — TAMANHO E ALINHAMENTO NA TELA DE LOGIN
+   (não mexe no tamanho do logo na sidebar)
+========================================================= */
+
+.login-showcase .ara-brand-logo {
+    width: 170px;
+    height: auto;
+
+    margin-left: clamp(16px, 4vw, 56px);
+}
+
+
+/* =========================================================
+   LOGIN — TEXTO DE APRESENTAÇÃO
+========================================================= */
+
+.login-copy {
+    max-width: 660px;
+
+    margin-left: clamp(16px, 4vw, 56px);
+}
+
+.login-copy h1 {
+    margin-top: 16px;
+
+    font-size: clamp(45px, 6vw, 86px);
+    line-height: .88;
+    letter-spacing: -.065em;
+
+    color: #edfff9;
+}
+
+.login-copy p {
+    margin-top: 24px;
+
+    max-width: 500px;
+
+    color: #93b8ad;
+
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.login-signals {
+    display: flex;
+    gap: 22px;
+
+    margin-left: clamp(16px, 4vw, 56px);
+
+    color: #749a90;
+
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: .14em;
+}
+
+.login-signals span {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.login-signals i {
+    width: 6px;
+    height: 6px;
+
+    border-radius: 50%;
+
+    background: var(--ara-primary);
+
+    box-shadow:
+        0 0 10px
+        rgba(var(--ara-primary-rgb), .5);
+}
+
+
+/* =========================================================
+   LOGIN — ACESSO (LADO DIREITO / CARD)
+========================================================= */
+
+.login-access {
+    display: grid;
+    place-items: center;
+
+    padding: 40px;
+
+    background: var(--ara-navy-2);
+}
+
+.ara-login-card {
+    width: min(480px, 100%);
+
+    padding: 42px 40px;
+
+    border: 1px solid var(--ara-border);
+    border-radius: 24px;
+
+    background: var(--ara-surface);
+
+    box-shadow: var(--ara-shadow);
+}
+
+.login-security {
+    display: inline-flex;
+    flex-direction: row !important;
+    align-items: center;
+    gap: 6px;
+
+    color: var(--ara-primary);
+
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: .12em;
+}
+
+.login-card-heading h2 {
+    margin-top: 16px;
+
+    font-size: 36px;
+    letter-spacing: -.035em;
+}
+
+.login-card-heading p {
+    margin-top: 6px;
+
+    color: var(--ara-text-muted);
+
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   LOGIN — CAMPOS DO FORMULÁRIO
+========================================================= */
+
+.ara-field {
+    display: block;
+
+    margin-top: 24px;
+}
+
+.ara-field > span {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: var(--ara-text-soft);
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.ara-field > div {
+    height: 52px;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 0 14px;
+
+    border: 1px solid var(--ara-border);
+    border-radius: 12px;
+
+    background: var(--ara-navy-2);
+    color: var(--ara-text-muted);
+
+    transition:
+        border-color .2s ease,
+        box-shadow .2s ease;
+}
+
+.ara-field > div:focus-within {
+    border-color: var(--ara-border-strong);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(var(--ara-primary-rgb), .05);
+}
+
+.ara-field input {
+    width: 100%;
+    min-width: 0;
+
+    border: 0;
+    outline: 0;
+
+    background: transparent;
+    color: var(--ara-text);
+
+    font-size: 15px;
+}
+
+
+/* =========================================================
+   CAMPO DE SENHA
+========================================================= */
+
+.ara-field .password-field {
+    display: flex;
+    align-items: center;
+}
+
+.ara-field .password-field input {
+    flex: 1;
+    width: auto;
+    min-width: 0;
+}
+
+
+/* =========================================================
+   BOTÃO — MOSTRAR / OCULTAR SENHA
+========================================================= */
+
+.ara-field .password-field .password-toggle {
+    appearance: none;
+    -webkit-appearance: none;
+
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+
+    flex: 0 0 32px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+    margin: 0;
+
+    border: 0 !important;
+    outline: 0 !important;
+
+    border-radius: 8px;
+
+    background: transparent !important;
+
+    color: var(--ara-text-muted);
+
+    box-shadow: none !important;
+
+    cursor: pointer;
+
+    transition:
+        color .2s ease,
+        background-color .2s ease,
+        opacity .2s ease;
+}
+
+.ara-field .password-field .password-toggle:hover {
+    background:
+        rgba(var(--ara-primary-rgb), .08)
+        !important;
+
+    color: var(--ara-primary);
+}
+
+.ara-field .password-field .password-toggle:active {
+    background:
+        rgba(var(--ara-primary-rgb), .12)
+        !important;
+
+    color: var(--ara-primary);
+}
+
+.ara-field .password-field .password-toggle:focus {
+    border: 0 !important;
+    outline: 0 !important;
+    box-shadow: none !important;
+}
+
+.ara-field .password-field .password-toggle:focus-visible {
+    outline:
+        1px solid
+        rgba(var(--ara-primary-rgb), .45)
+        !important;
+
+    outline-offset: 2px !important;
+}
+
+.ara-field .password-field .password-toggle svg {
+    width: 18px;
+    height: 18px;
+
+    display: block;
+    flex-shrink: 0;
+
+    stroke: currentColor;
+}
+
+
+/* =========================================================
+   LOGIN — MENSAGEM DE ERRO
+========================================================= */
+
+.login-error {
+    margin-top: 12px;
+
+    padding: 10px 12px;
+
+    border: 1px solid rgba(255, 70, 70, .35);
+    border-radius: 9px;
+
+    background: rgba(255, 70, 70, .06);
+
+    color: #ff6b6b;
+
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+
+/* =========================================================
+   CADASTRO — MENSAGEM DE SUCESSO
+========================================================= */
+
+.login-success {
+    margin-top: 12px;
+
+    padding: 10px 12px;
+
+    border:
+        1px solid
+        rgba(var(--ara-primary-rgb), .35);
+
+    border-radius: 9px;
+
+    background:
+        rgba(var(--ara-primary-rgb), .06);
+
+    color: var(--ara-primary);
+
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+
+/* =========================================================
+   LOGIN — BOTÃO PRINCIPAL
+========================================================= */
+
+.ara-login-button {
+    width: 100%;
+    height: 52px;
+
+    margin-top: 26px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 16px;
+
+    border: 0;
+    border-radius: 12px;
+
+    background: var(--ara-primary);
+    color: #061611;
+
+    font-weight: 900;
+    font-size: 16px;
+
+    cursor: pointer;
+
+    transition:
+        opacity .2s ease,
+        transform .15s ease;
+}
+
+.ara-login-button:hover:not(:disabled) {
+    opacity: .92;
+}
+
+.ara-login-button:active:not(:disabled) {
+    transform: translateY(1px);
+}
+
+.ara-login-button:disabled {
+    opacity: .6;
+
+    cursor: wait;
+}
+
+
+/* =========================================================
+   LOGIN — RODAPÉ
+========================================================= */
+
+.login-footnote {
+    display: block;
+
+    margin-top: 14px;
+
+    color: var(--ara-text-muted);
+
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.login-footnote a {
+    color: var(--ara-primary);
+
+    font-weight: 600;
+
+    text-decoration: none;
+}
+
+.login-footnote a:hover {
+    text-decoration: underline;
+}
+
+
+/* =========================================================
+   RESPONSIVO
+========================================================= */
+
+@media (max-width: 950px) {
+
+    .ara-login-page {
+        grid-template-columns: 1fr;
+    }
+
+    .login-showcase {
+        display: none;
+    }
+
+    .login-access {
+        min-height: 100vh;
+
+        padding: 24px;
+    }
+
+    .ara-login-card {
+        width: min(480px, 100%);
+    }
+}
+
+
+@media (max-width: 520px) {
+
+    .login-access {
+        padding: 16px;
+    }
+
+    .ara-login-card {
+        padding: 32px 24px;
+
+        border-radius: 20px;
+    }
+
+    .login-card-heading h2 {
+        font-size: 30px;
+    }
+
+    .ara-field {
+        margin-top: 20px;
+    }
+}

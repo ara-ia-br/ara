@@ -1,11 +1,12 @@
 import NativeResultRenderer
     from "./cards/NativeResultRenderer";
 
-import NativeResultRenderer
-    from "./cards/NativeResultRenderer";
-
 import araChatLogo
     from "../assets/brand/logo-chat.png";
+
+
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 
 function Message({
@@ -21,7 +22,7 @@ function Message({
 
 
     return (
-        <div
+        <article
             className={
                 assistente
                     ? "message jarvis-message ara-message"
@@ -35,28 +36,50 @@ function Message({
                     assistente
                         ? (
                             <>
-    <span className="message-avatar ara-avatar">
-        <img
-            src={araChatLogo}
-            alt=""
-            aria-hidden="true"
-        />
-    </span>
+                                <span className="message-avatar ara-avatar">
+                                    <img
+                                        src={araChatLogo}
+                                        alt=""
+                                        aria-hidden="true"
+                                    />
+                                </span>
 
-    <span>
-        A.R.A.
-    </span>
-</>
+                                <span>
+                                    A.R.A.
+                                </span>
+                            </>
                         )
-                        : "Você"
+                        : (
+                            <span>
+                                Você
+                            </span>
+                        )
                 }
 
             </div>
 
 
             <div className="message-content">
-                {children}
-            </div>
+    {
+        assistente
+            ? (
+                <ReactMarkdown
+                    remarkPlugins={[
+                        remarkGfm
+                    ]}
+                >
+                    {
+                        typeof children === "string"
+                            ? children
+                            : ""
+                    }
+                </ReactMarkdown>
+            )
+            : (
+                children
+            )
+    }
+</div>
 
 
             {
@@ -71,7 +94,7 @@ function Message({
                 )
             }
 
-        </div>
+        </article>
     );
 }
 

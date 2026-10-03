@@ -1,0 +1,89 @@
+/* 05-utilities.css — Scrollbar, seleção de texto, responsivo (versão antiga) (linhas originais 1808-1894) */
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+::-webkit-scrollbar {
+    width: 7px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+
+    background:
+        rgba(var(--jarvis-blue-rgb), 0.25);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background:
+        rgba(var(--jarvis-blue-rgb), 0.50);
+}
+
+
+/* =========================================================
+   SELEÇÃO
+========================================================= */
+
+::selection {
+    background:
+        rgba(var(--jarvis-blue-rgb), 0.30);
+
+    color: #ffffff;
+}
+
+
+/* =========================================================
+   RESPONSIVO
+========================================================= */
+
+@media (max-width: 750px) {
+
+    .sidebar {
+        display: none;
+    }
+
+    .chat-header {
+        padding: 0 18px;
+    }
+
+    .messages {
+        padding:
+            25px
+            18px;
+    }
+
+    .composer-container {
+        padding:
+            8px
+            12px
+            14px;
+    }
+
+    .welcome {
+        margin-top: 20px;
+    }
+
+    .tasks-header {
+        padding: 20px;
+
+        align-items: flex-start;
+    }
+
+    .tasks-content {
+        padding: 25px 18px;
+    }
+
+    .task-form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .task-meta {
+        flex-direction: column;
+        gap: 6px;
+    }
+}

@@ -1,0 +1,177 @@
+/* 04-login-legacy.css — Tela de login ANTIGA (JARVIS) — provavelmente sobrescrita pelo login novo mais abaixo (linhas originais 1633-1807) */
+
+/* =========================================================
+   LOGIN
+========================================================= */
+
+.login-page {
+    width: 100vw;
+    height: 100vh;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(var(--jarvis-blue-rgb), 0.06),
+            transparent 38%
+        ),
+        var(--bg-main);
+
+    padding: 20px;
+}
+
+.login-card {
+    width: 100%;
+    max-width: 390px;
+
+    padding: 40px;
+
+    border: 1px solid var(--border-light);
+    border-radius: 20px;
+
+    background: var(--bg-secondary);
+
+    box-shadow:
+        0 30px 80px
+        rgba(0, 0, 0, 0.45);
+}
+
+.login-logo {
+    width: 52px;
+    height: 52px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin: 0 auto 18px;
+
+    border:
+        1px solid
+        var(--border-active);
+
+    border-radius: 15px;
+
+    background:
+        rgba(var(--jarvis-blue-rgb), 0.10);
+
+    color: var(--jarvis-blue);
+
+    box-shadow: var(--glow-blue-strong);
+
+    font-size: 24px;
+    font-weight: 800;
+}
+
+.login-card h1 {
+    color: var(--jarvis-blue);
+
+    text-align: center;
+
+    font-size: 24px;
+    letter-spacing: 2px;
+}
+
+.login-card > p {
+    margin: 8px 0 30px;
+
+    color: var(--text-muted);
+
+    text-align: center;
+
+    font-size: 13px;
+}
+
+.login-field {
+    margin-bottom: 18px;
+}
+
+.login-field label {
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: var(--text-secondary);
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.login-field input {
+    width: 100%;
+
+    padding: 12px 14px;
+
+    border: 1px solid var(--border);
+    border-radius: 10px;
+
+    outline: none;
+
+    background: var(--bg-card);
+    color: var(--text);
+}
+
+.login-field input:focus {
+    border-color: var(--jarvis-blue);
+
+    box-shadow:
+        0 0 0 2px
+        rgba(var(--jarvis-blue-rgb), 0.07);
+}
+
+.login-error {
+    margin-bottom: 16px;
+
+    padding: 10px 12px;
+
+    border:
+        1px solid
+        rgba(var(--jarvis-red-rgb), 0.30);
+
+    border-radius: 8px;
+
+    background:
+        rgba(var(--jarvis-red-rgb), 0.08);
+
+    color: #dc5050;
+
+    font-size: 12px;
+}
+
+.login-button {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    padding: 12px;
+
+    border-radius: 10px;
+
+    background: var(--jarvis-blue);
+    color: #041014;
+
+    cursor: pointer;
+
+    font-weight: 700;
+
+    box-shadow: var(--glow-blue);
+}
+
+.login-button:hover {
+    background: #82d4f2;
+
+    box-shadow: var(--glow-blue-strong);
+}
+
+.login-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+

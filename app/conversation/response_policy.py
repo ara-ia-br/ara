@@ -223,10 +223,31 @@ class ResponsePolicy:
     @staticmethod
     def definir(
             mensagem: str,
-            perfil_usuario=None
+            perfil_usuario=None,
+            contexto_anterior: str | None = None
     ) -> ResponseProfile:
         texto = ResponsePolicy._normalizar(
             mensagem
+        )
+
+        texto = str(
+            mensagem
+            or ""
+        ).strip()
+
+        texto_lower = (
+            texto.lower()
+        )
+
+        contexto_anterior = str(
+            contexto_anterior
+            or ""
+        ).strip()
+
+        texto_contextual = (
+            f"{contexto_anterior}\n{texto}"
+            if contexto_anterior
+            else texto
         )
 
         # =================================================
@@ -241,7 +262,7 @@ class ResponsePolicy:
             return ResponseProfile(
                 tamanho=TamanhoResposta.DETALHADA,
                 markdown=PoliticaMarkdown.ESTRUTURADO,
-                max_tokens=1400,
+                max_tokens=2400,
                 temperatura=0.45
             )
 
@@ -266,12 +287,12 @@ class ResponsePolicy:
         # =================================================
 
         if ResponsePolicy._parece_tecnico(
-                texto
+                texto_contextual
         ):
             perfil_resposta = ResponseProfile(
                 tamanho=TamanhoResposta.NORMAL,
                 markdown=PoliticaMarkdown.ESTRUTURADO,
-                max_tokens=1000,
+                max_tokens=1800,
                 temperatura=0.35
             )
 

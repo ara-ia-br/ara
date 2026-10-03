@@ -55,18 +55,24 @@ function Chat({
 
 
             const mensagensConvertidas = (
-                resposta.data.map(
-                    (item) => ({
-                        id: item.id_mensagem,
+    resposta.data.map(
+        (item) => ({
+            id: item.id_mensagem,
 
-                        autor:
-                            item.remetente === "ARA"
-                                ? "ara"
-                                : "user",
+            autor:
+                item.remetente === "ARA"
+                    ? "ara"
+                    : "user",
 
-                        conteudo: item.conteudo
-                    })
-                )
+            conteudo:
+                item.conteudo,
+
+            visualizacao:
+                item.visualizacao
+                || null
+        })
+    )
+
             );
 
 
@@ -780,9 +786,9 @@ function Chat({
                 </div>
 
 
-                <span className="ara-disclaimer">
-                    A.R.A. pode cometer erros. Verifique informações importantes.
-                </span>
+                {/*<span className="ara-disclaimer">*/}
+                {/*    A.R.A. pode cometer erros. Verifique informações importantes.*/}
+                {/*</span>*/}
 
             </div>
 

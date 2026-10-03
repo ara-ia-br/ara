@@ -32,6 +32,7 @@ from app.services.memory_extraction_service import (
 from app.services.title_cleaner_service import (
     TitleCleanerService
 )
+from app.services.weather_context_service import WeatherContextService
 
 
 class MultiIntentHandlerService:
@@ -46,12 +47,29 @@ class MultiIntentHandlerService:
 
         inicio_agent = perf_counter()
 
-        plano = AraAgent.planejar(
-            mensagem=conteudo,
-            db=db,
-            id_usuario=id_usuario,
-            id_conversa=id_conversa
+        # =====================================================
+        # CONTEXTO NATIVO DE CLIMA
+        # =====================================================
+
+        decisao_contextual = (
+            WeatherContextService.analisar(
+                mensagem=conteudo,
+                db=db,
+                id_conversa=id_conversa
+            )
         )
+
+
+        plano = None
+
+        if decisao_contextual is None:
+
+            plano = AraAgent.planejar(
+                mensagem=conteudo,
+                db=db,
+                id_usuario=id_usuario,
+                id_conversa=id_conversa
+            )
 
         if plano is None:
             return None

@@ -52,6 +52,8 @@ export default defineConfig({
       '/mensagens': proxyApi(),
       '/memorias': proxyApi(),
 
+      '/perfil-personalizacao': proxyApi(),
+
       '/database': proxyApi(),
       '/health': proxyApi(),
     },

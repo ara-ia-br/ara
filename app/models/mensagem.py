@@ -10,6 +10,7 @@ from sqlalchemy import (
     Numeric,
     String,
     Text,
+    JSON,
     text
 )
 from sqlalchemy.dialects.mysql import LONGTEXT
@@ -47,9 +48,15 @@ class Mensagem(Base):
         nullable=False
     )
 
+
     conteudo: Mapped[str] = mapped_column(
         LONGTEXT,
         nullable=False
+    )
+
+    dados_visuais: Mapped[dict | None] = mapped_column(
+        JSON,
+        nullable=True
     )
 
     tipo: Mapped[str] = mapped_column(

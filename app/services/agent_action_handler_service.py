@@ -35,6 +35,7 @@ from app.services.chat_interaction_service import (
 from app.services.memory_extraction_service import (
     MemoryExtractionService
 )
+from app.services.weather_context_service import WeatherContextService
 
 
 class AgentActionHandlerService:
@@ -49,11 +50,27 @@ class AgentActionHandlerService:
 
         inicio_agent = perf_counter()
 
-        decisao = AraAgent.decidir(
-            mensagem=conteudo,
-            db=db,
-            id_usuario=id_usuario,
-            id_conversa=id_conversa
+
+        # =====================================================
+        # CONTEXTO NATIVO DE CLIMA
+        # =====================================================
+
+        decisao_contextual = (
+            WeatherContextService.analisar(
+                mensagem=conteudo,
+                db=db,
+                id_conversa=id_conversa
+            )
+        )
+
+        decisao = (
+            decisao_contextual
+            or AraAgent.decidir(
+                mensagem=conteudo,
+                db=db,
+                id_usuario=id_usuario,
+                id_conversa=id_conversa
+            )
         )
 
 
@@ -118,11 +135,12 @@ class AgentActionHandlerService:
                 ]
             )
 
+
             ChatInteractionService.salvar_agent(
                 db=db,
                 id_conversa=id_conversa,
                 conteudo_usuario=conteudo,
-                resposta_ara=resposta
+                resposta_ara=resposta,
             )
 
             return {
@@ -357,11 +375,19 @@ class AgentActionHandlerService:
         # PERSISTÊNCIA
         # =====================================================
 
+
+        visualizacao = (
+            resultado.get("visualizacao")
+            if isinstance(resultado, dict)
+            else None
+        )
+
         ChatInteractionService.salvar_agent(
             db=db,
             id_conversa=id_conversa,
             conteudo_usuario=conteudo,
-            resposta_ara=resposta
+            resposta_ara=resposta,
+            visualizacao=visualizacao
         )
 
         # =====================================================

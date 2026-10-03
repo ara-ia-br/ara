@@ -1,0 +1,12 @@
+/* 09-tasks-v2.css — Ajustes novos de tasks por cima do antigo (linhas originais 2219-2228) */
+
+/* TASKS — reskin existing functional screen */
+.tasks-page, .tasks { background: transparent !important; }
+.tasks-header, .tasks-toolbar, .task-card, .task-modal { border-color: var(--ara-border) !important; }
+.task-card { background: var(--ara-surface) !important; border-radius: 15px !important; box-shadow: none !important; }
+.task-card:hover { border-color: var(--ara-border-strong) !important; transform: translateY(-1px); }
+.task-modal-overlay { backdrop-filter: blur(10px); }
+.task-modal { background: var(--ara-surface) !important; border-radius: 20px !important; box-shadow: var(--ara-shadow) !important; }
+.task-modal input, .task-modal textarea, .task-modal select { background: var(--ara-navy-2) !important; color: var(--ara-text) !important; border-color: var(--ara-border) !important; }
+.primary { background: var(--ara-primary) !important; color: #061611 !important; }
+

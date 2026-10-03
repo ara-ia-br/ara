@@ -162,10 +162,23 @@ class ConversationalChatService:
         # RESPONSE POLICY
         # =====================================================
 
+        contexto_anterior_politica = "\n".join(
+            str(
+                getattr(
+                    mensagem,
+                    "conteudo",
+                    ""
+                )
+                or ""
+            )
+            for mensagem in historico[-4:-1]
+        )
+
         perfil_resposta = (
             ResponsePolicy.definir(
                 mensagem=conteudo,
-                perfil_usuario=perfil_personalizacao
+                perfil_usuario=perfil_personalizacao,
+                contexto_anterior=contexto_anterior_politica
             )
         )
 

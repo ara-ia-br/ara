@@ -28,7 +28,8 @@ _weather_service = WeatherService()
 # =========================================================
 
 async def _consultar_clima_local_async(
-    local: str
+    local: str,
+    modo: str = "completo"
 ) -> dict:
 
     local = local.strip()
@@ -42,21 +43,23 @@ async def _consultar_clima_local_async(
     # GEOCODING
     # -----------------------------------------------------
 
-    locais = await _location_service.buscar(
-        consulta=local,
-        limite=3
+    local_encontrado = (
+        await _location_service.resolver(
+            consulta=local,
+            limite=8
+        )
     )
 
-    if not locais:
+    if not local_encontrado:
         return {
             "sucesso": False,
-            "erro":
-                "Não encontrei essa localização.",
+            "erro": (
+                "Não encontrei essa "
+                "localização com segurança."
+            ),
             "tipo": "clima",
             "somente_leitura": True
         }
-
-    local_encontrado = locais[0]
 
     latitude = (
         local_encontrado["latitude"]
@@ -129,6 +132,7 @@ async def _consultar_clima_local_async(
     visualizacao = {
         "tipo": "clima",
         "versao": 1,
+        "modo": modo,
 
         "local":
             local_normalizado,
@@ -233,6 +237,7 @@ async def _consultar_clima_local_async(
 
 def consultar_clima_local(
     local: str,
+    modo: str = "completo",
     db: Session | None = None,
     id_usuario: int | None = None
 ) -> dict:
@@ -243,7 +248,8 @@ def consultar_clima_local(
             AsyncIntegrationRuntime
             .executar(
                 _consultar_clima_local_async(
-                    local=local
+                    local=local,
+                    modo=modo
                 ),
                 timeout=30.0
             )
