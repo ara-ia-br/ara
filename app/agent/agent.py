@@ -273,6 +273,122 @@ class AraAgent:
             passos=passos
         )
 
+    # =========================================================
+    # DETECTAR CONSULTA DE ROTA
+    # =========================================================
+
+    @staticmethod
+    def _detectar_consulta_rota(
+            mensagem: str
+    ) -> AgentDecision | None:
+
+        texto_original = str(
+            mensagem or ""
+        ).strip()
+
+        if not texto_original:
+            return None
+
+        texto = texto_original.lower()
+
+        # -----------------------------------------------------
+        # GATILHOS
+        # -----------------------------------------------------
+
+        gatilho = bool(
+            re.search(
+                r"\b(?:"
+                r"rota|"
+                r"trajeto|"
+                r"caminho|"
+                r"como\s+chegar|"
+                r"dist[aâ]ncia|"
+                r"quanto\s+tempo"
+                r")\b",
+                texto,
+                flags=re.IGNORECASE
+            )
+        )
+
+        if not gatilho:
+            return None
+
+        # -----------------------------------------------------
+        # PADRÕES ORIGEM → DESTINO
+        # -----------------------------------------------------
+
+        padroes = [
+
+            # rota do Centro até Copacabana
+            r"(?:rota|trajeto|caminho)"
+            r"\s+(?:de|do|da)\s+"
+            r"(.+?)"
+            r"\s+(?:até|ate|para|pra|pro|ao|à|a)\s+"
+            r"(.+?)[?.!]*$",
+
+            # como chegar do Centro até Copacabana
+            r"como\s+chegar"
+            r"\s+(?:de|do|da)\s+"
+            r"(.+?)"
+            r"\s+(?:até|ate|para|pra|pro|ao|à|a)\s+"
+            r"(.+?)[?.!]*$",
+
+            # distância do Centro até Copacabana
+            r"dist[aâ]ncia"
+            r"\s+(?:de|do|da)\s+"
+            r"(.+?)"
+            r"\s+(?:até|ate|para|pra|pro|ao|à|a)\s+"
+            r"(.+?)[?.!]*$",
+
+            # quanto tempo de carro do Centro até Copacabana
+            r"quanto\s+tempo"
+            r"(?:\s+de\s+carro)?"
+            r"\s+(?:de|do|da)\s+"
+            r"(.+?)"
+            r"\s+(?:até|ate|para|pra|pro|ao|à|a)\s+"
+            r"(.+?)[?.!]*$",
+        ]
+
+        for padrao in padroes:
+
+            correspondencia = re.search(
+                padrao,
+                texto_original,
+                flags=re.IGNORECASE
+            )
+
+            if not correspondencia:
+                continue
+
+            origem = (
+                correspondencia
+                .group(1)
+                .strip(" ,.-")
+            )
+
+            destino = (
+                correspondencia
+                .group(2)
+                .strip(" ,.-")
+            )
+
+            if (
+                    not origem
+                    or not destino
+            ):
+                return None
+
+            return AgentDecision(
+                acao=TipoAcao.EXECUTAR,
+                ferramenta="consultar_rota",
+                argumentos={
+                    "origem": origem,
+                    "destino": destino
+                }
+            )
+
+        return None
+
 
 
     # =========================================================
@@ -442,6 +558,23 @@ class AraAgent:
         ToolRegistry e executa o pipeline público completo do Agent.
         O planner precisa apenas classificar cada segmento.
         """
+
+        # -----------------------------------------------------
+        # ROTAS
+        # -----------------------------------------------------
+
+        decisao_rota = (
+            AraAgent._detectar_consulta_rota(
+                mensagem
+            )
+        )
+
+        if (
+                decisao_rota is not None
+                and decisao_rota.acao == TipoAcao.EXECUTAR
+                and decisao_rota.ferramenta
+        ):
+            return decisao_rota
 
 
         # CLIMA
@@ -763,6 +896,26 @@ class AraAgent:
             return decisao_lembrete
 
         # =====================================================
+        # CONSULTA DE ROTA
+        # =====================================================
+
+        decisao_rota = (
+            AraAgent._detectar_consulta_rota(
+                mensagem
+            )
+        )
+
+        if (
+                decisao_rota is not None
+                and decisao_rota.acao == TipoAcao.EXECUTAR
+                and decisao_rota.ferramenta
+                and ToolRegistry.existe(
+            decisao_rota.ferramenta
+        )
+        ):
+            return decisao_rota
+
+        # =====================================================
         # 4. CRIAÇÃO DIRETA DE LEMBRETE
         # =====================================================
 
@@ -798,6 +951,10 @@ class AraAgent:
         return AgentDecision(
             acao=TipoAcao.CONVERSAR
         )
+
+
+
+
 
     # =========================================================
     # INTERPRETAR RESPOSTA DO MODELO
@@ -920,6 +1077,11 @@ class AraAgent:
             "consultar_clima_local": [
                 "local"
             ],
+
+            "consultar_rota": [
+                "origem",
+                "destino"
+            ]
         }
 
         obrigatorios = (

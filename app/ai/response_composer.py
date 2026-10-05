@@ -882,6 +882,80 @@ class ResponseComposer:
                 partes
             )
 
+        # =====================================================
+        # ROTAS
+        # =====================================================
+
+        if ferramenta == "consultar_rota":
+
+            if resultado.get("sucesso") is False:
+                return (
+                    resultado.get(
+                        "erro",
+                        "Não consegui calcular essa rota."
+                    )
+                )
+
+            rota = (
+                    resultado.get("rota")
+                    or {}
+            )
+
+            origem = (
+                    rota.get("origem")
+                    or {}
+            )
+
+            destino = (
+                    rota.get("destino")
+                    or {}
+            )
+
+            origem_nome = (
+                    origem.get("nome")
+                    or origem.get("consulta")
+                    or "a origem"
+            )
+
+            destino_nome = (
+                    destino.get("nome")
+                    or destino.get("consulta")
+                    or "o destino"
+            )
+
+            distancia_km = rota.get(
+                "distancia_km"
+            )
+
+            duracao_min = rota.get(
+                "duracao_min"
+            )
+
+            partes = [
+                f"A rota de {origem_nome} "
+                f"até {destino_nome}"
+            ]
+
+            if distancia_km is not None:
+                distancia_formatada = (
+                    f"{distancia_km:.1f}"
+                    .replace(".", ",")
+                )
+
+                partes.append(
+                    f"tem aproximadamente "
+                    f"{distancia_formatada} km"
+                )
+
+            if duracao_min is not None:
+                partes.append(
+                    f"e o tempo estimado sem considerar "
+                    f"o trânsito é de cerca de "
+                    f"{int(duracao_min)} minutos"
+                )
+
+            return " ".join(partes) + "."
+
 
         # =====================================================
         # FALLBACK DE TOOL

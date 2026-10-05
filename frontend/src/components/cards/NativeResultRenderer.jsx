@@ -1,4 +1,5 @@
 import WeatherCard from "./WeatherCard";
+import RouteMapCard from "./RouteMapCard";
 
 
 function NativeResultRenderer({
@@ -12,6 +13,7 @@ function NativeResultRenderer({
         return null;
     }
 
+
     switch (visualizacao.tipo) {
 
         case "clima":
@@ -20,6 +22,15 @@ function NativeResultRenderer({
                     dados={visualizacao}
                 />
             );
+
+
+        case "rota":
+            return (
+                <RouteMapCard
+                    dados={visualizacao}
+                />
+            );
+
 
         default:
             return null;

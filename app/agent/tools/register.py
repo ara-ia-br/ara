@@ -10,6 +10,10 @@ from app.agent.lembrete_tools import (
     excluir_todos_lembretes
 )
 
+from app.agent.tools.route_tools import (
+    consultar_rota,
+)
+
 from app.agent.tools.weather_tools import (
     consultar_clima_local,
 )
@@ -142,4 +146,11 @@ def registrar_tools():
     ToolRegistry.registrar(
         "consultar_clima_local",
         consultar_clima_local
+    )
+
+
+    # ROTAS
+    ToolRegistry.registrar(
+        "consultar_rota",
+        consultar_rota
     )

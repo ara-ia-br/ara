@@ -353,3 +353,143 @@ class LocationService:
 
 
         return melhor
+
+    async def resolver_local(
+            self,
+            consulta: str,
+            limite: int = 8
+    ) -> dict | None:
+
+        consulta = str(
+            consulta or ""
+        ).strip()
+
+        if not consulta:
+            return None
+
+        resultados = await self.buscar(
+            consulta=consulta,
+            limite=max(
+                limite,
+                5
+            )
+        )
+
+        if not resultados:
+            return None
+
+        consulta_normalizada = (
+            self._normalizar(
+                consulta
+            )
+        )
+
+        partes_consulta = [
+            self._normalizar(
+                parte
+            )
+            for parte in consulta.split(",")
+            if self._normalizar(
+                parte
+            )
+        ]
+
+        def pontuar_local(
+                resultado: dict
+        ) -> float:
+
+            score = 0.0
+
+            nome = self._normalizar(
+                resultado.get("nome")
+            )
+
+            cidade = self._normalizar(
+                resultado.get("cidade")
+            )
+
+            estado = self._normalizar(
+                resultado.get("estado")
+            )
+
+            nome_completo = self._normalizar(
+                resultado.get(
+                    "nome_completo"
+                )
+            )
+
+            # -------------------------------------------------
+            # PRIMEIRA PARTE DA CONSULTA
+            # -------------------------------------------------
+
+            if partes_consulta:
+
+                principal = (
+                    partes_consulta[0]
+                )
+
+                if nome == principal:
+                    score += 100
+
+                elif principal in nome_completo:
+                    score += 60
+
+            # -------------------------------------------------
+            # DEMAIS PARTES
+            # -------------------------------------------------
+
+            for parte in partes_consulta[1:]:
+
+                if parte == cidade:
+                    score += 60
+
+                elif parte == estado:
+                    score += 40
+
+                elif parte in nome_completo:
+                    score += 25
+
+            # -------------------------------------------------
+            # CONSULTA COMPLETA
+            # -------------------------------------------------
+
+            if (
+                    consulta_normalizada
+                    in nome_completo
+            ):
+                score += 50
+
+            # -------------------------------------------------
+            # BRASIL
+            # -------------------------------------------------
+
+            pais = self._normalizar(
+                resultado.get("pais")
+            )
+
+            if pais in {
+                "brasil",
+                "brazil"
+            }:
+                score += 10
+
+            return score
+
+        ranqueados = sorted(
+            resultados,
+            key=pontuar_local,
+            reverse=True
+        )
+
+        melhor = ranqueados[0]
+
+        melhor_score = (
+            pontuar_local(
+                melhor
+            )
+        )
+
+        if melhor_score <= 0:
+            return None
+
+        return melhor

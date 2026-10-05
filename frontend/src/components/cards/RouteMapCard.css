@@ -1,0 +1,134 @@
+.route-card {
+    width: 100%;
+    max-width: 680px;
+    margin-top: 12px;
+    overflow: hidden;
+
+    border: 1px solid
+        rgba(255, 255, 255, 0.1);
+
+    border-radius: 18px;
+
+    background:
+        rgba(20, 20, 24, 0.92);
+}
+
+
+.route-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+
+    padding: 16px 18px 10px;
+}
+
+
+.route-card-title {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+
+.route-card-summary {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    font-size: 13px;
+    opacity: 0.8;
+}
+
+
+.route-card-locations {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    padding: 6px 18px 14px;
+}
+
+
+.route-location {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+
+.route-location-dot {
+    width: 10px;
+    height: 10px;
+
+    flex: 0 0 auto;
+
+    border-radius: 50%;
+}
+
+
+.route-location-origin {
+    background: #16a34a;
+}
+
+
+.route-location-destination {
+    background: #dc2626;
+}
+
+
+.route-location div {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+}
+
+
+.route-location small {
+    font-size: 11px;
+    opacity: 0.55;
+}
+
+
+.route-location strong {
+    overflow: hidden;
+
+    font-size: 13px;
+    font-weight: 500;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+.route-map {
+    width: 100%;
+    height: 340px;
+}
+
+
+.route-card-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+
+    padding: 10px 16px 12px;
+
+    font-size: 10px;
+    opacity: 0.55;
+}
+
+
+@media (
+    max-width: 700px
+) {
+
+    .route-map {
+        height: 280px;
+    }
+
+
+    .route-card-footer {
+        flex-direction: column;
+        gap: 3px;
+    }
+}
