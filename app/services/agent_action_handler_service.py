@@ -42,10 +42,11 @@ class AgentActionHandlerService:
 
     @staticmethod
     def processar(
-        db: Session,
-        id_usuario: int,
-        id_conversa: int,
-        conteudo: str
+            db: Session,
+            id_usuario: int,
+            id_conversa: int,
+            conteudo: str,
+            localizacao: dict | None = None
     ) -> dict | None:
 
         inicio_agent = perf_counter()
@@ -92,6 +93,135 @@ class AgentActionHandlerService:
             if decisao.argumentos
             else {}
         )
+
+
+        # =====================================================
+        # LOCALIZAÇÃO ATUAL
+        # =====================================================
+
+        if (
+            decisao.ferramenta
+            == "consultar_localizacao_atual"
+        ):
+
+            if localizacao:
+
+                latitude = (
+                    localizacao.get(
+                        "latitude"
+                    )
+                )
+
+                longitude = (
+                    localizacao.get(
+                        "longitude"
+                    )
+                )
+
+                accuracy = (
+                    localizacao.get(
+                        "accuracy"
+                    )
+                )
+
+
+                if (
+                    latitude is not None
+                    and longitude is not None
+                ):
+
+                    argumentos[
+                        "latitude"
+                    ] = float(
+                        latitude
+                    )
+
+                    argumentos[
+                        "longitude"
+                    ] = float(
+                        longitude
+                    )
+
+
+                if accuracy is not None:
+
+                    argumentos[
+                        "accuracy"
+                    ] = float(
+                        accuracy
+                    )
+
+        # =====================================================
+        # LOCALIZAÇÃO ATUAL PARA ROTAS
+        # =====================================================
+
+        if decisao.ferramenta == "consultar_rota":
+
+            origem_argumento = str(
+                argumentos.get("origem")
+                or ""
+            ).strip().lower()
+
+            origens_localizacao_atual = {
+                "daqui",
+                "onde estou",
+                "minha localização",
+                "minha localizacao",
+                "localização atual",
+                "localizacao atual"
+            }
+
+            if (
+                    origem_argumento
+                    in origens_localizacao_atual
+            ):
+
+                if not localizacao:
+                    resposta = (
+                        "Preciso da sua localização atual "
+                        "para calcular essa rota."
+                    )
+
+                    ChatInteractionService.salvar_agent(
+                        db=db,
+                        id_conversa=id_conversa,
+                        conteudo_usuario=conteudo,
+                        resposta_ara=resposta
+                    )
+
+                    return {
+                        "id_conversa": id_conversa,
+                        "mensagem_usuario": conteudo,
+                        "resposta_ara": resposta,
+                        "modelo": "AGENT",
+                        "ferramenta": "consultar_rota",
+                        "tempo_processamento": 0
+                    }
+
+                latitude = localizacao.get(
+                    "latitude"
+                )
+
+                longitude = localizacao.get(
+                    "longitude"
+                )
+
+                if (
+                        latitude is None
+                        or longitude is None
+                ):
+                    raise ValueError(
+                        "A localização atual recebida "
+                        "não possui coordenadas válidas."
+                    )
+
+                argumentos[
+                    "origem_latitude"
+                ] = float(latitude)
+
+                argumentos[
+                    "origem_longitude"
+                ] = float(longitude)
 
         # =====================================================
         # CONFIRMATION POLICY

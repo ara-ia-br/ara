@@ -347,6 +347,17 @@ class AraAgent:
             r"(.+?)"
             r"\s+(?:até|ate|para|pra|pro|ao|à|a)\s+"
             r"(.+?)[?.!]*$",
+            r"(?:rota|trajeto|caminho)"
+            r"\s+"
+            r"(daqui)"
+            r"\s+(?:até|ate|para|pra|pro|ao|à|a)\s+"
+            r"(.+?)[?.!]*$",
+
+            r"(?:rota|trajeto|caminho)"
+            r"\s+(?:de\s+)?"
+            r"(onde\s+estou|minha\s+localiza[cç][aã]o|localiza[cç][aã]o\s+atual)"
+            r"\s+(?:até|ate|para|pra|pro|ao|à|a)\s+"
+            r"(.+?)[?.!]*$",
         ]
 
         for padrao in padroes:
@@ -388,6 +399,11 @@ class AraAgent:
             )
 
         return None
+
+    # =====================================================
+    # LOCALIZAÇÃO ATUAL
+    # =====================================================
+
 
 
 
@@ -539,6 +555,52 @@ class AraAgent:
                 "local": local
             }
         )
+
+    # =========================================================
+    # DETECTAR LOCALIZAÇÃO ATUAL
+    # =========================================================
+
+    # =========================================================
+    # DETECTAR LOCALIZAÇÃO ATUAL
+    # =========================================================
+
+    @staticmethod
+    def _detectar_localizacao_atual(
+        mensagem: str
+    ) -> AgentDecision | None:
+
+        texto = (
+            mensagem
+            .lower()
+            .strip()
+        )
+
+        eh_consulta = bool(
+            re.search(
+                r"\b(?:"
+                r"onde\s+(?:eu\s+)?estou|"
+                r"qual\s+[ée]\s+(?:a\s+)?"
+                r"minha\s+localiza[cç][aã]o|"
+                r"em\s+que\s+bairro\s+"
+                r"(?:eu\s+)?estou|"
+                r"em\s+que\s+cidade\s+"
+                r"(?:eu\s+)?estou|"
+                r"que\s+lugar\s+[ée]\s+esse"
+                r")\b",
+                texto,
+                flags=re.IGNORECASE
+            )
+        )
+
+        if not eh_consulta:
+            return None
+
+        return AgentDecision(
+            acao=TipoAcao.EXECUTAR,
+            ferramenta="consultar_localizacao_atual",
+            argumentos={}
+        )
+
     # =========================================================
     # DETECTAR SEGMENTO INDEPENDENTE
     # =========================================================
@@ -787,6 +849,23 @@ class AraAgent:
         ):
             return decisao_contextual
 
+        decisao_localizacao = (
+            AraAgent
+            ._detectar_localizacao_atual(
+                mensagem
+            )
+        )
+
+        if (
+                decisao_localizacao
+                is not None
+                and decisao_localizacao.acao
+                == TipoAcao.EXECUTAR
+                and decisao_localizacao.ferramenta
+                and ToolRegistry.existe(
+            decisao_localizacao.ferramenta)
+        ):
+            return (decisao_localizacao)
 
         # CONSULTA DE CLIMA
 

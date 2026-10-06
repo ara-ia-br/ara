@@ -18,6 +18,57 @@ import "../chat-modern.css";
 import araChatLogo
     from "../assets/brand/logo-chat.png";
 
+import useUserLocation from "../hooks/useUserLocation";
+
+
+function calcularDistanciaMetros(
+    lat1,
+    lon1,
+    lat2,
+    lon2
+) {
+
+    const raioTerra = 6371000;
+
+    const paraRadianos = (
+        valor
+    ) => (
+        valor * Math.PI / 180
+    );
+
+
+    const deltaLat = paraRadianos(
+        lat2 - lat1
+    );
+
+    const deltaLon = paraRadianos(
+        lon2 - lon1
+    );
+
+
+    const a = (
+        Math.sin(deltaLat / 2) ** 2
+        + Math.cos(
+            paraRadianos(lat1)
+        )
+        * Math.cos(
+            paraRadianos(lat2)
+        )
+        * Math.sin(deltaLon / 2) ** 2
+    );
+
+
+    const c = (
+        2 * Math.atan2(
+            Math.sqrt(a),
+            Math.sqrt(1 - a)
+        )
+    );
+
+
+    return raioTerra * c;
+}
+
 
 function Chat({
     conversaSelecionada,
@@ -31,6 +82,20 @@ function Chat({
     const [carregando, setCarregando] = useState(false);
 
     const fimMensagensRef = useRef(null);
+
+    const rotaAtivaRef = useRef(null);
+
+    const recalculoRotaEmAndamentoRef =
+    useRef(false);
+
+    const {
+    location,
+    error: locationError,
+    tracking: locationTracking,
+    startTracking,
+    stopTracking,
+    getCurrentLocation
+} = useUserLocation();
 
 
     // =========================================================
@@ -91,6 +156,43 @@ function Chat({
     }
 
 
+   function mensagemUsaLocalizacao(
+    texto
+) {
+
+    const normalizado = (
+        String(texto || "")
+            .toLowerCase()
+    );
+
+    return (
+        /\bdaqui\b/.test(normalizado)
+        || /\bonde (?:eu )?estou\b/.test(normalizado)
+        || /\bminha localização\b/.test(normalizado)
+        || /\bminha localizacao\b/.test(normalizado)
+        || /\blocalização atual\b/.test(normalizado)
+        || /\blocalizacao atual\b/.test(normalizado)
+        || /\bem que bairro (?:eu )?estou\b/.test(normalizado)
+        || /\bem que cidade (?:eu )?estou\b/.test(normalizado)
+    );
+}
+
+
+// =========================================================
+// CONTROLE DE LOCALIZAÇÃO
+// =========================================================
+
+function alternarLocalizacao() {
+
+    if (locationTracking) {
+
+        stopTracking();
+        return;
+    }
+
+    startTracking();
+}
+
     // =========================================================
     // ENVIAR MENSAGEM
     // =========================================================
@@ -99,6 +201,48 @@ function Chat({
 
         const texto = mensagem.trim();
 
+
+        let localizacaoAtual = null;
+
+
+
+
+if (
+    mensagemUsaLocalizacao(texto)
+) {
+
+    if (
+        !locationTracking
+        || !location
+    ) {
+
+        setMensagens(
+            (anteriores) => [
+                ...anteriores,
+                {
+                    id:
+                        `localizacao-${Date.now()}`,
+
+                    autor:
+                        "ara",
+
+                    conteudo:
+                        (
+                            "Para usar sua localização atual, "
+                            + "ative a localização no botão "
+                            + "acima do chat."
+                        )
+                }
+            ]
+        );
+
+        return;
+    }
+
+
+    localizacaoAtual =
+        location;
+}
 
         if (
             !texto
@@ -147,13 +291,16 @@ function Chat({
 
             const resposta = await api.post(
                 "/chat",
-                {
-                    id_conversa:
-                        conversaSelecionada.id_conversa,
+              {
+    id_conversa:
+        conversaSelecionada.id_conversa,
 
-                    mensagem:
-                        texto
-                }
+    mensagem:
+        texto,
+
+    localizacao:
+       localizacaoAtual
+}
             );
 
 
@@ -450,6 +597,355 @@ function Chat({
     );
 
 
+    // =========================================================
+// ROTA GPS ATIVA
+// =========================================================
+
+useEffect(
+    () => {
+
+        const ultimaRota = (
+            [...mensagens]
+                .reverse()
+                .find(
+                    (item) =>
+                        item.autor === "ara"
+                        && item.visualizacao
+                            ?.tipo === "rota"
+                )
+        );
+
+
+        if (!ultimaRota) {
+
+            rotaAtivaRef.current = null;
+
+            return;
+        }
+
+
+        const visualizacao =
+            ultimaRota.visualizacao;
+
+
+        const origem =
+            visualizacao?.origem;
+
+
+        /*
+         * Só rotas iniciadas pela localização
+         * atual devem ser recalculadas.
+         *
+         * Rotas:
+         * Centro -> Copacabana
+         *
+         * não entram aqui.
+         */
+        if (
+            origem?.nome
+            !== "Sua localização atual"
+        ) {
+
+            rotaAtivaRef.current = null;
+
+            return;
+        }
+
+
+        const latitude = Number(
+            origem.latitude
+        );
+
+        const longitude = Number(
+            origem.longitude
+        );
+
+
+        const destino = (
+            visualizacao
+                ?.destino
+                ?.consulta
+            || visualizacao
+                ?.destino
+                ?.nome
+        );
+
+
+        if (
+            !Number.isFinite(latitude)
+            || !Number.isFinite(longitude)
+            || !destino
+        ) {
+
+            rotaAtivaRef.current = null;
+
+            return;
+        }
+
+
+        /*
+         * Não reinicia o relógio cada vez
+         * que o card é atualizado.
+         */
+        if (
+            rotaAtivaRef.current
+                ?.idMensagem
+            === ultimaRota.id
+        ) {
+            return;
+        }
+
+
+        rotaAtivaRef.current = {
+
+            idMensagem:
+                ultimaRota.id,
+
+            destino,
+
+            latitude,
+
+            longitude,
+
+            ultimaAtualizacao:
+                Date.now()
+        };
+
+    },
+    [
+        mensagens
+    ]
+);
+
+// =========================================================
+// RECÁLCULO INTELIGENTE DE ROTA
+// =========================================================
+
+useEffect(
+    () => {
+
+        if (
+            !locationTracking
+            || !location
+        ) {
+            return;
+        }
+
+
+        const rota =
+            rotaAtivaRef.current;
+
+
+        if (!rota) {
+            return;
+        }
+
+
+        if (
+            recalculoRotaEmAndamentoRef
+                .current
+        ) {
+            return;
+        }
+
+
+        const latitudeAtual = Number(
+            location.latitude
+        );
+
+        const longitudeAtual = Number(
+            location.longitude
+        );
+
+
+        if (
+            !Number.isFinite(
+                latitudeAtual
+            )
+            || !Number.isFinite(
+                longitudeAtual
+            )
+        ) {
+            return;
+        }
+
+
+        const distanciaPercorrida = (
+            calcularDistanciaMetros(
+                rota.latitude,
+                rota.longitude,
+                latitudeAtual,
+                longitudeAtual
+            )
+        );
+
+
+        const tempoDecorrido = (
+            Date.now()
+            - rota.ultimaAtualizacao
+        );
+
+
+        // Mínimo: 150 metros.
+        if (
+            distanciaPercorrida
+            < 150
+        ) {
+            return;
+        }
+
+
+        // Mínimo: 30 segundos.
+        if (
+            tempoDecorrido
+            < 30000
+        ) {
+            return;
+        }
+
+
+        recalculoRotaEmAndamentoRef
+            .current = true;
+
+
+        api.post(
+            "/chat/rota/recalcular",
+            {
+                destino:
+                    rota.destino,
+
+                latitude:
+                    latitudeAtual,
+
+                longitude:
+                    longitudeAtual
+            }
+        )
+            .then(
+                (resposta) => {
+
+                    const novaVisualizacao = (
+                        resposta.data
+                            ?.visualizacao
+                    );
+
+
+                    const novaResposta = (
+                        resposta.data
+                            ?.resposta_ara
+                    );
+
+
+                    if (
+                        !novaVisualizacao
+                    ) {
+                        return;
+                    }
+
+
+                    /*
+                     * Atualiza a mensagem existente.
+                     * Não cria outra mensagem.
+                     */
+                    setMensagens(
+                        (anteriores) =>
+                            anteriores.map(
+                                (item) => {
+
+                                    if (
+                                        item.id
+                                        !== rota.idMensagem
+                                    ) {
+                                        return item;
+                                    }
+
+
+                                    return {
+                                        ...item,
+
+                                        conteudo:
+                                            (
+                                                typeof novaResposta
+                                                === "string"
+                                            )
+                                                ? novaResposta
+                                                : item.conteudo,
+
+                                        visualizacao:
+                                            novaVisualizacao
+                                    };
+                                }
+                            )
+                    );
+
+
+                    /*
+                     * A nova posição vira a referência
+                     * para o próximo deslocamento.
+                     */
+                    rotaAtivaRef.current = {
+                        ...rota,
+
+                        latitude:
+                            latitudeAtual,
+
+                        longitude:
+                            longitudeAtual,
+
+                        destino:
+                            (
+                                novaVisualizacao
+                                    ?.destino
+                                    ?.consulta
+                                || rota.destino
+                            ),
+
+                        ultimaAtualizacao:
+                            Date.now()
+                    };
+
+
+                    console.log(
+                        "[ROTA] Recalculada:",
+                        {
+                            distanciaPercorrida:
+                                Math.round(
+                                    distanciaPercorrida
+                                ),
+
+                            destino:
+                                rota.destino
+                        }
+                    );
+                }
+            )
+            .catch(
+                (erro) => {
+
+                    console.error(
+                        "[ROTA] Erro ao recalcular:",
+                        erro
+                    );
+                }
+            )
+            .finally(
+                () => {
+
+                    recalculoRotaEmAndamentoRef
+                        .current = false;
+                }
+            );
+
+    },
+    [
+        location,
+        locationTracking
+    ]
+);
+
+
+
+
        // =========================================================
     // SEM CONVERSA
     // =========================================================
@@ -522,6 +1018,60 @@ function Chat({
                         </span>
 
                     </div>
+
+
+                    <button
+    type="button"
+    className={
+        "ara-location-status "
+        + (
+            locationTracking
+                ? "is-active"
+                : ""
+        )
+    }
+    onClick={alternarLocalizacao}
+    title={
+        locationTracking
+            ? "Desativar localização"
+            : "Ativar localização"
+    }
+>
+    <span
+        className="ara-location-status-dot"
+    />
+
+    <span>
+    {
+        locationTracking
+            ? (
+                location?.accuracy
+                    ? (
+                        "Localização ativa"
+                        + " · ±"
+                        + Math.round(
+                            location.accuracy
+                        )
+                        + " m"
+                    )
+                    : "Localização ativa"
+            )
+            : "Localização desativada"
+    }
+</span>
+</button>
+
+                    {
+    locationError
+    && (
+        <span
+            className="ara-location-error"
+            title={locationError}
+        >
+            Localização indisponível
+        </span>
+    )
+}
 
                 </div>
 

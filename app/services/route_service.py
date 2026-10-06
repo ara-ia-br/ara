@@ -6,6 +6,7 @@ from typing import Any
 from app.integrations.routing.osrm_provider import (
     OSRMRoutingProvider
 )
+
 from app.services.location_service import (
     LocationService
 )
@@ -55,7 +56,8 @@ class RouteService:
             or longitude is None
         ):
             raise ValueError(
-                "O local encontrado não possui coordenadas válidas."
+                "O local encontrado não possui "
+                "coordenadas válidas."
             )
 
         return (
@@ -89,7 +91,9 @@ class RouteService:
     async def calcular(
         self,
         origem: str,
-        destino: str
+        destino: str,
+        origem_latitude: float | None = None,
+        origem_longitude: float | None = None
     ) -> dict[str, Any]:
 
         origem = str(
@@ -99,6 +103,7 @@ class RouteService:
         destino = str(
             destino or ""
         ).strip()
+
 
         if not origem:
             raise ValueError(
@@ -111,32 +116,103 @@ class RouteService:
             )
 
 
-        # -----------------------------------------------------
-        # GEOCODING
-        # -----------------------------------------------------
+        # =====================================================
+        # ORIGEM
+        # =====================================================
 
-        local_origem, local_destino = (
-            await asyncio.gather(
-                self.location_service.resolver_local(
-                    origem
-                ),
-                self.location_service.resolver_local(
-                    destino
-                )
-            )
+        usa_origem_gps = (
+            origem_latitude is not None
+            or origem_longitude is not None
         )
 
 
-        if local_origem is None:
-            raise ValueError(
-                f"Não consegui localizar a origem: {origem}."
+        if usa_origem_gps:
+
+            if (
+                origem_latitude is None
+                or origem_longitude is None
+            ):
+                raise ValueError(
+                    "As coordenadas da localização atual "
+                    "estão incompletas."
+                )
+
+
+            origem_lat = float(
+                origem_latitude
             )
+
+            origem_lon = float(
+                origem_longitude
+            )
+
+
+            if not -90 <= origem_lat <= 90:
+                raise ValueError(
+                    "Latitude da localização atual inválida."
+                )
+
+            if not -180 <= origem_lon <= 180:
+                raise ValueError(
+                    "Longitude da localização atual inválida."
+                )
+
+
+            local_origem = {
+                "nome":
+                    "Sua localização atual",
+
+                "nome_completo":
+                    "Sua localização atual",
+
+                "latitude":
+                    origem_lat,
+
+                "longitude":
+                    origem_lon
+            }
+
+
+            local_destino = (
+                await self.location_service.resolver_local(
+                    destino
+                )
+            )
+
+
+        else:
+
+            local_origem, local_destino = (
+                await asyncio.gather(
+
+                    self.location_service.resolver_local(
+                        origem
+                    ),
+
+                    self.location_service.resolver_local(
+                        destino
+                    )
+                )
+            )
+
+
+            if local_origem is None:
+                raise ValueError(
+                    f"Não consegui localizar a origem: "
+                    f"{origem}."
+                )
+
 
         if local_destino is None:
             raise ValueError(
-                f"Não consegui localizar o destino: {destino}."
+                f"Não consegui localizar o destino: "
+                f"{destino}."
             )
 
+
+        # =====================================================
+        # COORDENADAS
+        # =====================================================
 
         origem_lat, origem_lon = (
             self._coordenadas(
@@ -151,9 +227,9 @@ class RouteService:
         )
 
 
-        # -----------------------------------------------------
+        # =====================================================
         # ROUTING
-        # -----------------------------------------------------
+        # =====================================================
 
         rota = await asyncio.to_thread(
             self.routing_provider.calcular_rota,
@@ -175,45 +251,70 @@ class RouteService:
         )
 
 
-        # -----------------------------------------------------
+        # =====================================================
         # RESULTADO
-        # -----------------------------------------------------
+        # =====================================================
 
         return {
             "origem": {
-                "consulta": origem,
-                "nome": self._nome_local(
-                    local_origem,
-                    origem
-                ),
-                "latitude": origem_lat,
-                "longitude": origem_lon
+                "consulta":
+                    origem,
+
+                "nome":
+                    self._nome_local(
+                        local_origem,
+                        origem
+                    ),
+
+                "latitude":
+                    origem_lat,
+
+                "longitude":
+                    origem_lon
             },
 
             "destino": {
-                "consulta": destino,
-                "nome": self._nome_local(
-                    local_destino,
-                    destino
-                ),
-                "latitude": destino_lat,
-                "longitude": destino_lon
+                "consulta":
+                    destino,
+
+                "nome":
+                    self._nome_local(
+                        local_destino,
+                        destino
+                    ),
+
+                "latitude":
+                    destino_lat,
+
+                "longitude":
+                    destino_lon
             },
 
-            "distancia_m": distancia_m,
+            "distancia_m":
+                distancia_m,
 
-            "distancia_km": round(
-                distancia_m / 1000,
-                1
-            ),
+            "distancia_km":
+                round(
+                    distancia_m / 1000,
+                    1
+                ),
 
-            "duracao_s": duracao_s,
+            "duracao_s":
+                duracao_s,
 
-            "duracao_min": round(
-                duracao_s / 60
-            ),
+            "duracao_min":
+                round(
+                    duracao_s / 60
+                ),
 
-            "geometria": rota.get(
-                "geometria"
-            )
+            "geometria":
+                rota.get(
+                    "geometria"
+                ),
+
+            "considera_transito":
+                False,
+
+            "provider":
+                "OSRM / OpenStreetMap"
         }

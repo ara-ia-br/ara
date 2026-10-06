@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import useUserLocation from "../hooks/useUserLocation.js";
 
 function saudacao() {
     const hora = new Date().getHours();
@@ -25,6 +26,8 @@ function HomePage() {
     const navigate = useNavigate();
     const [tarefas, setTarefas] = useState([]);
     const [carregando, setCarregando] = useState(true);
+
+
 
     useEffect(() => {
         let ativo = true;

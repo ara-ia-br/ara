@@ -14,7 +14,8 @@ class ActionGuardHandlerService:
             db: Session,
             id_usuario: int,
             id_conversa: int,
-            conteudo: str
+            conteudo: str,
+            localizacao: dict | None = None
     ) -> dict | None:
 
         # BARREIRA EXPLÍCITA

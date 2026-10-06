@@ -20,7 +20,9 @@ _route_service = RouteService()
 
 async def _consultar_rota_async(
     origem: str,
-    destino: str
+    destino: str,
+    origem_latitude: float | None = None,
+    origem_longitude: float | None = None
 ) -> dict:
 
     origem = str(
@@ -49,7 +51,9 @@ async def _consultar_rota_async(
 
     rota = await _route_service.calcular(
         origem=origem,
-        destino=destino
+        destino=destino,
+        origem_latitude=origem_latitude,
+        origem_longitude=origem_longitude
     )
 
 
@@ -110,11 +114,13 @@ async def _consultar_rota_async(
 # =========================================================
 
 def consultar_rota(
-    origem: str,
-    destino: str,
-    db: Session | None = None,
-    id_usuario: int | None = None
-) -> dict:
+            origem: str,
+            destino: str,
+            origem_latitude: float | None = None,
+            origem_longitude: float | None = None,
+            db: Session | None = None,
+            id_usuario: int | None = None
+    ) -> dict:
 
     try:
 
@@ -123,7 +129,9 @@ def consultar_rota(
             .executar(
                 _consultar_rota_async(
                     origem=origem,
-                    destino=destino
+                    destino=destino,
+                    origem_latitude=origem_latitude,
+                    origem_longitude=origem_longitude
                 ),
                 timeout=30.0
             )

@@ -10,6 +10,15 @@ from app.agent.lembrete_tools import (
     excluir_todos_lembretes
 )
 
+from app.agent.tools.nearby_tools import (
+    consultar_lugares_proximos
+)
+
+
+from app.agent.tools.location_tools import (
+    consultar_localizacao_atual
+)
+
 from app.agent.tools.route_tools import (
     consultar_rota,
 )
@@ -153,4 +162,23 @@ def registrar_tools():
     ToolRegistry.registrar(
         "consultar_rota",
         consultar_rota
+    )
+
+    # =========================================================
+    # LOCALIZAÇÃO
+    # =========================================================
+
+    ToolRegistry.registrar(
+        "consultar_localizacao_atual",
+        consultar_localizacao_atual
+    )
+
+
+    # =========================================================
+    # LUGARES PRÓXIMOS
+    # =========================================================
+
+    ToolRegistry.registrar(
+        "consultar_lugares_proximos",
+        consultar_lugares_proximos
     )

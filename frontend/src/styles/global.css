@@ -1,0 +1,61 @@
+:root {
+    --ara-font-family:
+        "Inter Variable",
+        "Inter",
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
+    font-family:
+        var(--ara-font-family);
+
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+}
+
+
+html,
+body,
+#root {
+    font-family:
+        var(--ara-font-family);
+}
+
+
+body {
+    margin: 0;
+}
+
+
+/*
+ * Controles de formulário não devem depender
+ * do estilo padrão do navegador.
+ */
+button,
+input,
+textarea,
+select,
+option {
+    font: inherit;
+}
+
+
+/*
+ * Garante a identidade tipográfica em componentes
+ * que tenham estilos próprios.
+ */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span,
+small,
+strong,
+label,
+a {
+    font-family: inherit;
+}

@@ -43,9 +43,10 @@ class ChatService:
 
     @staticmethod
     def enviar_mensagem(
-        db: Session,
-        id_conversa: int,
-        conteudo: str
+            db: Session,
+            id_conversa: int,
+            conteudo: str,
+            localizacao: dict | None = None
     ) -> dict:
 
         # =====================================================
@@ -128,15 +129,15 @@ class ChatService:
         if resultado_multi_intent is not None:
             return resultado_multi_intent
 
-
         resultado_agent = (
             AgentActionHandlerService.processar(
                 db=db,
                 id_usuario=id_usuario,
                 id_conversa=id_conversa,
-                conteudo=conteudo
+                conteudo=conteudo,
+                localizacao=localizacao
             )
-       )
+        )
 
         if resultado_agent is not None:
             return resultado_agent

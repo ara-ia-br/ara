@@ -958,6 +958,181 @@ class ResponseComposer:
 
 
         # =====================================================
+        # LOCALIZAÇÃO ATUAL
+        # =====================================================
+
+        if (
+            ferramenta
+            == "consultar_localizacao_atual"
+        ):
+
+            if (
+                resultado.get(
+                    "sucesso"
+                )
+                is False
+            ):
+
+                return (
+                    resultado.get(
+                        "erro"
+                    )
+                    or (
+                        "Não consegui identificar "
+                        "sua localização."
+                    )
+                )
+
+
+            local = (
+                resultado.get(
+                    "local"
+                )
+                or {}
+            )
+
+
+            bairro = (
+                local.get(
+                    "bairro"
+                )
+            )
+
+            cidade = (
+                local.get(
+                    "cidade"
+                )
+            )
+
+            estado = (
+                local.get(
+                    "estado"
+                )
+            )
+
+            logradouro = (
+                local.get(
+                    "logradouro"
+                )
+            )
+
+            numero = (
+                local.get(
+                    "numero"
+                )
+            )
+
+            accuracy = (
+                resultado.get(
+                    "accuracy_m"
+                )
+            )
+
+
+            partes_local = []
+
+
+            if logradouro:
+
+                endereco = (
+                    logradouro
+                )
+
+                if numero:
+                    endereco += (
+                        f", {numero}"
+                    )
+
+                partes_local.append(
+                    endereco
+                )
+
+
+            if bairro:
+
+                partes_local.append(
+                    bairro
+                )
+
+
+            if cidade:
+
+                partes_local.append(
+                    cidade
+                )
+
+
+            if estado:
+
+                partes_local.append(
+                    estado
+                )
+
+
+            local_formatado = (
+                ", ".join(
+                    partes_local
+                )
+            )
+
+
+            if not local_formatado:
+
+                local_formatado = (
+                    local.get(
+                        "nome_completo"
+                    )
+                    or "essa região"
+                )
+
+
+            # ---------------------------------------------
+            # PRECISÃO BAIXA
+            # ---------------------------------------------
+
+            if (
+                accuracy is not None
+                and accuracy >= 5000
+            ):
+
+                km = (
+                    accuracy / 1000
+                )
+
+                return (
+                    "Sua localização aproximada "
+                    f"aponta para {local_formatado}. "
+                    "O dispositivo está informando "
+                    "uma margem de precisão de cerca "
+                    f"de {km:.1f} km."
+                )
+
+
+            if (
+                accuracy is not None
+                and accuracy >= 1000
+            ):
+
+                km = (
+                    accuracy / 1000
+                )
+
+                return (
+                    "Pelo que consegui localizar, "
+                    f"você está próximo de "
+                    f"{local_formatado}. "
+                    "A posição é aproximada, com "
+                    f"margem de cerca de {km:.1f} km."
+                )
+
+
+            return (
+                "Você está em "
+                f"{local_formatado}."
+            )
+
+
+        # =====================================================
         # FALLBACK DE TOOL
         # =====================================================
 
