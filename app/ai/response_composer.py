@@ -1133,6 +1133,394 @@ class ResponseComposer:
 
 
         # =====================================================
+        # LUGARES PRÓXIMOS
+        # =====================================================
+
+        if (
+            ferramenta
+            == "consultar_lugares_proximos"
+        ):
+
+            if (
+                resultado.get(
+                    "sucesso"
+                )
+                is False
+            ):
+
+                return (
+                    resultado.get(
+                        "erro"
+                    )
+                    or (
+                        "Não consegui procurar "
+                        "lugares próximos."
+                    )
+                )
+
+
+            lugares = (
+                resultado.get(
+                    "lugares"
+                )
+                or []
+            )
+
+
+            categoria = (
+                resultado.get(
+                    "categoria"
+                )
+            )
+
+
+            if not lugares:
+
+                if categoria:
+
+                    return (
+                        "Não encontrei "
+                        f"{categoria}s próximos "
+                        "dentro da área pesquisada."
+                    )
+
+
+                return (
+                    "Não encontrei lugares próximos "
+                    "dentro da área pesquisada."
+                )
+
+
+            # -------------------------------------------------
+            # CABEÇALHO
+            # -------------------------------------------------
+
+            if categoria:
+
+                linhas = [
+                    (
+                        "Encontrei alguns lugares "
+                        f"próximos para **{categoria}**:"
+                    )
+                ]
+
+            else:
+
+                linhas = [
+                    "Encontrei alguns lugares próximos:"
+                ]
+
+
+            # -------------------------------------------------
+            # TOP 5
+            # -------------------------------------------------
+
+            for indice, lugar in enumerate(
+                lugares[:5],
+                start=1
+            ):
+
+                nome = (
+                    lugar.get("nome")
+                    or "Local"
+                )
+
+                tipo = (
+                    lugar.get("categoria")
+                    or "Local"
+                )
+
+                distancia_m = (
+                    lugar.get(
+                        "distancia_m"
+                    )
+                )
+
+
+                if (
+                    isinstance(
+                        distancia_m,
+                        (int, float)
+                    )
+                    and distancia_m >= 1000
+                ):
+
+                    distancia = (
+                        f"{distancia_m / 1000:.1f}"
+                        .replace(
+                            ".",
+                            ","
+                        )
+                        + " km"
+                    )
+
+                elif isinstance(
+                    distancia_m,
+                    (int, float)
+                ):
+
+                    distancia = (
+                        f"{round(distancia_m)} m"
+                    )
+
+                else:
+
+                    distancia = (
+                        "distância indisponível"
+                    )
+
+
+                linhas.append(
+                    (
+                        f"{indice}. **{nome}** "
+                        f"— {tipo} "
+                        f"— {distancia}"
+                    )
+                )
+
+
+            accuracy = (
+                resultado.get(
+                    "accuracy_m"
+                )
+            )
+
+
+            if (
+                accuracy is not None
+                and accuracy >= 5000
+            ):
+
+                linhas.append(
+                    (
+                        "\nSua localização atual está "
+                        "aproximada, então as distâncias "
+                        "também podem variar."
+                    )
+                )
+
+            return "\n".join(
+                linhas
+            )
+
+
+        # =====================================================
+        # LUGARES PRÓXIMOS
+        # =====================================================
+
+        if (
+            ferramenta
+            == "consultar_lugares_proximos"
+        ):
+
+            if (
+                resultado.get(
+                    "sucesso"
+                )
+                is False
+            ):
+
+                return (
+                    resultado.get(
+                        "erro"
+                    )
+                    or (
+                        "Não consegui procurar "
+                        "lugares próximos agora."
+                    )
+                )
+
+
+            lugares = (
+                resultado.get(
+                    "lugares"
+                )
+                or []
+            )
+
+            categoria = (
+                resultado.get(
+                    "categoria"
+                )
+            )
+
+
+            if not lugares:
+
+                if categoria:
+
+                    return (
+                        "Não encontrei lugares dessa "
+                        "categoria perto de você."
+                    )
+
+                return (
+                    "Não encontrei lugares próximos "
+                    "na área pesquisada."
+                )
+
+
+            # -------------------------------------------------
+            # CABEÇALHO
+            # -------------------------------------------------
+
+            if categoria:
+
+                linhas = [
+                    (
+                        "Encontrei alguns lugares "
+                        "perto de você:"
+                    )
+                ]
+
+            else:
+
+                linhas = [
+                    (
+                        "Encontrei alguns lugares "
+                        "perto de você:"
+                    )
+                ]
+
+
+            # -------------------------------------------------
+            # RESULTADOS
+            # -------------------------------------------------
+
+            for indice, lugar in enumerate(
+                lugares[:5],
+                start=1
+            ):
+
+                nome = (
+                    lugar.get(
+                        "nome"
+                    )
+                    or "Local"
+                )
+
+                tipo = (
+                    lugar.get(
+                        "categoria"
+                    )
+                    or "Local"
+                )
+
+                distancia_m = (
+                    lugar.get(
+                        "distancia_m"
+                    )
+                )
+
+
+                if (
+                    isinstance(
+                        distancia_m,
+                        (int, float)
+                    )
+                    and distancia_m >= 1000
+                ):
+
+                    distancia = (
+                        (
+                            f"{distancia_m / 1000:.1f}"
+                        )
+                        .replace(
+                            ".",
+                            ","
+                        )
+                        + " km"
+                    )
+
+                elif isinstance(
+                    distancia_m,
+                    (int, float)
+                ):
+
+                    distancia = (
+                        f"{round(distancia_m)} m"
+                    )
+
+                else:
+
+                    distancia = (
+                        "distância indisponível"
+                    )
+
+
+                linha = (
+                    f"{indice}. "
+                    f"**{nome}**"
+                    f" — {tipo}"
+                    f" — {distancia}"
+                )
+
+
+                endereco = (
+                    lugar.get(
+                        "endereco"
+                    )
+                )
+
+                numero = (
+                    lugar.get(
+                        "numero"
+                    )
+                )
+
+
+                if endereco:
+
+                    linha += (
+                        f"\n   {endereco}"
+                    )
+
+                    if numero:
+
+                        linha += (
+                            f", {numero}"
+                        )
+
+
+                linhas.append(
+                    linha
+                )
+
+
+            # -------------------------------------------------
+            # AVISO DE PRECISÃO
+            # -------------------------------------------------
+
+            accuracy = (
+                resultado.get(
+                    "accuracy_m"
+                )
+            )
+
+
+            if (
+                isinstance(
+                    accuracy,
+                    (int, float)
+                )
+                and accuracy >= 1000
+            ):
+
+                linhas.append(
+                    (
+                        "\nSua localização está "
+                        "aproximada, então as "
+                        "distâncias podem variar."
+                    )
+                )
+
+
+            return "\n".join(
+                linhas
+            )
+
+
+        # =====================================================
         # FALLBACK DE TOOL
         # =====================================================
 

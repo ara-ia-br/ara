@@ -400,9 +400,143 @@ class AraAgent:
 
         return None
 
-    # =====================================================
-    # LOCALIZAÇÃO ATUAL
-    # =====================================================
+    # =========================================================
+    # DETECTAR LUGARES PRÓXIMOS
+    # =========================================================
+
+    @staticmethod
+    def _detectar_lugares_proximos(
+        mensagem: str
+    ) -> AgentDecision | None:
+
+        texto = (
+            mensagem
+            .lower()
+            .strip()
+        )
+
+
+        # -----------------------------------------------------
+        # PRECISA INDICAR PROXIMIDADE
+        # -----------------------------------------------------
+
+        eh_proximidade = bool(
+            re.search(
+                r"\b(?:"
+                r"perto\s+de\s+mim|"
+                r"pr[oó]xim[oa]s?\s+de\s+mim|"
+                r"por\s+perto|"
+                r"nas\s+proximidades|"
+                r"aqui\s+perto"
+                r")\b",
+                texto,
+                flags=re.IGNORECASE
+            )
+        )
+
+
+        if not eh_proximidade:
+            return None
+
+
+        # -----------------------------------------------------
+        # CATEGORIA
+        # -----------------------------------------------------
+
+        categorias = [
+            (
+                r"\brestaurantes?\b",
+                "restaurante"
+            ),
+            (
+                r"\blanchonetes?\b",
+                "lanchonete"
+            ),
+            (
+                r"\bcaf[eé]s?\b",
+                "cafe"
+            ),
+            (
+                r"\bbares?\b",
+                "bar"
+            ),
+            (
+                r"\bfarm[aá]cias?\b",
+                "farmacia"
+            ),
+            (
+                r"\bhospitais?\b",
+                "hospital"
+            ),
+            (
+                r"\bsupermercados?\b",
+                "supermercado"
+            ),
+            (
+                r"\bmercados?\b",
+                "mercado"
+            ),
+            (
+                r"\bpostos?(?:\s+de\s+gasolina)?\b",
+                "posto"
+            ),
+            (
+                r"\bbancos?\b",
+                "banco"
+            ),
+            (
+                r"\bcaixas?\s+eletr[oô]nicos?\b",
+                "atm"
+            ),
+            (
+                r"\bacademias?\b",
+                "academia"
+            ),
+            (
+                r"\bparques?\b",
+                "parque"
+            ),
+            (
+                r"\bhot[eé]is?\b",
+                "hotel"
+            ),
+            (
+                r"\bestacionamentos?\b",
+                "estacionamento"
+            )
+        ]
+
+
+        categoria = None
+
+
+        for padrao, valor in categorias:
+
+            if re.search(
+                padrao,
+                texto,
+                flags=re.IGNORECASE
+            ):
+
+                categoria = valor
+                break
+
+
+        return AgentDecision(
+            acao=
+                TipoAcao.EXECUTAR,
+
+            ferramenta=
+                "consultar_lugares_proximos",
+
+            argumentos={
+                "categoria":
+                    categoria,
+
+                "raio_m":
+                    1000
+            }
+        )
 
 
 
@@ -639,6 +773,8 @@ class AraAgent:
             return decisao_rota
 
 
+
+
         # CLIMA
 
         decisao_clima = (
@@ -724,17 +860,16 @@ class AraAgent:
             return decisao_direta
 
         return None
-
     # =========================================================
     # DECIDIR
     # =========================================================
 
     @staticmethod
     def decidir(
-            mensagem: str,
-            db: Session | None = None,
-            id_usuario: int | None = None,
-            id_conversa: int | None = None
+        mensagem: str,
+        db: Session | None = None,
+        id_usuario: int | None = None,
+        id_conversa: int | None = None
     ) -> AgentDecision:
 
         # =====================================================
@@ -776,6 +911,7 @@ class AraAgent:
         }
 
         if texto in mensagens_diretas:
+
             print(
                 "[AGENT FAST PATH] "
                 "Conversa simples detectada."
@@ -784,6 +920,7 @@ class AraAgent:
             return AgentDecision(
                 acao=TipoAcao.CONVERSAR
             )
+
 
         # =====================================================
         # INSTRUCTIONAL GUARD GLOBAL
@@ -801,24 +938,32 @@ class AraAgent:
         )
 
         if consulta_instrucional is not None:
+
             return AgentDecision(
                 acao=TipoAcao.CONVERSAR
             )
 
-        ferramentas = ToolRegistry.listar()
+
+        ferramentas = (
+            ToolRegistry.listar()
+        )
 
         contexto_temporal = (
             TimeService.contexto_temporal()
         )
 
+
         # =====================================================
         # 1. CONTEXTO DE TAREFA
+        # =====================================================
         #
         # Exemplos:
+        #
         # "coloque a primeira como urgente"
         # "joga a segunda para sexta às 19h"
         # "conclua ela"
         # "cancela essa"
+        #
         # =====================================================
 
         decisao_contextual = (
@@ -832,22 +977,33 @@ class AraAgent:
         )
 
         if (
-                decisao_contextual is not None
-                and decisao_contextual.acao == TipoAcao.EXECUTAR
-                and decisao_contextual.ferramenta
-                and ToolRegistry.existe(
-            decisao_contextual.ferramenta
-        )
+            decisao_contextual is not None
+            and decisao_contextual.acao
+            == TipoAcao.EXECUTAR
+            and decisao_contextual.ferramenta
+            and ToolRegistry.existe(
+                decisao_contextual.ferramenta
+            )
         ):
+
             return decisao_contextual
+
 
         # Se o contextual identificou a intenção,
         # mas precisa conversar/solicitar informação.
+
         if (
-                decisao_contextual is not None
-                and decisao_contextual.acao == TipoAcao.CONVERSAR
+            decisao_contextual is not None
+            and decisao_contextual.acao
+            == TipoAcao.CONVERSAR
         ):
+
             return decisao_contextual
+
+
+        # =====================================================
+        # LOCALIZAÇÃO ATUAL
+        # =====================================================
 
         decisao_localizacao = (
             AraAgent
@@ -857,61 +1013,111 @@ class AraAgent:
         )
 
         if (
-                decisao_localizacao
-                is not None
-                and decisao_localizacao.acao
-                == TipoAcao.EXECUTAR
-                and decisao_localizacao.ferramenta
-                and ToolRegistry.existe(
-            decisao_localizacao.ferramenta)
+            decisao_localizacao is not None
+            and decisao_localizacao.acao
+            == TipoAcao.EXECUTAR
+            and decisao_localizacao.ferramenta
+            and ToolRegistry.existe(
+                decisao_localizacao.ferramenta
+            )
         ):
-            return (decisao_localizacao)
 
+            return decisao_localizacao
+
+
+        # =====================================================
+        # LUGARES PRÓXIMOS
+        # =====================================================
+
+        decisao_proximidade = (
+            AraAgent
+            ._detectar_lugares_proximos(
+                mensagem
+            )
+        )
+
+        if (
+            decisao_proximidade is not None
+            and decisao_proximidade.acao
+            == TipoAcao.EXECUTAR
+            and decisao_proximidade.ferramenta
+            and ToolRegistry.existe(
+                decisao_proximidade.ferramenta
+            )
+        ):
+
+            return decisao_proximidade
+
+
+        # =====================================================
         # CONSULTA DE CLIMA
+        # =====================================================
 
         decisao_clima = (
-            AraAgent._detectar_consulta_clima(mensagem)
+            AraAgent
+            ._detectar_consulta_clima(
+                mensagem
+            )
         )
 
         if (
             decisao_clima is not None
-            and decisao_clima.acao == TipoAcao.EXECUTAR
+            and decisao_clima.acao
+            == TipoAcao.EXECUTAR
             and decisao_clima.ferramenta
-            and ToolRegistry.existe(decisao_clima.ferramenta)
+            and ToolRegistry.existe(
+                decisao_clima.ferramenta
+            )
         ):
+
             return decisao_clima
+
 
         if (
             decisao_clima is not None
-            and decisao_clima.acao == TipoAcao.CONVERSAR
+            and decisao_clima.acao
+            == TipoAcao.CONVERSAR
         ):
+
             return decisao_clima
+
 
         # =====================================================
         # 2. AÇÕES DE TAREFA
         # =====================================================
 
         decisao_tarefa = (
-            AraAgent._detectar_acao_tarefa(
+            AraAgent
+            ._detectar_acao_tarefa(
                 mensagem
             )
         )
 
         if (
-                decisao_tarefa is not None
-                and decisao_tarefa.acao == TipoAcao.EXECUTAR
-                and decisao_tarefa.ferramenta
-                and ToolRegistry.existe(
-            decisao_tarefa.ferramenta
-        )
+            decisao_tarefa is not None
+            and decisao_tarefa.acao
+            == TipoAcao.EXECUTAR
+            and decisao_tarefa.ferramenta
+            and ToolRegistry.existe(
+                decisao_tarefa.ferramenta
+            )
         ):
+
             return decisao_tarefa
 
+
         if (
-                decisao_tarefa is not None
-                and decisao_tarefa.acao == TipoAcao.CONVERSAR
+            decisao_tarefa is not None
+            and decisao_tarefa.acao
+            == TipoAcao.CONVERSAR
         ):
+
             return decisao_tarefa
+
+
+        # =====================================================
+        # CONTEXTO DE LEMBRETE
+        # =====================================================
 
         decisao_contextual_lembrete = (
             AraAgent
@@ -924,13 +1130,15 @@ class AraAgent:
         )
 
         if (
-                decisao_contextual_lembrete is not None
-                and decisao_contextual_lembrete.ferramenta
-                and ToolRegistry.existe(
-            decisao_contextual_lembrete.ferramenta
-        )
+            decisao_contextual_lembrete is not None
+            and decisao_contextual_lembrete.ferramenta
+            and ToolRegistry.existe(
+                decisao_contextual_lembrete.ferramenta
+            )
         ):
+
             return decisao_contextual_lembrete
+
 
         # =====================================================
         # 3. EXCLUSÃO EM MASSA DE LEMBRETES
@@ -944,62 +1152,73 @@ class AraAgent:
         )
 
         if (
-                decisao_exclusao_lembretes is not None
-                and decisao_exclusao_lembretes.acao
-                == TipoAcao.EXECUTAR
-                and decisao_exclusao_lembretes.ferramenta
-                and ToolRegistry.existe(
-            decisao_exclusao_lembretes.ferramenta
-        )
+            decisao_exclusao_lembretes is not None
+            and decisao_exclusao_lembretes.acao
+            == TipoAcao.EXECUTAR
+            and decisao_exclusao_lembretes.ferramenta
+            and ToolRegistry.existe(
+                decisao_exclusao_lembretes.ferramenta
+            )
         ):
+
             return decisao_exclusao_lembretes
+
 
         # =====================================================
         # 4. AÇÕES DE LEMBRETE
         # =====================================================
 
         decisao_lembrete = (
-            AraAgent._detectar_acao_lembrete(
+            AraAgent
+            ._detectar_acao_lembrete(
                 mensagem
             )
         )
 
         if (
-                decisao_lembrete is not None
-                and decisao_lembrete.acao == TipoAcao.EXECUTAR
-                and decisao_lembrete.ferramenta
-                and ToolRegistry.existe(
-            decisao_lembrete.ferramenta
-        )
+            decisao_lembrete is not None
+            and decisao_lembrete.acao
+            == TipoAcao.EXECUTAR
+            and decisao_lembrete.ferramenta
+            and ToolRegistry.existe(
+                decisao_lembrete.ferramenta
+            )
         ):
+
             return decisao_lembrete
+
 
         # =====================================================
         # CONSULTA DE ROTA
         # =====================================================
 
         decisao_rota = (
-            AraAgent._detectar_consulta_rota(
+            AraAgent
+            ._detectar_consulta_rota(
                 mensagem
             )
         )
 
         if (
-                decisao_rota is not None
-                and decisao_rota.acao == TipoAcao.EXECUTAR
-                and decisao_rota.ferramenta
-                and ToolRegistry.existe(
-            decisao_rota.ferramenta
-        )
+            decisao_rota is not None
+            and decisao_rota.acao
+            == TipoAcao.EXECUTAR
+            and decisao_rota.ferramenta
+            and ToolRegistry.existe(
+                decisao_rota.ferramenta
+            )
         ):
+
             return decisao_rota
 
+
         # =====================================================
-        # 4. CRIAÇÃO DIRETA DE LEMBRETE
+        # 5. CRIAÇÃO DIRETA DE LEMBRETE
         # =====================================================
 
         decisao_direta = (
-            AraAgent._detectar_lembrete(
+            AraAgent
+            ._detectar_lembrete(
                 mensagem=mensagem,
                 db=db,
                 id_usuario=id_usuario,
@@ -1008,15 +1227,17 @@ class AraAgent:
         )
 
         if (
-                decisao_direta is not None
-                and ToolRegistry.existe(
-            "criar_lembrete"
-        )
+            decisao_direta is not None
+            and ToolRegistry.existe(
+                "criar_lembrete"
+            )
         ):
+
             return decisao_direta
 
+
         # =====================================================
-        # 5. FALLBACK DETERMINÍSTICO
+        # 6. FALLBACK DETERMINÍSTICO
         # =====================================================
         #
         # Nenhuma intenção operacional conhecida foi detectada.
@@ -1025,12 +1246,12 @@ class AraAgent:
         #
         # Isso evita uma chamada adicional ao modelo apenas para
         # classificar mensagens comuns como CONVERSAR.
+        #
         # =====================================================
 
         return AgentDecision(
             acao=TipoAcao.CONVERSAR
         )
-
 
 
 

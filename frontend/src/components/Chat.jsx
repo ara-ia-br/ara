@@ -167,17 +167,30 @@ function Chat({
 
     return (
         /\bdaqui\b/.test(normalizado)
+
         || /\bonde (?:eu )?estou\b/.test(normalizado)
+
         || /\bminha localização\b/.test(normalizado)
         || /\bminha localizacao\b/.test(normalizado)
+
         || /\blocalização atual\b/.test(normalizado)
         || /\blocalizacao atual\b/.test(normalizado)
+
         || /\bem que bairro (?:eu )?estou\b/.test(normalizado)
         || /\bem que cidade (?:eu )?estou\b/.test(normalizado)
+
+        || /\bperto de mim\b/.test(normalizado)
+
+        || /\bpróxim[oa]s? de mim\b/.test(normalizado)
+        || /\bproxim[oa]s? de mim\b/.test(normalizado)
+
+        || /\bpor perto\b/.test(normalizado)
+
+        || /\baqui perto\b/.test(normalizado)
+
+        || /\bnas proximidades\b/.test(normalizado)
     );
 }
-
-
 // =========================================================
 // CONTROLE DE LOCALIZAÇÃO
 // =========================================================

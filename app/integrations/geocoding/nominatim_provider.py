@@ -180,6 +180,21 @@ class NominatimGeocodingProvider(
                 or {}
             )
 
+            numero_endereco = (
+                endereco.get(
+                    "house_number"
+                )
+            )
+
+            if (
+                numero_endereco
+                and nome.strip()
+                == str(
+                    numero_endereco
+                ).strip()
+            ):
+                continue
+
             cidade = (
                 endereco.get("city")
                 or endereco.get("town")
@@ -266,6 +281,116 @@ class NominatimGeocodingProvider(
         )
 
         return resultados[:limite]
+
+
+    async def _buscar_nominatim_generico(
+        self,
+        latitude: float,
+        longitude: float,
+        raio_m: int,
+        limite: int
+    ) -> list[dict[str, Any]]:
+
+        categorias = [
+            "restaurante",
+            "farmacia",
+            "supermercado",
+            "cafe"
+        ]
+
+        encontrados = []
+
+        for indice, categoria in enumerate(
+            categorias
+        ):
+
+            if indice > 0:
+                await asyncio.sleep(
+                    1.1
+                )
+
+            try:
+
+                resultado = (
+                    await self._buscar_nominatim(
+                        latitude=latitude,
+                        longitude=longitude,
+                        categoria=categoria,
+                        raio_m=raio_m,
+                        limite=4
+                    )
+                )
+
+                encontrados.extend(
+                    resultado
+                )
+
+            except (
+                httpx.HTTPError,
+                TimeoutError
+            ) as erro:
+
+                print(
+                    "[NEARBY] Nominatim "
+                    f"falhou em {categoria}: "
+                    f"{erro!r}"
+                )
+
+                continue
+
+        # -------------------------------------------------
+        # REMOVE DUPLICADOS
+        # -------------------------------------------------
+
+        unicos = {}
+
+        for lugar in encontrados:
+
+            osm_tipo = lugar.get(
+                "osm_tipo"
+            )
+
+            osm_id = lugar.get(
+                "osm_id"
+            )
+
+            if (
+                osm_tipo
+                and osm_id
+            ):
+                chave = (
+                    osm_tipo,
+                    osm_id
+                )
+
+            else:
+                chave = (
+                    lugar.get(
+                        "nome"
+                    ),
+                    lugar.get(
+                        "latitude"
+                    ),
+                    lugar.get(
+                        "longitude"
+                    )
+                )
+
+            unicos[chave] = lugar
+
+        lugares = list(
+            unicos.values()
+        )
+
+        lugares.sort(
+            key=lambda lugar:
+                lugar.get(
+                    "distancia_m",
+                    float("inf")
+                )
+        )
+
+        return lugares[:limite]
 
     async def _respeitar_limite(
         self

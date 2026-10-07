@@ -95,6 +95,7 @@ class AgentActionHandlerService:
         )
 
 
+
         # =====================================================
         # LOCALIZAÇÃO ATUAL
         # =====================================================
@@ -222,6 +223,65 @@ class AgentActionHandlerService:
                 argumentos[
                     "origem_longitude"
                 ] = float(longitude)
+
+
+        # =====================================================
+        # LUGARES PRÓXIMOS — GPS
+        # =====================================================
+
+        if (
+            decisao.ferramenta
+            == "consultar_lugares_proximos"
+        ):
+
+            if localizacao:
+
+                latitude = (
+                    localizacao.get(
+                        "latitude"
+                    )
+                )
+
+                longitude = (
+                    localizacao.get(
+                        "longitude"
+                    )
+                )
+
+                accuracy = (
+                    localizacao.get(
+                        "accuracy"
+                    )
+                )
+
+                if (
+                    latitude is not None
+                    and longitude is not None
+                ):
+
+                    argumentos[
+                        "latitude"
+                    ] = float(
+                        latitude
+                    )
+
+                    argumentos[
+                        "longitude"
+                    ] = float(
+                        longitude
+                    )
+
+                if accuracy is not None:
+
+                    argumentos[
+                        "accuracy"
+                    ] = float(
+                        accuracy
+                    )
+
+
+
+
 
         # =====================================================
         # CONFIRMATION POLICY

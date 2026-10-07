@@ -120,7 +120,8 @@ def consultar_lugares_proximos(
     except (
         ValueError,
         httpx.HTTPError,
-        TimeoutError
+        TimeoutError,
+        RuntimeError
     ) as erro:
 
         return {
@@ -161,3 +162,4 @@ def consultar_lugares_proximos(
                     "lugares próximos agora."
                 )
         }
+
