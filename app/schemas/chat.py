@@ -1,3 +1,5 @@
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -12,3 +14,5 @@ class ChatResponse(BaseModel):
     resposta_jarvis: str
     modelo: str
     tempo_processamento: float
+    ferramenta: str | None = None
+    argumentos: dict[str, Any] = Field(default_factory=dict)

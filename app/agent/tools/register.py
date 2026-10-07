@@ -1,5 +1,7 @@
 from app.agent.tools.tarefa_tools import listar_tarefas_periodo
 from app.agent.tool_registry import ToolRegistry
+from app.agent.tools.automacao_teste import executar_automacao_teste
+from app.agent.tools.spotify_tools import executar_abrir_spotify
 
 from app.agent.lembrete_tools import (
     criar_lembrete,
@@ -98,3 +100,12 @@ def registrar_tools():
         "listar_tarefas_periodo",
         listar_tarefas_periodo
     )
+
+    ToolRegistry.registrar(
+    "executar_automacao_teste",
+    executar_automacao_teste
+)
+    ToolRegistry.registrar(
+    "abrir_spotify",
+    executar_abrir_spotify
+)

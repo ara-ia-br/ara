@@ -213,6 +213,7 @@ class JarvisAgent:
         ):
             return decisao_lembrete
 
+
         # =====================================================
         # 4. CRIAÇÃO DIRETA DE LEMBRETE
         # =====================================================
@@ -231,8 +232,30 @@ class JarvisAgent:
         ):
             return decisao_direta
 
+    
+        # =====================================================
+        # 5. AÇÕES DE AUTOMAÇÃO
+        # =====================================================
+
+        decisao_automacao = (
+            JarvisAgent._detectar_acao_automacao(
+                mensagem
+            )
+        )
+
+        if (
+            decisao_automacao is not None
+            and decisao_automacao.acao == TipoAcao.EXECUTAR
+            and decisao_automacao.ferramenta
+            and ToolRegistry.existe(
+                decisao_automacao.ferramenta
+            )
+        ):
+            return decisao_automacao
+
+
     # =====================================================
-    # 5. FALLBACK DETERMINÍSTICO
+    # 6. FALLBACK DETERMINÍSTICO
     # =====================================================
     #
     # Nenhuma intenção operacional conhecida foi detectada.
@@ -246,6 +269,26 @@ class JarvisAgent:
         return AgentDecision(
             acao=TipoAcao.CONVERSAR
         )
+
+
+
+    # =========================================================
+    # DETECTAR AÇÃO DE AUTOMAÇÃO
+    # =========================================================
+
+    @staticmethod
+    def _detectar_acao_automacao(
+        mensagem: str
+    ) -> AgentDecision | None:
+
+        texto = mensagem.lower().strip()
+
+        if "abrir o spotify" in texto:
+            return AgentDecision(
+               acao=TipoAcao.EXECUTAR,
+               ferramenta="abrir_spotify"
+            )
+        return None
 
 
 
