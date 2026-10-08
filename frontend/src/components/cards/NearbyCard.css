@@ -1,0 +1,190 @@
+.nearby-card {
+    width: 100%;
+    overflow: hidden;
+
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    border-radius: 18px;
+
+    background: rgba(15, 23, 42, 0.96);
+}
+
+
+.nearby-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 16px;
+
+    padding: 16px 18px;
+}
+
+
+.nearby-card-title {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+
+.nearby-card-category {
+    margin-top: 3px;
+
+    font-size: 12px;
+
+    opacity: 0.65;
+}
+
+
+.nearby-card-count {
+    flex-shrink: 0;
+
+    font-size: 12px;
+
+    opacity: 0.7;
+}
+
+
+.nearby-map {
+    width: 100%;
+    height: 320px;
+
+    background: #e2e8f0;
+}
+
+
+.nearby-list {
+    display: flex;
+    flex-direction: column;
+
+    max-height: 310px;
+
+    overflow-y: auto;
+}
+
+
+.nearby-item {
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 12px 16px;
+
+    border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+
+.nearby-item-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 27px;
+    height: 27px;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    background: rgba(220, 38, 38, 0.15);
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+
+.nearby-item-content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+
+    min-width: 0;
+}
+
+
+.nearby-item-content strong {
+    font-size: 14px;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+.nearby-item-content span {
+    margin-top: 2px;
+
+    font-size: 12px;
+
+    opacity: 0.75;
+}
+
+
+.nearby-item-content small {
+    margin-top: 3px;
+
+    font-size: 11px;
+
+    opacity: 0.55;
+}
+
+
+.nearby-item-distance {
+    flex-shrink: 0;
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+
+.nearby-card-footer {
+    display: flex;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    padding: 10px 16px;
+
+    border-top: 1px solid rgba(148, 163, 184, 0.12);
+
+    font-size: 10px;
+
+    opacity: 0.55;
+}
+
+
+.nearby-popup {
+    display: flex;
+    flex-direction: column;
+
+    gap: 3px;
+
+    min-width: 140px;
+
+    color: #111827;
+}
+
+
+.nearby-popup strong {
+    font-size: 13px;
+}
+
+
+.nearby-popup span {
+    font-size: 11px;
+}
+
+
+@media (
+    max-width: 600px
+) {
+
+    .nearby-map {
+        height: 270px;
+    }
+
+
+    .nearby-card-footer {
+        flex-direction: column;
+    }
+}

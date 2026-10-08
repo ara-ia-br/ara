@@ -33,7 +33,66 @@ async def _consultar_lugares_proximos_async(
     )
 
 
+    # =========================================================
+    # ORIGEM
+    # =========================================================
+
+    origem = {
+        "latitude":
+            float(latitude),
+
+        "longitude":
+            float(longitude)
+    }
+
+
+    # =========================================================
+    # PROVIDER
+    # =========================================================
+
+    provider = (
+        "Overpass / OpenStreetMap"
+    )
+
+
+    # =========================================================
+    # VISUALIZAÇÃO NATIVA
+    # =========================================================
+
+    visualizacao = {
+
+        "tipo":
+            "lugares_proximos",
+
+        "versao":
+            1,
+
+        "categoria":
+            categoria,
+
+        "raio_m":
+            raio_m,
+
+        "accuracy_m":
+            accuracy,
+
+        "origem":
+            origem,
+
+        "lugares":
+            lugares,
+
+        "provider":
+            provider
+    }
+
+
+    # =========================================================
+    # RESULTADO DA TOOL
+    # =========================================================
+
     return {
+
         "sucesso":
             True,
 
@@ -52,19 +111,17 @@ async def _consultar_lugares_proximos_async(
         "accuracy_m":
             accuracy,
 
-        "origem": {
-            "latitude":
-                float(latitude),
-
-            "longitude":
-                float(longitude)
-        },
+        "origem":
+            origem,
 
         "lugares":
             lugares,
 
         "provider":
-            "Overpass / OpenStreetMap"
+            provider,
+
+        "visualizacao":
+            visualizacao
     }
 
 
@@ -78,12 +135,17 @@ def consultar_lugares_proximos(
     id_usuario: int | None = None
 ) -> dict:
 
+    # =========================================================
+    # LOCALIZAÇÃO OBRIGATÓRIA
+    # =========================================================
+
     if (
         latitude is None
         or longitude is None
     ):
 
         return {
+
             "sucesso":
                 False,
 
@@ -92,6 +154,9 @@ def consultar_lugares_proximos(
 
             "somente_leitura":
                 True,
+
+            "visualizacao":
+                None,
 
             "erro":
                 (
@@ -125,6 +190,7 @@ def consultar_lugares_proximos(
     ) as erro:
 
         return {
+
             "sucesso":
                 False,
 
@@ -133,6 +199,9 @@ def consultar_lugares_proximos(
 
             "somente_leitura":
                 True,
+
+            "visualizacao":
+                None,
 
             "erro":
                 str(erro)
@@ -147,6 +216,7 @@ def consultar_lugares_proximos(
         )
 
         return {
+
             "sucesso":
                 False,
 
@@ -156,10 +226,12 @@ def consultar_lugares_proximos(
             "somente_leitura":
                 True,
 
+            "visualizacao":
+                None,
+
             "erro":
                 (
                     "Não consegui procurar "
                     "lugares próximos agora."
                 )
         }
-

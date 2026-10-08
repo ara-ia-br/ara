@@ -1,5 +1,6 @@
 import WeatherCard from "./WeatherCard";
 import RouteMapCard from "./RouteMapCard";
+import NearbyCard from "./NearbyCard";
 
 
 function NativeResultRenderer({
@@ -27,6 +28,14 @@ function NativeResultRenderer({
         case "rota":
             return (
                 <RouteMapCard
+                    dados={visualizacao}
+                />
+            );
+
+
+        case "lugares_proximos":
+            return (
+                <NearbyCard
                     dados={visualizacao}
                 />
             );

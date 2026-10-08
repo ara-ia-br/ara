@@ -56,6 +56,68 @@ class LocationService:
 
         return texto.strip()
 
+    # =========================================================
+    # NORMALIZAÇÃO DE CONSULTA GEOGRÁFICA
+    # =========================================================
+
+    @classmethod
+    def _normalizar_consulta_geografica(
+            cls,
+            consulta: str
+    ) -> str:
+
+        consulta = str(
+            consulta or ""
+        ).strip()
+
+        if not consulta:
+            return consulta
+
+        texto = (
+            cls._normalizar(
+                consulta
+            )
+            .replace(",", " ")
+        )
+
+        texto = re.sub(
+            r"\s+",
+            " ",
+            texto
+        ).strip()
+
+        # -----------------------------------------------------
+        # CENTRO DO RIO
+        # -----------------------------------------------------
+        #
+        # Exemplos:
+        #
+        # Centro do Rio
+        # Centro do Rio de Janeiro
+        # Centro do Rio de Janeiro, RJ
+        # Centro de Rio de Janeiro
+        #
+        # -----------------------------------------------------
+
+        if re.fullmatch(
+                (
+                        r"centro\s+"
+                        r"(?:do|de)\s+"
+                        r"rio"
+                        r"(?:\s+de\s+janeiro)?"
+                        r"(?:\s+rj)?"
+                ),
+                texto,
+                flags=re.IGNORECASE
+        ):
+            return (
+                "Centro, Rio de Janeiro, "
+                "RJ, Brasil"
+            )
+
+        return consulta
+
+
 
     # =========================================================
     # CANDIDATOS DE NOME
@@ -366,6 +428,16 @@ class LocationService:
 
         if not consulta:
             return None
+
+            # =====================================================
+            # NORMALIZA CONSULTA GEOGRÁFICA
+            # =====================================================
+
+        consulta = (
+            self._normalizar_consulta_geografica(
+                consulta
+            )
+        )
 
         resultados = await self.buscar(
             consulta=consulta,

@@ -4,6 +4,7 @@ import asyncio
 import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+from typing import Any
 
 import httpx
 
@@ -176,9 +177,42 @@ class NominatimGeocodingProvider(
         for item in dados:
 
             endereco = (
-                item.get("address")
-                or {}
+                    item.get("address")
+                    or {}
             )
+
+            cidade = (
+                    endereco.get("city")
+                    or endereco.get("town")
+                    or endereco.get("village")
+                    or endereco.get("municipality")
+            )
+
+            estado = (
+                endereco.get("state")
+            )
+
+            pais = (
+                endereco.get("country")
+            )
+
+            codigo_pais = (
+                endereco.get("country_code")
+            )
+
+            # =====================================================
+            # NOME
+            # =====================================================
+
+            nome = (
+                    item.get("name")
+                    or cidade
+                    or consulta
+            )
+
+            # =====================================================
+            # IGNORA RESULTADO QUE É APENAS NÚMERO DE ENDEREÇO
+            # =====================================================
 
             numero_endereco = (
                 endereco.get(
@@ -187,38 +221,14 @@ class NominatimGeocodingProvider(
             )
 
             if (
-                numero_endereco
-                and nome.strip()
-                == str(
                     numero_endereco
-                ).strip()
+                    and nome
+                    and nome.strip()
+                    == str(
+                numero_endereco
+            ).strip()
             ):
                 continue
-
-            cidade = (
-                endereco.get("city")
-                or endereco.get("town")
-                or endereco.get("village")
-                or endereco.get("municipality")
-            )
-
-            estado = endereco.get(
-                "state"
-            )
-
-            pais = endereco.get(
-                "country"
-            )
-
-            codigo_pais = endereco.get(
-                "country_code"
-            )
-
-            nome = (
-                item.get("name")
-                or cidade
-                or consulta
-            )
 
             try:
 
