@@ -60,3 +60,8 @@ logs/
 
 # Backup local do histórico Git
 .git-backup/
+
+
+# Arquivos
+storage/uploads/*
+!storage/uploads/.gitkeep
